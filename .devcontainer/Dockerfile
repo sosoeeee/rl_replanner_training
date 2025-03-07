@@ -29,8 +29,20 @@ WORKDIR /home/$USERNAME/ros2_ws
 # Copy configuration files
 RUN echo 'source /opt/ros/'$ROS_DISTRO'/setup.bash' >> /home/$USERNAME/.bashrc
 
-# Install some python packages
-RUN pip install "pybind11[global]"
+# build pybind11
+RUN cd ./extern/pybind11 \
+    && mkdir build \
+    && cd build \
+    && cmake .. \
+    && sudo make install
+
+# build c++ library
+RUN cd ./cpp_utils \
+    && mkdir build \
+    && cd build \
+    && cmake .. \
+    && make \
+    && sudo make install
 
 # Setup entrypoint
 COPY ./ros_entrypoint.sh /
