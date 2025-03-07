@@ -13,6 +13,8 @@ RUN apt update -q \
     xauth \
     ros-humble-rviz2 \ 
     ros-dev-tools \
+    # graphicsmagick \
+    libgraphicsmagick++-dev \
     && apt clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

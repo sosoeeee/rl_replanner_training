@@ -47,8 +47,6 @@
 #include <vector>
 #include <queue>
 #include <mutex>
-#include "geometry_msgs/msg/point.hpp"
-#include "nav_msgs/msg/occupancy_grid.hpp"
 
 namespace nav2_costmap_2d
 {
@@ -85,12 +83,6 @@ public:
    * @param map The costmap to copy
    */
   Costmap2D(const Costmap2D & map);
-
-  /**
-   * @brief  Constructor for a costmap from an OccupancyGrid map
-   * @param  map The OccupancyGrid map to create costmap from
-   */
-  explicit Costmap2D(const nav_msgs::msg::OccupancyGrid & map);
 
   /**
    * @brief  Overloaded assignment operator
@@ -289,16 +281,6 @@ public:
   {
     return default_value_;
   }
-
-  /**
-   * @brief  Sets the cost of a convex polygon to a desired value
-   * @param polygon The polygon to perform the operation on
-   * @param cost_value The value to set costs to
-   * @return True if the polygon was filled... false if it could not be filled
-   */
-  bool setConvexPolygonCost(
-    const std::vector<geometry_msgs::msg::Point> & polygon,
-    unsigned char cost_value);
 
   /**
    * @brief  Get the map cells that make up the outline of a polygon
