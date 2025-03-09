@@ -35,30 +35,28 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#include "nav2_costmap_2d/inflation_layer.hpp"
+#include "map_loader/inflation_layer.hpp"
 
 #include <limits>
 #include <map>
 #include <vector>
 #include <algorithm>
 #include <utility>
+#include <iostream>
 
-#include "nav2_costmap_2d/costmap_math.hpp"
-#include "nav2_costmap_2d/footprint.hpp"
-#include "pluginlib/class_list_macros.hpp"
-#include "rclcpp/parameter_events_filter.hpp"
+#include "yaml-cpp/yaml.h"
+#include "map_loader/map_io.hpp"
 
-PLUGINLIB_EXPORT_CLASS(nav2_costmap_2d::InflationLayer, nav2_costmap_2d::Layer)
+using namespace nav2_map_server;
 
 using nav2_costmap_2d::LETHAL_OBSTACLE;
 using nav2_costmap_2d::INSCRIBED_INFLATED_OBSTACLE;
 using nav2_costmap_2d::NO_INFORMATION;
-using rcl_interfaces::msg::ParameterType;
 
 namespace nav2_costmap_2d
 {
 
-InflationLayer::InflationLayer()
+InflationLayer::InflationLayer(Costmap2D * costmap, const std::string & yaml_filename)
 : inflation_radius_(0),
   inscribed_radius_(0),
   cost_scaling_factor_(0),
@@ -68,138 +66,67 @@ InflationLayer::InflationLayer()
   cached_cell_inflation_radius_(0),
   resolution_(0),
   cache_length_(0),
-  last_min_x_(std::numeric_limits<double>::lowest()),
-  last_min_y_(std::numeric_limits<double>::lowest()),
-  last_max_x_(std::numeric_limits<double>::max()),
-  last_max_y_(std::numeric_limits<double>::max())
-{
-  access_ = new mutex_t();
-}
+  costmap_(costmap),
+  yaml_filename_(yaml_filename)
+{}
 
 InflationLayer::~InflationLayer()
-{
-  dyn_params_handler_.reset();
-  delete access_;
-}
+{}
 
 void
 InflationLayer::onInitialize()
 {
-  declareParameter("enabled", rclcpp::ParameterValue(true));
-  declareParameter("inflation_radius", rclcpp::ParameterValue(0.55));
-  declareParameter("cost_scaling_factor", rclcpp::ParameterValue(10.0));
-  declareParameter("inflate_unknown", rclcpp::ParameterValue(false));
-  declareParameter("inflate_around_unknown", rclcpp::ParameterValue(false));
+  YAML::Node doc = YAML::LoadFile(expand_user_home_dir_if_needed(yaml_filename_, get_home_dir()));
 
-  {
-    auto node = node_.lock();
-    if (!node) {
-      throw std::runtime_error{"Failed to lock node"};
-    }
-    node->get_parameter(name_ + "." + "enabled", enabled_);
-    node->get_parameter(name_ + "." + "inflation_radius", inflation_radius_);
-    node->get_parameter(name_ + "." + "cost_scaling_factor", cost_scaling_factor_);
-    node->get_parameter(name_ + "." + "inflate_unknown", inflate_unknown_);
-    node->get_parameter(name_ + "." + "inflate_around_unknown", inflate_around_unknown_);
-
-    dyn_params_handler_ = node->add_on_set_parameters_callback(
-      std::bind(
-        &InflationLayer::dynamicParametersCallback,
-        this, std::placeholders::_1));
+  YAML::Node inflation_layer_node = doc["inflation_layer"];
+  if (!inflation_layer_node) {
+    throw std::runtime_error("Failed to find 'inflation_layer' node in YAML file");
   }
 
-  current_ = true;
+  inscribed_radius_ = yaml_get_value<double>(inflation_layer_node, "robot_radius");
+  inflation_radius_ = yaml_get_value<double>(inflation_layer_node, "inflation_radius");
+  cost_scaling_factor_ = yaml_get_value<double>(inflation_layer_node, "cost_scaling_factor");
+  inflate_unknown_ = yaml_get_value<bool>(inflation_layer_node, "inflate_unknown");
+  inflate_around_unknown_ = yaml_get_value<bool>(inflation_layer_node, "inflate_around_unknown");
+
+  //debug
+  // std::cout << "[Inflation] inscribed_radius_: " << inscribed_radius_ << std::endl;
+  // std::cout << "[Inflation] inflation_radius_: " << inflation_radius_ << std::endl;
+  // std::cout << "[Inflation] cost_scaling_factor_: " << cost_scaling_factor_ << std::endl;
+
   seen_.clear();
   cached_distances_.clear();
   cached_costs_.clear();
-  need_reinflation_ = false;
-  cell_inflation_radius_ = cellDistance(inflation_radius_);
+  // cell_inflation_radius_ = cellDistance(inflation_radius_);
   matchSize();
 }
 
 void
 InflationLayer::matchSize()
 {
-  std::lock_guard<Costmap2D::mutex_t> guard(*getMutex());
-  nav2_costmap_2d::Costmap2D * costmap = layered_costmap_->getCostmap();
-  resolution_ = costmap->getResolution();
+  resolution_ = costmap_->getResolution();
   cell_inflation_radius_ = cellDistance(inflation_radius_);
   computeCaches();
-  seen_ = std::vector<bool>(costmap->getSizeInCellsX() * costmap->getSizeInCellsY(), false);
+  seen_ = std::vector<bool>(costmap_->getSizeInCellsX() * costmap_->getSizeInCellsY(), false);
 }
 
-void
-InflationLayer::updateBounds(
-  double /*robot_x*/, double /*robot_y*/, double /*robot_yaw*/, double * min_x,
-  double * min_y, double * max_x, double * max_y)
-{
-  std::lock_guard<Costmap2D::mutex_t> guard(*getMutex());
-  if (need_reinflation_) {
-    last_min_x_ = *min_x;
-    last_min_y_ = *min_y;
-    last_max_x_ = *max_x;
-    last_max_y_ = *max_y;
-
-    *min_x = std::numeric_limits<double>::lowest();
-    *min_y = std::numeric_limits<double>::lowest();
-    *max_x = std::numeric_limits<double>::max();
-    *max_y = std::numeric_limits<double>::max();
-    need_reinflation_ = false;
-  } else {
-    double tmp_min_x = last_min_x_;
-    double tmp_min_y = last_min_y_;
-    double tmp_max_x = last_max_x_;
-    double tmp_max_y = last_max_y_;
-    last_min_x_ = *min_x;
-    last_min_y_ = *min_y;
-    last_max_x_ = *max_x;
-    last_max_y_ = *max_y;
-    *min_x = std::min(tmp_min_x, *min_x) - inflation_radius_;
-    *min_y = std::min(tmp_min_y, *min_y) - inflation_radius_;
-    *max_x = std::max(tmp_max_x, *max_x) + inflation_radius_;
-    *max_y = std::max(tmp_max_y, *max_y) + inflation_radius_;
-  }
-}
 
 void
-InflationLayer::onFootprintChanged()
+InflationLayer::updateCosts()
 {
-  std::lock_guard<Costmap2D::mutex_t> guard(*getMutex());
-  inscribed_radius_ = layered_costmap_->getInscribedRadius();
-  cell_inflation_radius_ = cellDistance(inflation_radius_);
-  computeCaches();
-  need_reinflation_ = true;
-
-  RCLCPP_DEBUG(
-    logger_, "InflationLayer::onFootprintChanged(): num footprint points: %zu,"
-    " inscribed_radius_ = %.3f, inflation_radius_ = %.3f",
-    layered_costmap_->getFootprint().size(), inscribed_radius_, inflation_radius_);
-}
-
-void
-InflationLayer::updateCosts(
-  nav2_costmap_2d::Costmap2D & master_grid, int min_i, int min_j,
-  int max_i,
-  int max_j)
-{
-  std::lock_guard<Costmap2D::mutex_t> guard(*getMutex());
-  if (!enabled_ || (cell_inflation_radius_ == 0)) {
-    return;
-  }
 
   // make sure the inflation list is empty at the beginning of the cycle (should always be true)
   for (auto & dist : inflation_cells_) {
-    RCLCPP_FATAL_EXPRESSION(
-      logger_,
-      !dist.empty(), "The inflation list must be empty at the beginning of inflation");
+    if (!dist.empty()) {
+      std::cout << "[ERROR] The inflation list must be empty at the beginning of inflation" << std::endl;
+    }
   }
 
-  unsigned char * master_array = master_grid.getCharMap();
-  unsigned int size_x = master_grid.getSizeInCellsX(), size_y = master_grid.getSizeInCellsY();
+  unsigned char * master_array = costmap_->getCharMap();
+  unsigned int size_x = costmap_->getSizeInCellsX(), size_y = costmap_->getSizeInCellsY();
 
   if (seen_.size() != size_x * size_y) {
-    RCLCPP_WARN(
-      logger_, "InflationLayer::updateCosts(): seen_ vector size is wrong");
+    std::cout << "[WARN] InflationLayer::updateCosts(): seen_ vector size is wrong" << std::endl;
     seen_ = std::vector<bool>(size_x * size_y, false);
   }
 
@@ -209,19 +136,10 @@ InflationLayer::updateCosts(
   // box min_i...max_j, by the amount cell_inflation_radius_.  Cells
   // up to that distance outside the box can still influence the costs
   // stored in cells inside the box.
-  const int base_min_i = min_i;
-  const int base_min_j = min_j;
-  const int base_max_i = max_i;
-  const int base_max_j = max_j;
-  min_i -= static_cast<int>(cell_inflation_radius_);
-  min_j -= static_cast<int>(cell_inflation_radius_);
-  max_i += static_cast<int>(cell_inflation_radius_);
-  max_j += static_cast<int>(cell_inflation_radius_);
-
-  min_i = std::max(0, min_i);
-  min_j = std::max(0, min_j);
-  max_i = std::min(static_cast<int>(size_x), max_i);
-  max_j = std::min(static_cast<int>(size_y), max_j);
+  const int base_min_i = 0;
+  const int base_min_j = 0;
+  const int base_max_i = costmap_->getSizeInCellsX();
+  const int base_max_j = costmap_->getSizeInCellsY();
 
   // Inflation list; we append cells to visit in a list associated with
   // its distance to the nearest obstacle
@@ -230,15 +148,18 @@ InflationLayer::updateCosts(
 
   // Start with lethal obstacles: by definition distance is 0.0
   auto & obs_bin = inflation_cells_[0];
-  for (int j = min_j; j < max_j; j++) {
-    for (int i = min_i; i < max_i; i++) {
-      int index = static_cast<int>(master_grid.getIndex(i, j));
+  for (int j = base_min_j; j < base_max_j; j++) {
+    for (int i = base_min_i; i < base_max_i; i++) {
+      int index = static_cast<int>(costmap_->getIndex(i, j));
       unsigned char cost = master_array[index];
       if (cost == LETHAL_OBSTACLE || (inflate_around_unknown_ && cost == NO_INFORMATION)) {
         obs_bin.emplace_back(index, i, j, i, j);
       }
     }
   }
+
+  // debug
+  // std::cout << "[Inflation] obs_bin size: " << obs_bin.size() << std::endl;
 
   // Process cells by increasing distance; new cells are appended to the
   // corresponding distance bin, so they
@@ -303,7 +224,6 @@ InflationLayer::updateCosts(
     dist.reserve(200);
   }
 
-  current_ = true;
 }
 
 /**
@@ -342,7 +262,6 @@ InflationLayer::enqueue(
 void
 InflationLayer::computeCaches()
 {
-  std::lock_guard<Costmap2D::mutex_t> guard(*getMutex());
   if (cell_inflation_radius_ == 0) {
     return;
   }
@@ -375,6 +294,10 @@ InflationLayer::computeCaches()
   for (auto & dist : inflation_cells_) {
     dist.reserve(200);
   }
+
+  // debug
+  // std::cout << "[DEBUG] [InflationLayer::computeCaches]: cache_length_: " << cache_length_ << std::endl;
+  // std::cout << "[DEBUG] [InflationLayer::max_dist]: " << max_dist << std::endl;
 }
 
 int
@@ -415,64 +338,6 @@ InflationLayer::generateIntegerDistances()
 
   distance_matrix_ = distance_matrix;
   return level;
-}
-
-/**
-  * @brief Callback executed when a parameter change is detected
-  * @param event ParameterEvent message
-  */
-rcl_interfaces::msg::SetParametersResult
-InflationLayer::dynamicParametersCallback(
-  std::vector<rclcpp::Parameter> parameters)
-{
-  std::lock_guard<Costmap2D::mutex_t> guard(*getMutex());
-  rcl_interfaces::msg::SetParametersResult result;
-
-  bool need_cache_recompute = false;
-
-  for (auto parameter : parameters) {
-    const auto & param_type = parameter.get_type();
-    const auto & param_name = parameter.get_name();
-
-    if (param_type == ParameterType::PARAMETER_DOUBLE) {
-      if (param_name == name_ + "." + "inflation_radius" &&
-        inflation_radius_ != parameter.as_double())
-      {
-        inflation_radius_ = parameter.as_double();
-        need_reinflation_ = true;
-        need_cache_recompute = true;
-      } else if (param_name == name_ + "." + "cost_scaling_factor" && // NOLINT
-        cost_scaling_factor_ != parameter.as_double())
-      {
-        cost_scaling_factor_ = parameter.as_double();
-        need_reinflation_ = true;
-        need_cache_recompute = true;
-      }
-    } else if (param_type == ParameterType::PARAMETER_BOOL) {
-      if (param_name == name_ + "." + "enabled" && enabled_ != parameter.as_bool()) {
-        enabled_ = parameter.as_bool();
-        need_reinflation_ = true;
-        current_ = false;
-      } else if (param_name == name_ + "." + "inflate_unknown" && // NOLINT
-        inflate_unknown_ != parameter.as_bool())
-      {
-        inflate_unknown_ = parameter.as_bool();
-        need_reinflation_ = true;
-      } else if (param_name == name_ + "." + "inflate_around_unknown" && // NOLINT
-        inflate_around_unknown_ != parameter.as_bool())
-      {
-        inflate_around_unknown_ = parameter.as_bool();
-        need_reinflation_ = true;
-      }
-    }
-  }
-
-  if (need_cache_recompute) {
-    matchSize();
-  }
-
-  result.successful = true;
-  return result;
 }
 
 }  // namespace nav2_costmap_2d

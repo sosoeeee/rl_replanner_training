@@ -1,28 +1,5 @@
-#! /usr/bin/env python3
-# Copyright 2021 Samsung Research America
-# Copyright 2022 Stevedan Ogochukwu Omodolor
-# Copyright 2022 Jaehun Jackson Kim
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-"""
-This is a Python3 API for costmap 2d messages from the stack.
-
-It provides the basic conversion, get/set,
-and handling semantics found in the costmap 2d C++ API.
-"""
-
 import numpy as np
+
 from nav_msgs.msg import OccupancyGrid
 
 
@@ -30,16 +7,16 @@ class PyCostmap2D:
     """
     PyCostmap2D.
 
-    Costmap Python3 API for OccupancyGrids to populate from published messages
+    Costmap Python3 API for Converting Costmap2D_cpp to OccupancyGrid used for rendering.
     """
 
-    def __init__(self):
+    def __init__(self, node = None):    
         self.size_x = None
         self.size_y = None
         self.resolution = None
         self.origin_x = None
         self.origin_y = None
-        self.global_frame_id = None
+        self.global_frame_id = "map"
         self.costmap_timestamp = None
         # Extract costmap
         self.costmap = None
@@ -50,6 +27,8 @@ class PyCostmap2D:
         self.cost_translation_table.append(99)
         self.cost_translation_table.append(100)
         self.cost_translation_table.append(-1)
+
+        self.node = node
     
     def getOccupancyGrid(self):
         """
@@ -62,7 +41,7 @@ class PyCostmap2D:
         """
         OccupancyGrid_msg = OccupancyGrid()
         OccupancyGrid_msg.header.frame_id = self.global_frame_id
-        OccupancyGrid_msg.header.stamp = self.costmap_timestamp
+        OccupancyGrid_msg.header.stamp = self.node.get_clock().now().to_msg()
         OccupancyGrid_msg.info.width = self.size_x
         OccupancyGrid_msg.info.height = self.size_y
         OccupancyGrid_msg.info.resolution = self.resolution
@@ -79,26 +58,24 @@ class PyCostmap2D:
             OccupancyGrid_msg.data[i] = self.cost_translation_table[self.costmap[i]]
 
         return OccupancyGrid_msg
-        
-
-    def loadCostmapFromMsg(self, costmap_msg):
+    
+    def loadCostmapFromCostmapCpp(self, costmap_cpp):
         """
-        Load costmap from nav2_msgs/Costmap.
+        Load costmap from Costmap2D_cpp (create by cpp_utils).
 
         Args:
         ----
-            costmap_msg (nav2_msgs/Costmap): 2D Costmap
+            costmap_cpp (Costmap2D_cpp): 2D Costmap
 
         """
-        self.size_x = costmap_msg.metadata.size_x
-        self.size_y = costmap_msg.metadata.size_y
-        self.resolution = costmap_msg.metadata.resolution
-        self.origin_x = costmap_msg.metadata.origin.position.x
-        self.origin_y = costmap_msg.metadata.origin.position.y
-        self.global_frame_id = costmap_msg.header.frame_id
-        self.costmap_timestamp = costmap_msg.header.stamp
+        self.size_x = costmap_cpp.size_x
+        self.size_y = costmap_cpp.size_y
+        self.resolution = costmap_cpp.resolution
+        self.origin_x = costmap_cpp.origin_x
+        self.origin_y = costmap_cpp.origin_y
+        self.costmap_timestamp = self.node.get_clock().now().to_msg()
         # Extract costmap
-        self.costmap = np.array(costmap_msg.data, dtype=np.uint8)
+        self.costmap = np.array(costmap_cpp.data, dtype=np.uint8)
 
     def getSizeInCellsX(self):
         """Get map width in cells."""
@@ -276,7 +253,7 @@ class PyCostmap2D:
 
         partial_costmap_msg = OccupancyGrid()
         partial_costmap_msg.header.frame_id = self.global_frame_id
-        partial_costmap_msg.header.stamp = self.costmap_timestamp
+        partial_costmap_msg.header.stamp = self.node.get_clock().now().to_msg()
         partial_costmap_msg.info.width = m_size_x
         partial_costmap_msg.info.height = m_size_y
         partial_costmap_msg.info.resolution = self.resolution

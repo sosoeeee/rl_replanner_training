@@ -232,6 +232,16 @@ unsigned char * Costmap2D::getCharMap() const
   return costmap_;
 }
 
+std::vector<uint8_t> Costmap2D::getCharMapToPy() const
+{
+  std::vector<uint8_t> costmap_int8;
+  costmap_int8.resize(size_x_ * size_y_);
+  for (unsigned int i = 0; i < size_x_ * size_y_; i++) {
+    costmap_int8[i] = costmap_[i];
+  }
+  return costmap_int8;
+}
+
 unsigned char Costmap2D::getCost(unsigned int mx, unsigned int my) const
 {
   return costmap_[getIndex(mx, my)];

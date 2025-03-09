@@ -222,6 +222,12 @@ public:
    */
   unsigned char * getCharMap() const;
 
+    /**
+   * @brief  Will return a vector of the underlying unsigned char array used as the costmap
+   * @return A vector of the underlying unsigned char array storing cost values
+   */
+  std::vector<uint8_t> getCharMapToPy() const;
+
   /**
    * @brief  Accessor for the x size of the costmap in cells
    * @return The x size of the costmap

@@ -42,16 +42,14 @@
 #include <cstdlib>
 
 #include "Magick++.h"
-#include "yaml-cpp/yaml.h"
 // #include "tf2/LinearMath/Matrix3x3.h"
 // #include "tf2/LinearMath/Quaternion.h"
 #include "map_loader/occ_grid_values.hpp"
+#include "map_loader/costmap_2d.hpp"
 
 
 namespace nav2_map_server
 {
-// === Map input part ===
-
 /// Get the given subnode value.
 /// The only reason this function exists is to wrap the exceptions in slightly nicer error messages,
 /// including the name of the failed key
@@ -147,109 +145,104 @@ LoadParameters loadMapYaml(const std::string & yaml_filename)
 }
 
 void loadMapFromFile(
-  const LoadParameters & load_parameters)
+  const LoadParameters & load_parameters,
+  unsigned int & size_x,
+  unsigned int & size_y,
+  double & resolution,
+  double & origin_x,
+  double & origin_y,
+  int8_t * & data)
 {
   Magick::InitializeMagick(nullptr);
-  // nav_msgs::msg::OccupancyGrid msg;
 
   std::cout << "[INFO] [map_io]: Loading image_file: " <<
     load_parameters.image_file_name << std::endl;
   Magick::Image img(load_parameters.image_file_name);
 
   // // Copy the image data into the map structure
-  // msg.info.width = img.size().width();
-  // msg.info.height = img.size().height();
+  size_x = img.size().width();
+  size_y = img.size().height();
+  resolution = load_parameters.resolution;
+  origin_x = load_parameters.origin[0];
+  origin_y = load_parameters.origin[1];
 
-  // msg.info.resolution = load_parameters.resolution;
-  // msg.info.origin.position.x = load_parameters.origin[0];
-  // msg.info.origin.position.y = load_parameters.origin[1];
-  // msg.info.origin.position.z = 0.0;
-  // msg.info.origin.orientation = orientationAroundZAxis(load_parameters.origin[2]);
+  data = new int8_t[size_x * size_y];
 
-  // // Allocate space to hold the data
-  // msg.data.resize(msg.info.width * msg.info.height);
+  // Copy pixel data into the map structure
+  for (size_t y = 0; y < size_y; y++) {
+    for (size_t x = 0; x < size_x; x++) {
+      auto pixel = img.pixelColor(x, y);
 
-  // // Copy pixel data into the map structure
-  // for (size_t y = 0; y < msg.info.height; y++) {
-  //   for (size_t x = 0; x < msg.info.width; x++) {
-  //     auto pixel = img.pixelColor(x, y);
+      std::vector<Magick::Quantum> channels = {pixel.redQuantum(), pixel.greenQuantum(),
+        pixel.blueQuantum()};
+      if (load_parameters.mode == MapMode::Trinary && img.matte()) {
+        // To preserve existing behavior, average in alpha with color channels in Trinary mode.
+        // CAREFUL. alpha is inverted from what you might expect. High = transparent, low = opaque
+        channels.push_back(MaxRGB - pixel.alphaQuantum());
+      }
+      double sum = 0;
+      for (auto c : channels) {
+        sum += c;
+      }
+      /// on a scale from 0.0 to 1.0 how bright is the pixel?
+      double shade = Magick::ColorGray::scaleQuantumToDouble(sum / channels.size());
 
-  //     std::vector<Magick::Quantum> channels = {pixel.redQuantum(), pixel.greenQuantum(),
-  //       pixel.blueQuantum()};
-  //     if (load_parameters.mode == MapMode::Trinary && img.matte()) {
-  //       // To preserve existing behavior, average in alpha with color channels in Trinary mode.
-  //       // CAREFUL. alpha is inverted from what you might expect. High = transparent, low = opaque
-  //       channels.push_back(MaxRGB - pixel.alphaQuantum());
-  //     }
-  //     double sum = 0;
-  //     for (auto c : channels) {
-  //       sum += c;
-  //     }
-  //     /// on a scale from 0.0 to 1.0 how bright is the pixel?
-  //     double shade = Magick::ColorGray::scaleQuantumToDouble(sum / channels.size());
+      // If negate is true, we consider blacker pixels free, and whiter
+      // pixels occupied. Otherwise, it's vice versa.
+      /// on a scale from 0.0 to 1.0, how occupied is the map cell (before thresholding)?
+      double occ = (load_parameters.negate ? shade : 1.0 - shade);
 
-  //     // If negate is true, we consider blacker pixels free, and whiter
-  //     // pixels occupied. Otherwise, it's vice versa.
-  //     /// on a scale from 0.0 to 1.0, how occupied is the map cell (before thresholding)?
-  //     double occ = (load_parameters.negate ? shade : 1.0 - shade);
-
-  //     int8_t map_cell;
-  //     switch (load_parameters.mode) {
-  //       case MapMode::Trinary:
-  //         if (load_parameters.occupied_thresh < occ) {
-  //           map_cell = nav2_util::OCC_GRID_OCCUPIED;
-  //         } else if (occ < load_parameters.free_thresh) {
-  //           map_cell = nav2_util::OCC_GRID_FREE;
-  //         } else {
-  //           map_cell = nav2_util::OCC_GRID_UNKNOWN;
-  //         }
-  //         break;
-  //       case MapMode::Scale:
-  //         if (pixel.alphaQuantum() != OpaqueOpacity) {
-  //           map_cell = nav2_util::OCC_GRID_UNKNOWN;
-  //         } else if (load_parameters.occupied_thresh < occ) {
-  //           map_cell = nav2_util::OCC_GRID_OCCUPIED;
-  //         } else if (occ < load_parameters.free_thresh) {
-  //           map_cell = nav2_util::OCC_GRID_FREE;
-  //         } else {
-  //           map_cell = std::rint(
-  //             (occ - load_parameters.free_thresh) /
-  //             (load_parameters.occupied_thresh - load_parameters.free_thresh) * 100.0);
-  //         }
-  //         break;
-  //       case MapMode::Raw: {
-  //           double occ_percent = std::round(shade * 255);
-  //           if (nav2_util::OCC_GRID_FREE <= occ_percent &&
-  //             occ_percent <= nav2_util::OCC_GRID_OCCUPIED)
-  //           {
-  //             map_cell = static_cast<int8_t>(occ_percent);
-  //           } else {
-  //             map_cell = nav2_util::OCC_GRID_UNKNOWN;
-  //           }
-  //           break;
-  //         }
-  //       default:
-  //         throw std::runtime_error("Invalid map mode");
-  //     }
-  //     msg.data[msg.info.width * (msg.info.height - y - 1) + x] = map_cell;
-  //   }
-  // }
-
-  // // Since loadMapFromFile() does not belong to any node, publishing in a system time.
-  // rclcpp::Clock clock(RCL_SYSTEM_TIME);
-  // msg.info.map_load_time = clock.now();
-  // msg.header.frame_id = "map";
-  // msg.header.stamp = clock.now();
-
-  // std::cout <<
-  //   "[DEBUG] [map_io]: Read map " << load_parameters.image_file_name << ": " << msg.info.width <<
-  //   " X " << msg.info.height << " map @ " << msg.info.resolution << " m/cell" << std::endl;
-
-  // map = msg;
+      int8_t map_cell;
+      switch (load_parameters.mode) {
+        case MapMode::Trinary:
+          if (load_parameters.occupied_thresh < occ) {
+            map_cell = nav2_util::OCC_GRID_OCCUPIED;
+          } else if (occ < load_parameters.free_thresh) {
+            map_cell = nav2_util::OCC_GRID_FREE;
+          } else {
+            map_cell = nav2_util::OCC_GRID_UNKNOWN;
+          }
+          break;
+        case MapMode::Scale:
+          if (pixel.alphaQuantum() != OpaqueOpacity) {
+            map_cell = nav2_util::OCC_GRID_UNKNOWN;
+          } else if (load_parameters.occupied_thresh < occ) {
+            map_cell = nav2_util::OCC_GRID_OCCUPIED;
+          } else if (occ < load_parameters.free_thresh) {
+            map_cell = nav2_util::OCC_GRID_FREE;
+          } else {
+            map_cell = std::rint(
+              (occ - load_parameters.free_thresh) /
+              (load_parameters.occupied_thresh - load_parameters.free_thresh) * 100.0);
+          }
+          break;
+        case MapMode::Raw: {
+            double occ_percent = std::round(shade * 255);
+            if (nav2_util::OCC_GRID_FREE <= occ_percent &&
+              occ_percent <= nav2_util::OCC_GRID_OCCUPIED)
+            {
+              map_cell = static_cast<int8_t>(occ_percent);
+            } else {
+              map_cell = nav2_util::OCC_GRID_UNKNOWN;
+            }
+            break;
+          }
+        default:
+          throw std::runtime_error("Invalid map mode");
+      }
+      data[size_x * (size_y - y - 1) + x] = map_cell;
+    }
+  }
 }
 
 LOAD_MAP_STATUS loadMapFromYaml(
-  const std::string & yaml_file)
+  const std::string & yaml_file,
+  unsigned int & size_x,
+  unsigned int & size_y,
+  double & resolution,
+  double & origin_x,
+  double & origin_y,
+  int8_t * & data)
 {
   if (yaml_file.empty()) {
     std::cerr << "[ERROR] [map_io]: YAML file name is empty, can't load!" << std::endl;
@@ -271,7 +264,7 @@ LOAD_MAP_STATUS loadMapFromYaml(
     return INVALID_MAP_METADATA;
   }
   try {
-    loadMapFromFile(load_parameters);
+    loadMapFromFile(load_parameters, size_x, size_y, resolution, origin_x, origin_y, data);
   } catch (std::exception & e) {
     std::cerr <<
       "[ERROR] [map_io]: Failed to load image file " << load_parameters.image_file_name <<

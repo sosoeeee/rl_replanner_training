@@ -21,11 +21,21 @@
 #include <vector>
 
 #include "map_mode.hpp"
+#include "yaml-cpp/yaml.h"
 
 /* Map input part */
 
 namespace nav2_map_server
 {
+
+template<typename T>
+T yaml_get_value(const YAML::Node & node, const std::string & key);
+
+std::string get_home_dir();
+
+std::string expand_user_home_dir_if_needed(
+  std::string yaml_filename,
+  std::string home_variable_value);
 
 struct LoadParameters
 {
@@ -60,7 +70,13 @@ LoadParameters loadMapYaml(const std::string & yaml_filename);
  * @throw std::exception
  */
 void loadMapFromFile(
-  const LoadParameters & load_parameters);
+  const LoadParameters & load_parameters,
+  unsigned int & size_x,
+  unsigned int & size_y,
+  double & resolution,
+  double & origin_x,
+  double & origin_y,
+  int8_t * & data);
 
 /**
  * @brief Load the map YAML, image from map file and
@@ -70,7 +86,13 @@ void loadMapFromFile(
  * @return status of map loaded
  */
 LOAD_MAP_STATUS loadMapFromYaml(
-  const std::string & yaml_file);
+  const std::string & yaml_file,
+  unsigned int & size_x,
+  unsigned int & size_y,
+  double & resolution,
+  double & origin_x,
+  double & origin_y,
+  int8_t * & data);
 
 
 /* Map output part */

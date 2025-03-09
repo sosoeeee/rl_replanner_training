@@ -42,9 +42,8 @@
 #include <vector>
 #include <mutex>
 
-#include "rclcpp/rclcpp.hpp"
-#include "nav2_costmap_2d/layer.hpp"
-#include "nav2_costmap_2d/layered_costmap.hpp"
+#include "map_loader/costmap_2d.hpp"
+#include "cost_values.hpp"
 
 namespace nav2_costmap_2d
 {
@@ -78,13 +77,13 @@ public:
  * @brief Layer to convolve costmap by robot's radius or footprint to prevent
  * collisions and largely simply collision checking
  */
-class InflationLayer : public Layer
+class InflationLayer
 {
 public:
   /**
     * @brief A constructor
     */
-  InflationLayer();
+  InflationLayer(Costmap2D * costmap, const std::string & yaml_filename);
 
   /**
     * @brief A destructor
@@ -94,53 +93,17 @@ public:
   /**
    * @brief Initialization process of layer on startup
    */
-  void onInitialize() override;
+  void onInitialize();
 
   /**
-   * @brief Update the bounds of the master costmap by this layer's update dimensions
-   * @param robot_x X pose of robot
-   * @param robot_y Y pose of robot
-   * @param robot_yaw Robot orientation
-   * @param min_x X min map coord of the window to update
-   * @param min_y Y min map coord of the window to update
-   * @param max_x X max map coord of the window to update
-   * @param max_y Y max map coord of the window to update
-   */
-  void updateBounds(
-    double robot_x, double robot_y, double robot_yaw, double * min_x,
-    double * min_y,
-    double * max_x,
-    double * max_y) override;
-  /**
    * @brief Update the costs in the master costmap in the window
-   * @param master_grid The master costmap grid to update
-   * @param min_x X min map coord of the window to update
-   * @param min_y Y min map coord of the window to update
-   * @param max_x X max map coord of the window to update
-   * @param max_y Y max map coord of the window to update
    */
-  void updateCosts(
-    nav2_costmap_2d::Costmap2D & master_grid,
-    int min_i, int min_j, int max_i, int max_j) override;
+  void updateCosts();
 
   /**
    * @brief Match the size of the master costmap
    */
-  void matchSize() override;
-
-  /**
-   * @brief If clearing operations should be processed on this layer or not
-   */
-  virtual bool isClearable() override {return false;}
-
-  /**
-   * @brief Reset this costmap
-   */
-  void reset() override
-  {
-    matchSize();
-    current_ = false;
-  }
+  void matchSize();
 
   /** @brief  Given a distance, compute a cost.
    * @param  distance The distance from an obstacle in cells
@@ -161,23 +124,7 @@ public:
     return cost;
   }
 
-  // Provide a typedef to ease future code maintenance
-  typedef std::recursive_mutex mutex_t;
-
-  /**
-   * @brief Get the mutex of the inflation inforamtion
-   */
-  mutex_t * getMutex()
-  {
-    return access_;
-  }
-
 protected:
-  /**
-   * @brief Process updates on footprint changes to the inflation layer
-   */
-  void onFootprintChanged() override;
-
   /**
    * @brief  Lookup pre-computed distances
    * @param mx The x coordinate of the current cell
@@ -227,7 +174,7 @@ protected:
    */
   unsigned int cellDistance(double world_dist)
   {
-    return layered_costmap_->getCostmap()->cellDistance(world_dist);
+    return costmap_->cellDistance(world_dist);
   }
 
   /**
@@ -237,12 +184,9 @@ protected:
     unsigned int index, unsigned int mx, unsigned int my,
     unsigned int src_x, unsigned int src_y);
 
-  /**
-   * @brief Callback executed when a parameter change is detected
-   * @param event ParameterEvent message
-   */
-  rcl_interfaces::msg::SetParametersResult
-  dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
+
+  Costmap2D * costmap_;
+  std::string yaml_filename_;
 
   double inflation_radius_, inscribed_radius_, cost_scaling_factor_;
   bool inflate_unknown_, inflate_around_unknown_;
@@ -258,13 +202,6 @@ protected:
   std::vector<double> cached_distances_;
   std::vector<std::vector<int>> distance_matrix_;
   unsigned int cache_length_;
-  double last_min_x_, last_min_y_, last_max_x_, last_max_y_;
-
-  // Indicates that the entire costmap should be reinflated next time around.
-  bool need_reinflation_;
-  mutex_t * access_;
-  // Dynamic parameters handler
-  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler_;
 };
 
 }  // namespace nav2_costmap_2d
