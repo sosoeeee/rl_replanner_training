@@ -11,11 +11,11 @@ find_package(GRAPHICSMAGICKCPP REQUIRED)
 set(map_library_name map_loader)
 
 add_library(${map_library_name} SHARED
-  src/map_mode.cpp
-  src/map_io.cpp
-  src/costmap_2d.cpp
-  src/static_layer.cpp
-  src/inflation_layer.cpp)
+  src/${map_library_name}/map_mode.cpp
+  src/${map_library_name}/map_io.cpp
+  src/${map_library_name}/costmap_2d.cpp
+  src/${map_library_name}/static_layer.cpp
+  src/${map_library_name}/inflation_layer.cpp)
 
 # include_directories / target_include_directories
 target_include_directories(${map_library_name} PUBLIC ./include)
