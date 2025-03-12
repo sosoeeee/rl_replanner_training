@@ -17,6 +17,13 @@ add_library(${map_library_name} SHARED
   src/${map_library_name}/static_layer.cpp
   src/${map_library_name}/inflation_layer.cpp)
 
+set(path_library_name path_planner)
+
+add_library(${path_library_name} SHARED
+  src/${path_library_name}/navfn.cpp
+  src/${path_library_name}/navfn_planner_with_cone.cpp
+  )
+
 # include_directories / target_include_directories
 target_include_directories(${map_library_name} PUBLIC ./include)
 target_include_directories(${map_library_name} SYSTEM PRIVATE
@@ -24,14 +31,19 @@ target_include_directories(${map_library_name} SYSTEM PRIVATE
 target_include_directories(${map_library_name} SYSTEM PRIVATE
   ${yaml_cpp_vendor_INCLUDE_DIRS})
 
+target_include_directories(${path_library_name} PUBLIC ./include)
+
 # Linking and Dependencies
 target_link_libraries(${map_library_name} 
   ${GRAPHICSMAGICKCPP_LIBRARIES})
 target_link_libraries(${map_library_name}
   ${yaml_cpp_vendor_LIBRARIES})
 
+target_link_libraries(${path_library_name} ${yaml_cpp_vendor_LIBRARIES})
+
 # install
 install(TARGETS ${map_library_name} DESTINATION lib)
+install(TARGETS ${path_library_name} DESTINATION lib)
 # install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 
 add_subdirectory(binding)

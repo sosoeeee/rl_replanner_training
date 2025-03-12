@@ -3,6 +3,8 @@
 #include "map_loader/static_layer.hpp"
 #include "map_loader/inflation_layer.hpp"
 
+#include "path_planner/navfn_planner_with_cone.hpp"
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <tuple>
@@ -13,6 +15,7 @@ namespace py = pybind11;
 
 using namespace nav2_map_server;
 using namespace nav2_costmap_2d;
+using namespace nav2_navfn_planner_with_cone;
 
 std::tuple<LOAD_MAP_STATUS, Costmap2D>
 loadMap(const std::string &yaml_file) {
@@ -59,7 +62,23 @@ PYBIND11_MODULE(cpp_utils, m) {
         .def_property("origin_x", &Costmap2D::getOriginX, nullptr)
         .def_property("origin_y", &Costmap2D::getOriginY, nullptr)
         .def_property("data", &Costmap2D::getCharMapToPy, nullptr)
-        .def("getCost", static_cast<unsigned char (Costmap2D::*)(unsigned int, unsigned int) const>(&Costmap2D::getCost), "Get the cost of a cell in the costmap", py::arg("mx"), py::arg("my"));
+        .def("getCost", static_cast<unsigned char (Costmap2D::*)(unsigned int, unsigned int) const>(&Costmap2D::getCost), "Get the cost of a cell in the costmap", py::arg("mx"), py::arg("my"))
+        .def("getCostByIndex", static_cast<unsigned char (Costmap2D::*)(unsigned int) const>(&Costmap2D::getCost), "Get the cost of a cell in the costmap by index", py::arg("index"));
+    
+    // Bind the point data structure
+    py::class_<Point>(m, "Point")
+        .def(py::init<float, float>())
+        .def_readwrite("x", &Point::x)
+        .def_readwrite("y", &Point::y);
+
+    py::class_<NavfnPlannerWithCone, std::shared_ptr<NavfnPlannerWithCone>>(m, "PathPlanner")
+        .def(py::init())
+        .def("configure", &NavfnPlannerWithCone::configure, 
+            "Configure the path planner based on the yaml file", py::arg("costmap"), py::arg("yaml_filename"))
+        .def("plan", &NavfnPlannerWithCone::createPlan, 
+            "Create a plan from start and goal poses", py::arg("start"), py::arg("goal"))
+        .def("loadCone", &NavfnPlannerWithCone::loadCone, 
+            "Load the cone into the map", py::arg("is_enabled"), py::arg("cone_center"), py::arg("current_pos"), py::arg("radius"));
 
     // Bind the loadMap function
     m.def("loadMap", &loadMap, "Load map from YAML into OccupancyGrid", py::arg("yaml_file"));
