@@ -51,7 +51,7 @@ public:
     const Point & start,
     const Point & goal);
 
-  void loadCone(bool is_enabled = true, std::vector<float> center, std::vector<float> current_pos, float radius);
+  void loadCone(std::vector<float> center, std::vector<float> current_pos, float radius, bool is_enabled = true);
 
 protected:
   /**
@@ -169,7 +169,7 @@ protected:
   float inflated_distance_;
   double resolution_{0};
 
-  std::unique_ptr<nav2_costmap_2d::Costmap2D> costmap_with_cone_; // a copy
+  std::unique_ptr<nav2_costmap_2d::Costmap2D> costmap_for_plan_; // a copy
 
   void loadConeToMap(float robot_x, float robot_y);
   void setEdgeCost(float wx0, float wy0, float wx1, float wy1, unsigned char cost_value);

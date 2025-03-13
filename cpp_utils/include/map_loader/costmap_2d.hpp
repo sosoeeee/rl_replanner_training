@@ -47,6 +47,7 @@
 #include <vector>
 #include <queue>
 #include <mutex>
+#include <memory>
 
 namespace nav2_costmap_2d
 {
@@ -350,6 +351,17 @@ public:
   {
     return access_;
   }
+
+  /**
+   * @brief  Get a partial costmap at the desired location with desired size
+   * @param  wx The x coordinate of the center of the partial map
+   * @param  wy The y coordinate of the center of the partial map
+   * @param  wx_size The x size of the partial map
+   * @param  wy_size The y size of the partial map
+   * @return A pointer to the partial map
+   */
+  std::shared_ptr<Costmap2D> getPartialCostmap(
+    double wx, double wy, double wx_size, double wy_size);
 
 protected:
   /**

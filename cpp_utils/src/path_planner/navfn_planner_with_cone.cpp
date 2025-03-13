@@ -116,49 +116,36 @@ NavfnPlannerWithCone::makePlan(
   double wx = start.x;
   double wy = start.y;
 
+  // copy the costmap to costmap_for_plan_
+  costmap_for_plan_ = std::make_unique<nav2_costmap_2d::Costmap2D>(
+      costmap_->getSizeInCellsX(),
+      costmap_->getSizeInCellsY(),
+      costmap_->getResolution(),
+      costmap_->getOriginX(),
+      costmap_->getOriginY()
+    );
+
+  if (!costmap_for_plan_->copyWindow(*costmap_, 0, 0, costmap_->getSizeInCellsX(), costmap_->getSizeInCellsY(), 0, 0)){
+    std::cout << "[Path Planner] Fail to copy costmap!" << std::endl;
+  }
+
   try {
     if (enabled_){
       enabled_ = false;
-      // initialize
-      costmap_with_cone_ = std::make_unique<nav2_costmap_2d::Costmap2D>(
-        costmap_->getSizeInCellsX(),
-        costmap_->getSizeInCellsY(),
-        costmap_->getResolution(),
-        costmap_->getOriginX(),
-        costmap_->getOriginY()
-      );
-
-      // copy costmap
-      if (costmap_with_cone_->copyWindow(*costmap_, 0, 0, costmap_->getSizeInCellsX(), costmap_->getSizeInCellsY(), 0, 0)){
-        loadConeToMap(cur_pos_[0], cur_pos_[1]);
-        cur_pos_.clear();
-      }
-      else{
-        std::cout << "[Path Planner] Fail to copy costmap!" << std::endl;
+      loadConeToMap(cur_pos_[0], cur_pos_[1]);
+      cur_pos_.clear();
       }
 
       // make sure to resize the underlying array that Navfn uses
       planner_->setNavArr(
-        costmap_with_cone_->getSizeInCellsX(),
-        costmap_with_cone_->getSizeInCellsY());
+        costmap_for_plan_->getSizeInCellsX(),
+        costmap_for_plan_->getSizeInCellsY());
 
-      planner_->setCostmap(costmap_with_cone_->getCharMap(), true, allow_unknown_); 
+      planner_->setCostmap(costmap_for_plan_->getCharMap(), true, allow_unknown_); 
 
-      // RCLCPP_INFO(logger_, "costmap_with_cone_ address is %p", static_cast<void*>(costmap_with_cone_.get()));
+      // RCLCPP_INFO(logger_, "costmap_for_plan_ address is %p", static_cast<void*>(costmap_for_plan_.get()));
       // RCLCPP_INFO(logger_, "costmap_ address is %p", (void *)costmap_);
-      // RCLCPP_INFO(logger_, "[After copying] current map size_x: %d, size_y %d", costmap_with_cone_->getSizeInCellsX(), costmap_with_cone_->getSizeInCellsY());
-    }
-    else{
-      // use normal planner
-      // make sure to resize the underlying array that Navfn uses
-      planner_->setNavArr(
-        costmap_->getSizeInCellsX(),
-        costmap_->getSizeInCellsY());
-
-      planner_->setCostmap(costmap_->getCharMap(), true, allow_unknown_);
-
-      // RCLCPP_INFO(logger_, "current map size_x: %d, size_y %d", costmap_->getSizeInCellsX(), costmap_->getSizeInCellsY());
-    }
+      // RCLCPP_INFO(logger_, "[After copying] current map size_x: %d, size_y %d", costmap_for_plan_->getSizeInCellsX(), costmap_for_plan_->getSizeInCellsY());
   } catch (const std::exception & e) {
     std::cout << "[Path Planner] Caught exception: " << e.what() << std::endl;
     throw;
@@ -399,11 +386,11 @@ NavfnPlannerWithCone::clearRobotCell(unsigned int mx, unsigned int my)
 {
   // TODO(orduno): check usage of this function, might instead be a request to
   //               world_model / map server
-  costmap_->setCost(mx, my, nav2_costmap_2d::FREE_SPACE);
+  costmap_for_plan_->setCost(mx, my, nav2_costmap_2d::FREE_SPACE);
 }
 
 void
-NavfnPlannerWithCone::loadCone(bool is_enabled, std::vector<float> center, std::vector<float> current_pos, float radius)
+NavfnPlannerWithCone::loadCone(std::vector<float> center, std::vector<float> current_pos, float radius, bool is_enabled)
 {
   enabled_ = is_enabled;
   if (!enabled_) {
@@ -489,9 +476,9 @@ NavfnPlannerWithCone::setEdgeCost(
 
   while (distance <= module)
   {
-    is_valid = costmap_with_cone_->worldToMap(wx0 + distance * direction_vector[0], wy0 + distance * direction_vector[1], mx, my);
+    is_valid = costmap_->worldToMap(wx0 + distance * direction_vector[0], wy0 + distance * direction_vector[1], mx, my);
     if (is_valid){
-      costmap_with_cone_->setCost(mx, my, cost_value);
+      costmap_for_plan_->setCost(mx, my, cost_value);
     }
     else
     {

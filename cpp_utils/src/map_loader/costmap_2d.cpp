@@ -41,8 +41,10 @@
 #include <cstdio>
 #include <string>
 #include <vector>
+#include <iostream>
 #include "map_loader/cost_values.hpp"
 #include "map_loader/occ_grid_values.hpp"
+
 
 namespace nav2_costmap_2d
 {
@@ -501,6 +503,36 @@ bool Costmap2D::saveMap(std::string file_name)
   }
   fclose(fp);
   return true;
+}
+
+std::shared_ptr<Costmap2D> Costmap2D::getPartialCostmap(
+  double wx, double wy, double wx_size, double wy_size)
+{
+  unsigned int mx, my;
+  if (!worldToMap(wx, wy, mx, my))
+  {
+    std::cout << "Request for a costmap at " << wx << ", " << wy << " is off the map.\n";
+    return NULL;
+  }
+
+  unsigned int size_x = cellDistance(wx_size);
+  unsigned int size_y = cellDistance(wy_size);
+  unsigned int start_x = mx - size_x / 2;
+  unsigned int start_y = my - size_y / 2;
+
+  std::shared_ptr<Costmap2D> partial_map = std::make_shared<Costmap2D>(size_x, size_y, resolution_, 
+                                  origin_x_ + start_x * resolution_,
+                                  origin_y_ + start_y * resolution_);
+
+  for (unsigned int x = 0; x < size_x; ++x) {
+    for (unsigned int y = 0; y < size_y; ++y) {
+      unsigned int cell_x = start_x + x;
+      unsigned int cell_y = start_y + y;
+      partial_map->setCost(x, y, getCost(cell_x, cell_y));
+    }
+  }
+
+  return partial_map;
 }
 
 }  // namespace nav2_costmap_2d
