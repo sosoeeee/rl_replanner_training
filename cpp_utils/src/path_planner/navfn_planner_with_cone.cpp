@@ -117,6 +117,7 @@ NavfnPlannerWithCone::makePlan(
   double wy = start.y;
 
   // copy the costmap to costmap_for_plan_
+  // TODO: update the old simulation env
   costmap_for_plan_ = std::make_unique<nav2_costmap_2d::Costmap2D>(
       costmap_->getSizeInCellsX(),
       costmap_->getSizeInCellsY(),
@@ -491,5 +492,10 @@ NavfnPlannerWithCone::setEdgeCost(
     std::cout << "[Path Planner] The edge of cone is out of range." << std::endl;
   }
 } 
+
+float NavfnPlannerWithCone::getInflatedDistance()
+{
+  return inflated_distance_;
+}
 
 }  // namespace nav2_navfn_planner_with_cone

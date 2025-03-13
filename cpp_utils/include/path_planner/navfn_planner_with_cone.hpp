@@ -53,6 +53,8 @@ public:
 
   void loadCone(std::vector<float> center, std::vector<float> current_pos, float radius, bool is_enabled = true);
 
+  float getInflatedDistance();
+
 protected:
   /**
    * @brief Compute a plan given start and goal poses, provided in global world frame.
@@ -161,8 +163,6 @@ protected:
   // ======================================================================================== //
   // Cone related parameters
   bool enabled_;
-  std::string cone_frame_;  // frame that map is located in
-  unsigned int dimension_; // Dimension of the cone
   std::vector<float> center_; // Center of the cone
   std::vector<float> cur_pos_; // cur_pos of the robot (get from predictor server)
   float radius_; // Radius of the cone
@@ -173,7 +173,6 @@ protected:
 
   void loadConeToMap(float robot_x, float robot_y);
   void setEdgeCost(float wx0, float wy0, float wx1, float wy1, unsigned char cost_value);
-
 };
 
 }  // namespace nav2_navfn_planner_with_cone

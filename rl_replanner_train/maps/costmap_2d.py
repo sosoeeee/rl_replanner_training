@@ -1,4 +1,6 @@
+import copy
 import numpy as np
+import math
 
 from nav_msgs.msg import OccupancyGrid
 
@@ -29,6 +31,20 @@ class PyCostmap2D:
         self.cost_translation_table.append(-1)
 
         self.node = node
+
+    def __deepcopy__(self, memo):
+        # Create a new instance of PyCostmap2D
+        new_copy = PyCostmap2D(self.node)
+        # Copy all attributes except those that cannot be deep copied
+        new_copy.size_x = self.size_x
+        new_copy.size_y = self.size_y
+        new_copy.resolution = self.resolution
+        new_copy.origin_x = self.origin_x
+        new_copy.origin_y = self.origin_y
+        new_copy.global_frame_id = self.global_frame_id
+        new_copy.costmap_timestamp = self.costmap_timestamp
+        new_copy.costmap = copy.deepcopy(self.costmap, memo)
+        return new_copy
     
     def getOccupancyGrid(self):
         """
@@ -185,7 +201,7 @@ class PyCostmap2D:
         wy = self.origin_y + (my + 0.5) * self.resolution
         return (wx, wy)
 
-    def worldToMap(self, wx: float, wy: float) -> tuple[int, int]:
+    def worldToMap(self, wx: float, wy: float) -> tuple[int, int, bool]:
         """
         Get the map coordinate XY using world coordinate XY.
 
@@ -203,11 +219,13 @@ class PyCostmap2D:
         """
         mx = int((wx - self.origin_x) // self.resolution)
         my = int((wy - self.origin_y) // self.resolution)
-
+        
+        is_valid = True
         if mx < 0 or mx >= self.size_x or my < 0 or my >= self.size_y:
-            raise ValueError("[PyCostmap]: The world coordinate is out of the costmap range")
+            # raise ValueError("[PyCostmap]: The world coordinate is out of the costmap range")
+            is_valid = False
 
-        return (mx, my)
+        return (mx, my, is_valid)
 
     def getIndex(self, mx: int, my: int) -> int:
         """
@@ -224,49 +242,94 @@ class PyCostmap2D:
 
         """
         return my * self.size_x + mx
-
-    def getPartialCostmap(self, wx: float, wy: float, w_size_x: float, w_size_y: float) -> np.array:
+    
+    def set_edge_cost(self, wx0: float, wy0: float, wx1: float, wy1: float, cost_value: int):
         """
-        Get the partial costmap using world coordinate XY and size.
+        Set the cost of the edge in the costmap.
 
         Args
         ----
-            the center of the partial costmap is (wx, wy)
-            wx (float) [m]: world coordinate X
-            wy (float) [m]: world coordinate Y
-            w_size_x (float) [m]: width of the partial costmap
-            w_size_y (float) [m]: height of the partial costmap
-
-        Returns
-        -------
-            nav_msgs.msg.OccupancyGrid: The partial costmap
+            wx0 (float): World coordinate x0
+            wy0 (float): World coordinate y0
+            wx1 (float): World coordinate x1
+            wy1 (float): World coordinate y1
+            cost_value (int): Cost value to set
 
         """
-        mx, my = self.worldToMap(wx, wy)
-        m_size_x = int(w_size_x / self.resolution)
-        m_size_y = int(w_size_y / self.resolution)
-        start_x = mx - m_size_x // 2
-        start_y = my - m_size_y // 2
-        
-        # Get the starting index of the partial costmap
-        partial_costmap = np.array([self.getCostIdx(self.getIndex(start_x + i, start_y + j)) for j in range(m_size_y) for i in range(m_size_x)])
+        direction_vector = [(wx1 - wx0) / math.sqrt((wx1 - wx0) ** 2 + (wy1 - wy0) ** 2),
+                            (wy1 - wy0) / math.sqrt((wx1 - wx0) ** 2 + (wy1 - wy0) ** 2)]
+        distance = 0
+        module = math.sqrt((wx1 - wx0) ** 2 + (wy1 - wy0) ** 2)
+        warn_flag = False
 
-        partial_costmap_msg = OccupancyGrid()
-        partial_costmap_msg.header.frame_id = self.global_frame_id
-        partial_costmap_msg.header.stamp = self.node.get_clock().now().to_msg()
-        partial_costmap_msg.info.width = m_size_x
-        partial_costmap_msg.info.height = m_size_y
-        partial_costmap_msg.info.resolution = self.resolution
-        partial_costmap_msg.info.origin.position.x = self.origin_x + start_x * self.resolution
-        partial_costmap_msg.info.origin.position.y = self.origin_y + start_y * self.resolution
-        partial_costmap_msg.info.origin.position.z = 0.0
-        partial_costmap_msg.info.origin.orientation.x = 0.0
-        partial_costmap_msg.info.origin.orientation.y = 0.0
-        partial_costmap_msg.info.origin.orientation.z = 0.0
-        partial_costmap_msg.info.origin.orientation.w = 1.0
-        partial_costmap_msg.data = [0] * m_size_x * m_size_y
+        while distance <= module:
+            mx, my, is_valid = self.worldToMap(wx0 + distance * direction_vector[0],
+                                        wy0 + distance * direction_vector[1])
+            if is_valid:
+                self.setCost(mx, my, cost_value)
+            else:
+                warn_flag = True
+                
+            distance += self.resolution
 
-        for i in range(m_size_x * m_size_y):
-            partial_costmap_msg.data[i] = self.cost_translation_table[partial_costmap[i]]
+        if warn_flag:
+            print("[Path Planner] The edge of cone is out of range.")
 
-        return partial_costmap_msg
+    def load_cone_to_map(self, cur_x: float, cur_y: float, cone_center: list[float], radius: float, inflated_distance: float):
+        """
+        Inflate the cone and set the cost in the costmap.
+
+        Args
+        ----
+            cur_x (float): Robot's x position
+            cur_y (float): Robot's y position
+            cone_center (list[float]): Center of the cone
+            radius (float): Radius of the cone
+            inflated_distance (float): Distance to inflate the cone
+
+        """
+        # 创建 base_map 的深拷贝
+        map_with_cone = copy.deepcopy(self)
+
+        # Inflate the cone to make sure the goal is not in the cone edge
+        height = math.sqrt((cone_center[0] - cur_x) ** 2 + (cone_center[1] - cur_y) ** 2)
+        height_dirc = [(cone_center[0] - cur_x) / height, (cone_center[1] - cur_y) / height]
+        inflated_center = [cone_center[0] + height_dirc[0] * inflated_distance,
+                           cone_center[1] + height_dirc[1] * inflated_distance]
+
+        # The bottom edge of the cone after inflation
+        phi = math.atan(height / radius)
+        inflated_radius = radius + inflated_distance / math.tan(phi / 2)
+        # Calculate the bottom vertex of the cone
+        inflated_vertices = []
+        for i in range(2):
+            vertex = {
+                'x': inflated_center[0] + inflated_radius * height_dirc[1] * math.cos(i * math.pi),
+                'y': inflated_center[1] - inflated_radius * height_dirc[0] * math.cos(i * math.pi)
+            }
+            inflated_vertices.append(vertex)
+
+        # The upper vertex of the cone after inflation
+        inflated_robot_x = cur_x - height_dirc[0] * inflated_distance
+        inflated_robot_y = cur_y - height_dirc[1] * inflated_distance
+        inflated_robot_vertices = []
+        for i in range(2):
+            vertex = {
+                'x': inflated_robot_x + inflated_distance * math.tan(phi / 2) * height_dirc[1] * math.cos(i * math.pi),
+                'y': inflated_robot_y - inflated_distance * math.tan(phi / 2) * height_dirc[0] * math.cos(i * math.pi)
+            }
+            inflated_robot_vertices.append(vertex)
+
+        # Base edge
+        map_with_cone.set_edge_cost(inflated_vertices[0]['x'], inflated_vertices[0]['y'],
+                                    inflated_vertices[1]['x'], inflated_vertices[1]['y'], 254)
+        # Side edges
+        map_with_cone.set_edge_cost(inflated_vertices[0]['x'], inflated_vertices[0]['y'],
+                                    inflated_robot_vertices[0]['x'], inflated_robot_vertices[0]['y'], 254)
+        map_with_cone.set_edge_cost(inflated_vertices[1]['x'], inflated_vertices[1]['y'],
+                                    inflated_robot_vertices[1]['x'], inflated_robot_vertices[1]['y'], 254)
+        # Top edge
+        map_with_cone.set_edge_cost(inflated_robot_vertices[0]['x'], inflated_robot_vertices[0]['y'],
+                                    inflated_robot_vertices[1]['x'], inflated_robot_vertices[1]['y'], 254)
+
+        return map_with_cone
