@@ -1,6 +1,6 @@
 import cpp_utils
 import rclpy
-from maps.costmap_2d import PyCostmap2D
+from rl_replanner_train.render.costmap_2d import PyCostmap2D
 
 from nav_msgs.msg import OccupancyGrid
 from nav_msgs.msg import Path

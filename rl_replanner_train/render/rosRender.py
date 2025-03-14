@@ -2,7 +2,7 @@ import math
 import threading
 
 import cpp_utils
-from rl_replanner_train.maps.costmap_2d import PyCostmap2D
+from rl_replanner_train.render.costmap_2d import PyCostmap2D
 # ros2 dependencies
 import rclpy
 
