@@ -41,7 +41,8 @@ class SimulationWorld(gym.Env):
             decision_interval=1
         ):
         
-        self.render_mode = render_mode
+        assert render_mode is None or render_mode in self.metadata["render_modes"], "Invalid render mode."
+        self.render_mode = 'none' if render_mode is None else render_mode
 
         # define observation space
         self.window_width_pixel = int(obser_width / map_resolution)            # TODO: training env can get the map resolution from the map setting file
@@ -290,14 +291,14 @@ class SimulationWorld(gym.Env):
         self.current_robot_path = [[pose.x, pose.y] for pose in self.current_robot_path]
 
         # debug
-        print("robot path length: ", len(self.current_robot_path))
+        # print("robot path length: ", len(self.current_robot_path))
 
         # extend the robot path to include historical human path
         if len(self.human_path_buffer) == self.history_length:
             self.current_robot_path = self.human_path_buffer + self.current_robot_path
             
             # debug
-            print("robot path length after extension: ", len(self.current_robot_path))
+            # print("robot path length after extension: ", len(self.current_robot_path))
 
         self.current_index = self.history_length
 
