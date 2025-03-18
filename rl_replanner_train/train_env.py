@@ -38,11 +38,13 @@ class SimulationWorld(gym.Env):
             map_resolution=0.05, 
             history_length=20, 
             replay_traj_path=None,
-            decision_interval=1
+            decision_interval=1,
+            render_real_time_factor=1.0
         ):
         
         assert render_mode is None or render_mode in self.metadata["render_modes"], "Invalid render mode."
         self.render_mode = 'none' if render_mode is None else render_mode
+        self.render_real_time_factor = render_real_time_factor
 
         # define observation space
         self.window_width_pixel = int(obser_width / map_resolution)            # TODO: training env can get the map resolution from the map setting file
@@ -193,6 +195,10 @@ class SimulationWorld(gym.Env):
     def step(self, raw_action: Dict[str, Union[int, np.ndarray]]):
         self.current_action = self.action_converter.convert(raw_action)
 
+        # debug
+        if self.render_mode == "ros":
+            print("current action: ", self.current_action)
+
         terminated = False
         # apply action
         # direction vector is average velocity calculated from past trajectory
@@ -291,7 +297,8 @@ class SimulationWorld(gym.Env):
         self.current_robot_path = [[pose.x, pose.y] for pose in self.current_robot_path]
 
         # debug
-        # print("robot path length: ", len(self.current_robot_path))
+        if self.render_mode == "ros":
+            print("robot path length: ", len(self.current_robot_path))
 
         # extend the robot path to include historical human path
         if len(self.human_path_buffer) == self.history_length:
@@ -319,7 +326,6 @@ class SimulationWorld(gym.Env):
                 self.human_path_buffer.append([x, y])
         
         return False
-
 
     def _get_robot_path(self):
         k = 5   # include the boundary
@@ -471,7 +477,7 @@ class SimulationWorld(gym.Env):
                 # bilateral
                 pred_position = self._avoidObstacles(vertices[0], vertices[1], {'x':inter_x, 'y':inter_y})
         except Exception as e:
-            print('[Predictor] Fail to get the predicted goal: %s' % str(e))
+            # print('[Predictor] Fail to get the predicted goal: %s' % str(e))
             return False
         
         if pred_position is None:
@@ -515,7 +521,7 @@ class SimulationWorld(gym.Env):
             while self._isCollided(p_):
                 distance += self.map_resolution
                 if distance > module:
-                    print('[Predictor] The lien segment is in the obstacles')
+                    # print('[Predictor] The lien segment is in the obstacles')
                     return None
                 else:
                     p_ = [target['x'] + distance * dir_x, target['y'] + distance * dir_y]
@@ -528,7 +534,7 @@ class SimulationWorld(gym.Env):
             while self._isCollided(p_):
                 distance += self.map_resolution
                 if distance > module:
-                    print('[Predictor] The lien segment is in the obstacles')
+                    # print('[Predictor] The lien segment is in the obstacles')
                     return None
                 else:
                     p_ = [target['x'] + distance * dir_x, target['y'] + distance * dir_y]
@@ -548,7 +554,7 @@ class SimulationWorld(gym.Env):
                     return p_1
                 distance += self.map_resolution
                 if distance > module_0 and distance > module_1:
-                    print('[Predictor] The lien segment is in the obstacles')
+                    # print('[Predictor] The lien segment is in the obstacles')
                     return None
                 elif distance > module_0 and distance <= module_1:
                     p_1 = [target['x'] - distance * dir_x, target['y'] - distance * dir_y]
@@ -574,13 +580,25 @@ class SimulationWorld(gym.Env):
         # regularization reward
         # radius / depth
         if self.current_action[0] == LOCAL_GOAL:
-            angle_reg_reward = -np.arctan(self.current_action[1][1] / self.current_action[1][0]) / (np.pi / 2) * self.reward_weight['reg_angle']
+            if "reg_angle" in self.reward_weight.keys():
+                angle_reg_reward = -np.arctan(self.current_action[1][1] / self.current_action[1][0]) / (np.pi / 2) * self.reward_weight['reg_angle']
+            # change to the ln scale
+            elif "reg_angle_factor" in self.reward_weight.keys():
+                norm_angle = np.arctan(self.current_action[1][1] / self.current_action[1][0]) / (np.pi / 2)
+                print("norm_angle: ", norm_angle)
+                angle_reg_reward = 1 / self.reward_weight['reg_angle_factor'] * np.log(1 - norm_angle) 
         else:
             angle_reg_reward = 0.0
 
         # depth
         if self.current_action[0] == LOCAL_GOAL and self.current_action[1][0] < self.len_threshold:
-            depth_reg_reward = (self.current_action[1][0] - self.len_threshold) / self.len_threshold * self.reward_weight['reg_depth']
+            if "reg_depth" in self.reward_weight.keys():
+                depth_reg_reward = (self.current_action[1][0] - self.len_threshold) / self.len_threshold * self.reward_weight['reg_depth']
+            # change to the ln scale
+            elif "reg_depth_factor" in self.reward_weight.keys():
+                norm_depth = self.current_action[1][0] / self.len_threshold
+                print("norm_depth: ", norm_depth)
+                depth_reg_reward = 1 / self.reward_weight['reg_depth_factor'] * np.log(norm_depth)
         else:
             depth_reg_reward = 0.0
         
@@ -594,10 +612,11 @@ class SimulationWorld(gym.Env):
         
         # debug
         # print("============== reward terms ==============")
-        # print("task_reward: ", task_reward)
-        # print("angle_reg_reward: ", angle_reg_reward)
-        # print("depth_reg_reward: ", depth_reg_reward)
-        # print("replan_reward: ", replan_reward)
+        if self.render_mode == "ros":
+            print("task_reward: ", task_reward)
+            print("angle_reg_reward: ", angle_reg_reward)
+            print("depth_reg_reward: ", depth_reg_reward)
+            print("replan_reward: ", replan_reward)
 
         return self.reward
 
@@ -624,7 +643,7 @@ class SimulationWorld(gym.Env):
             self.render_ros.pub_robot_path(self.current_robot_path)
 
             # sleep this thread to make the simulation real-time
-            time.sleep(self.decision_interval)
+            time.sleep(self.decision_interval / self.render_real_time_factor)
             
 
 

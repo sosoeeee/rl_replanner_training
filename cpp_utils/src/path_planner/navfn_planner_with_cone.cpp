@@ -75,7 +75,7 @@ std::vector<Point> NavfnPlannerWithCone::createPlan(
     unsigned int mx, my;
     costmap_->worldToMap(start.x, start.y, mx, my);
     if (costmap_->getCost(mx, my) == nav2_costmap_2d::LETHAL_OBSTACLE) {
-      std::cout << "[Path Planner] Failed to create a unique pose path because of obstacles" << std::endl;
+      // std::cout << "[Path Planner] Failed to create a unique pose path because of obstacles" << std::endl;
       return path;
     }
     Point pose;
@@ -86,7 +86,7 @@ std::vector<Point> NavfnPlannerWithCone::createPlan(
   }
 
   if (!makePlan(start, goal, tolerance_, path)) {
-    std::cout << "[Path Planner] Failed to create a plan with tolerance " << tolerance_ << std::endl;
+    // std::cout << "[Path Planner] Failed to create a plan with tolerance " << tolerance_ << std::endl;
   }
 
   return path;
@@ -127,7 +127,7 @@ NavfnPlannerWithCone::makePlan(
     );
 
   if (!costmap_for_plan_->copyWindow(*costmap_, 0, 0, costmap_->getSizeInCellsX(), costmap_->getSizeInCellsY(), 0, 0)){
-    std::cout << "[Path Planner] Fail to copy costmap!" << std::endl;
+    // std::cout << "[Path Planner] Fail to copy costmap!" << std::endl;
   }
 
   try {
@@ -148,13 +148,13 @@ NavfnPlannerWithCone::makePlan(
       // RCLCPP_INFO(logger_, "costmap_ address is %p", (void *)costmap_);
       // RCLCPP_INFO(logger_, "[After copying] current map size_x: %d, size_y %d", costmap_for_plan_->getSizeInCellsX(), costmap_for_plan_->getSizeInCellsY());
   } catch (const std::exception & e) {
-    std::cout << "[Path Planner] Caught exception: " << e.what() << std::endl;
+    // std::cout << "[Path Planner] Caught exception: " << e.what() << std::endl;
     throw;
   }
 
   unsigned int mx, my;
   if (!worldToMap(wx, wy, mx, my)) {
-    std::cout << "[Path Planner] Cannot create a plan: the robot's start position is off the global costmap. Planning will always fail, are you sure the robot has been properly localized?" << std::endl;
+    // std::cout << "[Path Planner] Cannot create a plan: the robot's start position is off the global costmap. Planning will always fail, are you sure the robot has been properly localized?" << std::endl;
     return false;
   }
 
@@ -169,7 +169,7 @@ NavfnPlannerWithCone::makePlan(
   wy = goal.y;
 
   if (!worldToMap(wx, wy, mx, my)) {
-    std::cout << "[Path Planner] Cannot create a plan: the goal is off the global costmap. Planning will always fail." << std::endl;
+    // std::cout << "[Path Planner] Cannot create a plan: the goal is off the global costmap. Planning will always fail." << std::endl;
     return false;
   }
 
@@ -252,10 +252,10 @@ NavfnPlannerWithCone::makePlan(
       // }
       // ==============================================================================
     } else {
-      std::cout << "[Path Planner] Failed to create a plan from potential when a legal potential was found. This shouldn't happen." << std::endl;
+      // std::cout << "[Path Planner] Failed to create a plan from potential when a legal potential was found. This shouldn't happen." << std::endl;
     }
   } else {
-    std::cout << "[Path Planner] Failed to find a legal plan from potential." << std::endl;
+    // std::cout << "[Path Planner] Failed to find a legal plan from potential." << std::endl;
   }
 
   return !plan.empty();
@@ -299,7 +299,7 @@ NavfnPlannerWithCone::getPlanFromPotential(
   // the potential has already been computed, so we won't update our copy of the costmap
   unsigned int mx, my;
   if (!worldToMap(wx, wy, mx, my)) {
-    std::cout << "[Path Planner] The goal sent to the navfn planner is off the global costmap. Planning will always fail to this goal." << std::endl;
+    // std::cout << "[Path Planner] The goal sent to the navfn planner is off the global costmap. Planning will always fail to this goal." << std::endl;
     return false;
   }
 
@@ -370,7 +370,7 @@ NavfnPlannerWithCone::worldToMap(double wx, double wy, unsigned int & mx, unsign
     return true;
   }
 
-  std::cout << "[Path Planner] worldToMap failed: mx,my: " << mx << "," << my << ", size_x,size_y: " << costmap_->getSizeInCellsX() << "," << costmap_->getSizeInCellsY() << std::endl;
+  // std::cout << "[Path Planner] worldToMap failed: mx,my: " << mx << "," << my << ", size_x,size_y: " << costmap_->getSizeInCellsX() << "," << costmap_->getSizeInCellsY() << std::endl;
 
   return false;
 }
@@ -489,7 +489,7 @@ NavfnPlannerWithCone::setEdgeCost(
   }
 
   if (warn_flag){
-    std::cout << "[Path Planner] The edge of cone is out of range." << std::endl;
+    // std::cout << "[Path Planner] The edge of cone is out of range." << std::endl;
   }
 } 
 

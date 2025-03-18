@@ -273,7 +273,8 @@ class PyCostmap2D:
             distance += self.resolution
 
         if warn_flag:
-            print("[Path Planner] The edge of cone is out of range.")
+            pass
+            # print("[Path Planner] The edge of cone is out of range.")
 
     def load_cone_to_map(self, cur_x: float, cur_y: float, cone_center: list[float], radius: float, inflated_distance: float):
         """
