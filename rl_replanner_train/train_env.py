@@ -36,7 +36,9 @@ class SimulationWorld(gym.Env):
             render_mode=None, 
             obser_width=5, 
             map_resolution=0.05, 
-            history_length=20, 
+            human_history_length=20,
+            robot_prediction_length=150,
+            speed_buffer_length=4,
             replay_traj_path=None,
             decision_interval=1,
             render_real_time_factor=1.0
@@ -49,13 +51,15 @@ class SimulationWorld(gym.Env):
         # define observation space
         self.window_width_pixel = int(obser_width / map_resolution)            # TODO: training env can get the map resolution from the map setting file
         self.obser_width = obser_width
-        self.history_length = history_length
+        self.human_history_length = human_history_length
+        self.robot_prediction_length = robot_prediction_length
+        self.speed_buffer_length = speed_buffer_length
         self.observation_space = spaces.Dict(
             {
                 "partial_map": spaces.Box(0, 255, (1, self.window_width_pixel, self.window_width_pixel), np.uint8),
                 "d_goal": spaces.Box(-0.5, 0.5, (2,), np.float32),
-                "human_path": spaces.Box(-0.5, 0.5, (2 * history_length,), np.float32),
-                "robot_path": spaces.Box(-0.5, 0.5, (2 * history_length,), np.float32),
+                "human_path": spaces.Box(-0.5, 0.5, (2 * human_history_length,), np.float32),
+                "robot_path": spaces.Box(-0.5, 0.5, (2 * self.robot_prediction_length,), np.float32),
                 "last_action": spaces.Discrete(3),
             }
         )
@@ -78,8 +82,6 @@ class SimulationWorld(gym.Env):
         # define reward
         self.reward_weight = reward_weight
         self.decay_factor = self.reward_weight['decay_factor'] # task reward decay factor
-        self.decay_weight = [self.decay_factor ** i for i in reversed(range(self.history_length))] 
-        self.decay_weight = np.array(self.decay_weight) * (1 - self.decay_factor) / (1 - self.decay_factor ** (self.history_length))
         self.exp_factor = self.reward_weight['exp_factor']     # when error is 0.5 (which is half length of edge of partial square map), the approximate reward is 0.3
         self.len_threshold = 1/4  # half length of the partial square map
         self.reward = 0.0
@@ -88,18 +90,20 @@ class SimulationWorld(gym.Env):
         # define simulation world parameters
         self.time = 0
         self.decision_interval = decision_interval                       # seconds
-        self.speed_buffer_length = int(self.history_length / 5)          # TODO: time length is self.history_length * self.time_resolution (change the test simulation env also)
+        # self.speed_buffer_length = int(self.history_length / 5)          # TODO: time length is self.history_length * self.time_resolution (change the test simulation env also)
 
         # human path
         self.replay_traj_files = glob.glob(replay_traj_path + '/*.txt')
         self.current_human_traj = None
         self.time_resolution = 0.1            # collect rate is 10Hz
-        self.path_resolution = 0.05 / 4
+        self.path_resolution = 0.05 / 2
         self.human_path_buffer = []
+        self.future_human_path_buffer = []
 
         # robot path
         self.current_robot_path = None
         self.robot_path_buffer = []
+        self.future_robot_path_buffer = []
 
         # global goal
         self.global_goal = None
@@ -156,6 +160,7 @@ class SimulationWorld(gym.Env):
         self.current_human_traj = np.loadtxt(traj_file)
         self.global_goal = [self.current_human_traj[-1][0], self.current_human_traj[-1][1]]
         self.human_path_buffer = []
+        self.future_human_path_buffer = []
 
         # time elapsed
         self._plan_robot_path([self.current_human_traj[0][0], self.current_human_traj[0][1]], self.global_goal)
@@ -165,7 +170,7 @@ class SimulationWorld(gym.Env):
         
         self.human_path_buffer.append([self.current_human_traj[0][0], self.current_human_traj[0][1]])
         idx = 1
-        while len(self.human_path_buffer) < self.history_length:
+        while len(self.human_path_buffer) < self.human_history_length:
             idx += 1
             if idx >= len(self.current_human_traj):
                 raise ValueError("[SimulationWorld] Human total path is too short.")
@@ -175,6 +180,21 @@ class SimulationWorld(gym.Env):
             distance = ((x - self.human_path_buffer[-1][0]) ** 2 + (y - self.human_path_buffer[-1][1]) ** 2) ** 0.5
             if distance >= self.path_resolution:
                 self.human_path_buffer.append([x, y])
+
+        # get future human path buffer for reward calculation
+        self.f_idx = idx + 1
+        self.future_human_path_buffer.append([self.current_human_traj[self.f_idx][0], self.current_human_traj[self.f_idx][1]])
+        while len(self.future_human_path_buffer) < self.robot_prediction_length:
+            self.f_idx += 1
+            if self.f_idx >= len(self.current_human_traj):
+                # assume that human intention is standing still
+                self.future_human_path_buffer.append([self.current_human_traj[-1][0], self.current_human_traj[-1][1]]) 
+
+            x = self.current_human_traj[self.f_idx][0]
+            y = self.current_human_traj[self.f_idx][1]
+            distance = ((x - self.future_human_path_buffer[-1][0]) ** 2 + (y - self.future_human_path_buffer[-1][1]) ** 2) ** 0.5
+            if distance >= self.path_resolution:
+                self.future_human_path_buffer.append([x, y])
 
 
         self.time += self.time_resolution * idx
@@ -268,7 +288,8 @@ class SimulationWorld(gym.Env):
     def _get_obs(self, is_terminal=False):
         self.structure_obs = {}
         if not is_terminal:
-            self.structure_obs["robot_path"] = self._get_robot_path()
+            self.future_robot_path_buffer = self._get_robot_path()                              # for reward calculation
+            self.structure_obs["robot_path"] = copy.deepcopy(self.future_robot_path_buffer)
             self.structure_obs["human_path"] = self.human_path_buffer
             self.structure_obs["partial_map"] = self._get_partial_map()
             self.structure_obs["d_goal"] = self.global_goal
@@ -276,8 +297,8 @@ class SimulationWorld(gym.Env):
             self._regularization()
         else:
             self.structure_obs["partial_map"] = np.zeros((1, self.window_width_pixel, self.window_width_pixel), dtype=np.uint8)
-            self.structure_obs["human_path"] = np.zeros((2 * self.history_length,), dtype=np.float32)
-            self.structure_obs["robot_path"] = np.zeros((2 * self.history_length,), dtype=np.float32)
+            self.structure_obs["human_path"] = np.zeros((2 * self.human_history_length,), dtype=np.float32)
+            self.structure_obs["robot_path"] = np.zeros((2 * self.robot_prediction_length,), dtype=np.float32)
             self.structure_obs["d_goal"] = np.zeros((2,), dtype=np.float32)
             self.structure_obs["last_action"] = int(self.current_action[0])
 
@@ -300,14 +321,7 @@ class SimulationWorld(gym.Env):
         if self.render_mode == "ros":
             print("robot path length: ", len(self.current_robot_path))
 
-        # extend the robot path to include historical human path
-        if len(self.human_path_buffer) == self.history_length:
-            self.current_robot_path = self.human_path_buffer + self.current_robot_path
-            
-            # debug
-            # print("robot path length after extension: ", len(self.current_robot_path))
-
-        self.current_index = self.history_length
+        self.current_index = 0
 
     def _get_human_path(self):
         # update the human path buffer
@@ -324,35 +338,55 @@ class SimulationWorld(gym.Env):
             if distance >= self.path_resolution:
                 self.human_path_buffer.pop(0)
                 self.human_path_buffer.append([x, y])
-        
+
+                # update furture human path buffer also
+                self.future_human_path_buffer.pop(0)
+                while len(self.future_human_path_buffer) < self.robot_prediction_length:
+                    self.f_idx += 1
+                    if self.f_idx >= len(self.current_human_traj):
+                        # assume that human intention is standing still
+                        self.future_human_path_buffer.append([self.current_human_traj[-1][0], self.current_human_traj[-1][1]]) 
+
+                    x = self.current_human_traj[self.f_idx][0]
+                    y = self.current_human_traj[self.f_idx][1]
+                    distance = ((x - self.future_human_path_buffer[-1][0]) ** 2 + (y - self.future_human_path_buffer[-1][1]) ** 2) ** 0.5
+                    if distance >= self.path_resolution:
+                        self.future_human_path_buffer.append([x, y])
+                
         return False
+    
+    def _get_future_human_path(self, furture_len):
+        return self.future_human_path_buffer[:furture_len]
 
     def _get_robot_path(self):
-        k = 5   # include the boundary
+        k = 30 # TODO: The parameter k should be set according to the human average velocity
         cur_robot_path_length = len(self.current_robot_path)
-        start_idx = max(0, self.current_index - self.history_length - k)
-        end_idx = min(cur_robot_path_length, self.current_index + self.history_length + k)
-        min_ds = np.inf
-        min_de = np.inf
+        start_idx = max(0, self.current_index - k)
+        end_idx = min(cur_robot_path_length, self.current_index + k)
+        min_d = np.inf
         idx_ = start_idx
-        start = self.human_path_buffer[0]
-        end = self.human_path_buffer[-1]
+        cur_robot_pose = self.human_path_buffer[-1]
+
+        # find the nearest point on the robot path
         for i in range(start_idx, end_idx):
             robot_pose = self.current_robot_path[i]
-            ds = ((robot_pose[0] - start[0]) ** 2 + (robot_pose[1] - start[1]) ** 2) ** 0.5
-            de = ((robot_pose[0] - end[0]) ** 2 + (robot_pose[1] - end[1]) ** 2) ** 0.5
-            if ds < min_ds:
-                min_ds = ds
+            d_ = ((robot_pose[0] - cur_robot_pose[0]) ** 2 + (robot_pose[1] - cur_robot_pose[1]) ** 2) ** 0.5
+            if d_ < min_d:
+                min_d = d_
                 idx_ = i
-            if de < min_de:
-                min_de = de
-                self.current_index = i
 
-        self.robot_path_buffer = self.current_robot_path[idx_: idx_ + self.history_length]
-        if cur_robot_path_length < idx_ + self.history_length:
+        idx_ += 1
+        self.current_index = idx_
+
+        self.robot_path_buffer = self.current_robot_path[idx_: idx_ + self.robot_prediction_length]
+
+        if cur_robot_path_length < idx_ + self.robot_prediction_length:
             # append the terminal poses repeatedly
-            for i in range(cur_robot_path_length, idx_ + self.history_length):
+            for i in range(cur_robot_path_length, idx_ + self.robot_prediction_length):
+
+                # TODO: Which append method is better?
                 self.robot_path_buffer.append(self.current_robot_path[-1])
+                # self.robot_path_buffer.append([0.0, 0.0])              
         
         return self.robot_path_buffer
 
@@ -567,13 +601,29 @@ class SimulationWorld(gym.Env):
     def calculate_reward(self, is_terminal=False):
         # task reward
         if not is_terminal:
-            exp_error = np.exp(- self.exp_factor * np.linalg.norm((self.structure_obs['human_path'].reshape((-1,2)) - self.structure_obs['robot_path'].reshape((-1,2))), axis=1))
+            # exp_error = np.exp(- self.exp_factor * np.linalg.norm((self.structure_obs['human_path'].reshape((-1,2)) - self.structure_obs['robot_path'].reshape((-1,2))), axis=1))
+            # # debug
+            # # print("max error: ", np.max(np.linalg.norm((self.structure_obs['human_path'].reshape((-1,2)) - self.structure_obs['robot_path'].reshape((-1,2))), axis=1)))
+            # # print("exp_error: ", exp_error)
+            # # print("decay_weight: ", np.round(self.decay_weight, 2))
+            # # print("decay_weight sum is: ", np.sum(self.decay_weight))
+            # task_reward = self.decay_weight.dot(exp_error) * self.reward_weight['task']
+
+            eval_length = min(self.robot_prediction_length, len(self.current_robot_path))
+            h_p = self._get_future_human_path(eval_length)
+            r_p = self.future_robot_path_buffer[:eval_length]
+            exp_error = np.exp(- self.exp_factor * np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1))
+            decay_weight = [self.decay_factor ** i for i in range(eval_length)] 
+            decay_weight = np.array(decay_weight) * (1 - self.decay_factor) / (1 - self.decay_factor ** (eval_length))
+            task_reward = decay_weight.dot(exp_error) * self.reward_weight['task']
+
             # debug
-            # print("max error: ", np.max(np.linalg.norm((self.structure_obs['human_path'].reshape((-1,2)) - self.structure_obs['robot_path'].reshape((-1,2))), axis=1)))
-            # print("exp_error: ", exp_error)
-            # print("decay_weight: ", np.round(self.decay_weight, 2))
-            # print("decay_weight sum is: ", np.sum(self.decay_weight))
-            task_reward = self.decay_weight.dot(exp_error) * self.reward_weight['task']
+            # if self.render_mode == 'ros':
+            #     print("l2_error: ", np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1))
+            #     print("exp_error: ", exp_error)
+            #     print("decay_weight: ", np.round(decay_weight, 2))
+            #     print("decay_weight sum is: ", np.sum(decay_weight))
+
         else:
             task_reward = 0.0
 
@@ -612,11 +662,11 @@ class SimulationWorld(gym.Env):
         
         # debug
         # print("============== reward terms ==============")
-        if self.render_mode == "ros":
-            print("task_reward: ", task_reward)
-            print("angle_reg_reward: ", angle_reg_reward)
-            print("depth_reg_reward: ", depth_reg_reward)
-            print("replan_reward: ", replan_reward)
+        # if self.render_mode == "ros":
+        #     print("task_reward: ", task_reward)
+        #     print("angle_reg_reward: ", angle_reg_reward)
+        #     print("depth_reg_reward: ", depth_reg_reward)
+        #     print("replan_reward: ", replan_reward)
 
         return self.reward
 
@@ -627,7 +677,7 @@ class SimulationWorld(gym.Env):
         if self.render_mode == "ros":
             # observation
             self.render_ros.pub_partial_map(self.partial_map)
-            self.render_ros.pub_local_human_path(self.human_path_buffer, self.robot_direction)
+            self.render_ros.pub_local_human_path(self.human_path_buffer, self.future_human_path_buffer, self.robot_direction)
             self.render_ros.pub_local_robot_path(self.robot_path_buffer)
             self.render_ros.pub_global_goal(self.global_goal)
 
