@@ -215,6 +215,8 @@ class SimulationWorld(gym.Env):
     def step(self, raw_action: Dict[str, Union[int, np.ndarray]]):
         self.current_action = self.action_converter.convert(raw_action)
 
+        # self.current_action = (1, np.array([0.08, 0.02]))
+
         # debug
         if self.render_mode == "ros":
             print("current action: ", self.current_action)
@@ -234,9 +236,9 @@ class SimulationWorld(gym.Env):
                                             current_pos=self.cur_position,
                                             radius=self.current_action[1][1],
                                             is_enabled=True)
-                # self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal)
+                self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal)
                 # use point on robot path as the start point
-                self._plan_robot_path([self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]], self.pred_goal)
+                # self._plan_robot_path([self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]], self.pred_goal)
             else:
                 terminated = True
         elif self.current_action[0] == DO_NOTHING:
@@ -379,13 +381,16 @@ class SimulationWorld(gym.Env):
                 idx_ = i
 
         idx_ += 1
-        self.robot_closest_idx = idx_
+        self.robot_closest_idx = min(idx_, cur_robot_path_length - 1)
 
-        self.robot_path_buffer = self.current_robot_path[idx_: idx_ + self.robot_prediction_length]
+        if self.render_mode == "ros":
+            print("robot closest idx: ", self.robot_closest_idx)
 
-        if cur_robot_path_length < idx_ + self.robot_prediction_length:
+        self.robot_path_buffer = self.current_robot_path[self.robot_closest_idx: self.robot_closest_idx + self.robot_prediction_length]
+
+        if cur_robot_path_length < self.robot_closest_idx + self.robot_prediction_length:
             # append the terminal poses repeatedly
-            for i in range(cur_robot_path_length, idx_ + self.robot_prediction_length):
+            for i in range(cur_robot_path_length, self.robot_closest_idx + self.robot_prediction_length):
 
                 # TODO: Which append method is better?
                 self.robot_path_buffer.append(self.current_robot_path[-1])
@@ -467,10 +472,10 @@ class SimulationWorld(gym.Env):
         
     def _get_predicted_goal(self, depth, radius):
         # position
-        # self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]]  
+        self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]]  
         
         # load cone from robot's perspective
-        self.cur_position = [self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]]
+        # self.cur_position = [self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]]
 
         # debug 
         # these two positions are not the same !!!
@@ -615,7 +620,7 @@ class SimulationWorld(gym.Env):
             # # print("decay_weight sum is: ", np.sum(self.decay_weight))
             # task_reward = self.decay_weight.dot(exp_error) * self.reward_weight['task']
 
-            eval_length = min(self.robot_prediction_length, len(self.current_robot_path))
+            eval_length = min(self.robot_prediction_length, len(self.current_robot_path) - self.robot_closest_idx)
             h_p = self._get_future_human_path(eval_length)
             r_p = self.future_robot_path_buffer[:eval_length]
             exp_error = np.exp(- self.exp_factor * np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1))
@@ -626,9 +631,9 @@ class SimulationWorld(gym.Env):
             # debug
             # if self.render_mode == 'ros':
             #     print("l2_error: ", np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1))
-            #     print("exp_error: ", exp_error)
-            #     print("decay_weight: ", np.round(decay_weight, 2))
-            #     print("decay_weight sum is: ", np.sum(decay_weight))
+                # print("exp_error: ", exp_error)
+                # print("decay_weight: ", np.round(decay_weight, 2))
+                # print("decay_weight sum is: ", np.sum(decay_weight))
 
         else:
             task_reward = 0.0
