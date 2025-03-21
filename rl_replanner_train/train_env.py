@@ -234,14 +234,16 @@ class SimulationWorld(gym.Env):
                                             current_pos=self.cur_position,
                                             radius=self.current_action[1][1],
                                             is_enabled=True)
-                self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal)
+                # self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal)
+                # use point on robot path as the start point
+                self._plan_robot_path([self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]], self.pred_goal)
             else:
                 terminated = True
         elif self.current_action[0] == DO_NOTHING:
             pass
         
         if len(self.current_robot_path) == 0:
-            print("[SimulationWorld] Failed to find a path from start to goal.")
+            print("[During step] Failed to find a path from start to goal.")
             terminated = True
 
         if terminated:
@@ -321,7 +323,7 @@ class SimulationWorld(gym.Env):
         if self.render_mode == "ros":
             print("robot path length: ", len(self.current_robot_path))
 
-        self.current_index = 0
+        self.robot_closest_idx = 0
 
     def _get_human_path(self):
         # update the human path buffer
@@ -346,6 +348,7 @@ class SimulationWorld(gym.Env):
                     if self.f_idx >= len(self.current_human_traj):
                         # assume that human intention is standing still
                         self.future_human_path_buffer.append([self.current_human_traj[-1][0], self.current_human_traj[-1][1]]) 
+                        continue
 
                     x = self.current_human_traj[self.f_idx][0]
                     y = self.current_human_traj[self.f_idx][1]
@@ -361,8 +364,8 @@ class SimulationWorld(gym.Env):
     def _get_robot_path(self):
         k = 30 # TODO: The parameter k should be set according to the human average velocity
         cur_robot_path_length = len(self.current_robot_path)
-        start_idx = max(0, self.current_index - k)
-        end_idx = min(cur_robot_path_length, self.current_index + k)
+        start_idx = max(0, self.robot_closest_idx - k)
+        end_idx = min(cur_robot_path_length, self.robot_closest_idx + k)
         min_d = np.inf
         idx_ = start_idx
         cur_robot_pose = self.human_path_buffer[-1]
@@ -376,7 +379,7 @@ class SimulationWorld(gym.Env):
                 idx_ = i
 
         idx_ += 1
-        self.current_index = idx_
+        self.robot_closest_idx = idx_
 
         self.robot_path_buffer = self.current_robot_path[idx_: idx_ + self.robot_prediction_length]
 
@@ -464,7 +467,10 @@ class SimulationWorld(gym.Env):
         
     def _get_predicted_goal(self, depth, radius):
         # position
-        self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]]  
+        # self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]]  
+        
+        # load cone from robot's perspective
+        self.cur_position = [self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]]
 
         # debug 
         # these two positions are not the same !!!
@@ -637,6 +643,8 @@ class SimulationWorld(gym.Env):
                 norm_angle = np.arctan(self.current_action[1][1] / self.current_action[1][0]) / (np.pi / 2)
                 print("norm_angle: ", norm_angle)
                 angle_reg_reward = 1 / self.reward_weight['reg_angle_factor'] * np.log(1 - norm_angle) 
+            else:
+                angle_reg_reward = 0.0
         else:
             angle_reg_reward = 0.0
 
@@ -649,6 +657,8 @@ class SimulationWorld(gym.Env):
                 norm_depth = self.current_action[1][0] / self.len_threshold
                 print("norm_depth: ", norm_depth)
                 depth_reg_reward = 1 / self.reward_weight['reg_depth_factor'] * np.log(norm_depth)
+            else:
+                depth_reg_reward = 0.0
         else:
             depth_reg_reward = 0.0
         
