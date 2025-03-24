@@ -29,7 +29,8 @@ env = SimulationWorld(
     reward_weight=reward_weight,
     map_setting_file='/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml',
     planner_setting_file='/home/rosdev/ros2_ws/cpp_utils/include/path_planner/planner_setting.yaml',
-    render_mode='ros',
+    # render_mode='ros',
+    # render_real_time_factor=4,
     obser_width=obser_width,
     replay_traj_path='/home/rosdev/ros2_ws/rl_replanner_train/data',
     human_history_length=human_history_length,
@@ -44,13 +45,14 @@ print("Shape of observation space:", env.observation_space.shape)
 print("Action space:", env.action_space)
 
 step = 0
+total_reward = 0
 while True:
     action = env.action_space.sample()
     obs, reward, terminated, truncated, info = env.step(action)
-
+    total_reward += reward
     # print('Step:', step)
     # print('Action:', action)
-    # print('Observation:', obs)
+    print('Observation:', obs)
     print('Reward:', reward)
     # print('Done:', terminated)
     # print('Info:', info)
@@ -58,6 +60,8 @@ while True:
     if terminated:
         print("Episode finished after {} timesteps".format(step + 1))
         obs, info = env.reset()
+        print('===================== Total reward:', total_reward, '=====================')
+        total_reward = 0
     
     step += 1
 
