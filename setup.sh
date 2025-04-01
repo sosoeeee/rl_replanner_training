@@ -20,5 +20,12 @@ cd ./cpp_utils \
     && make \
     && sudo make install
 
+# build teb_planner
+# sudo apt update && apt upgrade -y
+# rosdep update                                                # set up network proxy first
+# rosdep install -y --ignore-src --from-paths ./extern/teb_planner/src -r
+# cd ./extern/teb_planner/
+# colcon build --symlink-install
+
 # RUN the following command to test the installation
 # python3 ./rl_replanner_train/tests/test_env.py
