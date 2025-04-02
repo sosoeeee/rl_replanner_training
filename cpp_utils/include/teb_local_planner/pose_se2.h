@@ -43,12 +43,12 @@
 
 #include <Eigen/Core>
 #include "teb_local_planner/misc.h"
-#include <geometry_msgs/msg/pose.hpp>
-#include <geometry_msgs/msg/pose2_d.hpp>
+// #include <geometry_msgs/msg/pose.hpp>
+// #include <geometry_msgs/msg/pose2_d.hpp>
 
-#include <tf2/convert.h>
-#include <tf2/utils.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+// #include <tf2/convert.h>
+// #include <tf2/utils.h>
+// #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace teb_local_planner
 {
@@ -97,37 +97,6 @@ public:
       _theta = theta;
   }
   
-  /**
-   * @brief Construct pose using a geometry_msgs::msg::Pose
-   * @param pose geometry_msgs::msg::Pose object
-   */
-  PoseSE2(const geometry_msgs::msg::PoseStamped& pose)
-      :PoseSE2(pose.pose)
-  {
-
-  }
-
-  /**
-   * @brief Construct pose using a geometry_msgs::msg::Pose
-   * @param pose geometry_msgs::msg::Pose object
-   */ 
-  PoseSE2(const geometry_msgs::msg::Pose& pose)
-  {
-      _position.coeffRef(0) = pose.position.x;
-      _position.coeffRef(1) = pose.position.y;
-      _theta = tf2::getYaw( pose.orientation );
-  }
-  
-  /**
-   * @brief Construct pose using a geometry_msgs::msg::Pose2D
-   * @param pose geometry_msgs::msg::Pose2D object
-   */
-  PoseSE2(const geometry_msgs::msg::Pose2D& pose)
-  {
-      _position.coeffRef(0) = pose.x;
-      _position.coeffRef(1) = pose.y;
-      _theta = pose.theta;
-  }
   
   /**
     * @brief Copy constructor
@@ -210,31 +179,6 @@ public:
     _theta = 0;
   }
   
-  /**
-   * @brief Convert PoseSE2 to a geometry_msgs::msg::Pose
-   * @param[out] pose Pose message
-   */
-  void toPoseMsg(geometry_msgs::msg::Pose& pose) const
-  {
-    pose.position.x = _position.x();
-    pose.position.y = _position.y();
-    pose.position.z = 0;
-    tf2::Quaternion q;
-    q.setRPY(0, 0, _theta);
-    pose.orientation = tf2::toMsg(q);
-  }
-
-  /**
-   * @brief Convert PoseSE2 to a geometry_msgs::msg::Pose2D
-   * @param[out] pose Pose message
-   */
-  void toPoseMsg(geometry_msgs::msg::Pose2D& pose) const
-  {
-    pose.x = _position.x();
-    pose.y = _position.y();
-    pose.theta = _theta;
-  }
-
   /**
    * @brief Return the unit vector of the current orientation
    * @returns [cos(theta), sin(theta))]^T

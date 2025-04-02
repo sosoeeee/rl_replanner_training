@@ -46,10 +46,6 @@
 
 #include <complex>
 
-#include <geometry_msgs/msg/polygon.hpp>
-#include <geometry_msgs/msg/twist_with_covariance.hpp>
-#include <geometry_msgs/msg/quaternion_stamped.hpp>
-
 #include "teb_local_planner/distance_calculations.h"
 
 
@@ -148,138 +144,6 @@ public:
 
   //@}
 
-
-
-  /** @name Velocity related methods for non-static, moving obstacles */
-  //@{ 
-
-  /**
-    * @brief Get the estimated minimum spatiotemporal distance to the moving obstacle using a constant velocity model (point as reference)
-    * @param position 2d reference position
-    * @param t time, for which the minimum distance to the obstacle is estimated
-    * @return The nearest possible distance to the obstacle at time t
-    */
-  virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const = 0;
-
-  /**
-    * @brief Get the estimated minimum spatiotemporal distance to the moving obstacle using a constant velocity model (line as reference)
-    * @param line_start 2d position of the begin of the reference line
-    * @param line_end 2d position of the end of the reference line
-    * @param t time, for which the minimum distance to the obstacle is estimated
-    * @return The nearest possible distance to the obstacle at time t
-    */
-  virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const = 0;
-
-  /**
-    * @brief Get the estimated minimum spatiotemporal distance to the moving obstacle using a constant velocity model (polygon as reference)
-    * @param polygon Vertices (2D points) describing a closed polygon
-    * @param t time, for which the minimum distance to the obstacle is estimated
-    * @return The nearest possible distance to the obstacle at time t
-    */
-  virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const = 0;
-
-  /**
-    * @brief Predict position of the centroid assuming a constant velocity model
-    * @param[in]  t         time in seconds for the prediction (t>=0)
-    * @param[out] position  predicted 2d position of the centroid
-    */
-  virtual void predictCentroidConstantVelocity(double t, Eigen::Ref<Eigen::Vector2d> position) const
-  {
-    position = getCentroid() + t * getCentroidVelocity();
-  }
-
-  /**
-    * @brief Check if the obstacle is a moving with a (non-zero) velocity
-    * @return \c true if the obstacle is not marked as static, \c false otherwise
-    */	
-  bool isDynamic() const {return dynamic_;}
-
-  /**
-    * @brief Set the 2d velocity (vx, vy) of the obstacle w.r.t to the centroid
-    * @remarks Setting the velocity using this function marks the obstacle as dynamic (@see isDynamic)
-    * @param vel 2D vector containing the velocities of the centroid in x and y directions
-    */
-  void setCentroidVelocity(const Eigen::Ref<const Eigen::Vector2d>& vel) {centroid_velocity_ = vel; dynamic_=true;} 
-
-  /**
-    * @brief Set the 2d velocity (vx, vy) of the obstacle w.r.t to the centroid
-    * @remarks Setting the velocity using this function marks the obstacle as dynamic (@see isDynamic)
-    * @param velocity geometry_msgs::msg::TwistWithCovariance containing the velocity of the obstacle
-    * @param orientation geometry_msgs::msg::QuaternionStamped containing the orientation of the obstacle
-    */
-  void setCentroidVelocity(const geometry_msgs::msg::TwistWithCovariance& velocity,
-                           const geometry_msgs::msg::Quaternion& orientation)
-  {
-    // Set velocity, if obstacle is moving
-    Eigen::Vector2d vel;
-    vel.coeffRef(0) = velocity.twist.linear.x;
-    vel.coeffRef(1) = velocity.twist.linear.y;
-
-    // If norm of velocity is less than 0.001, consider obstacle as not dynamic
-    // TODO: Get rid of constant
-    if (vel.norm() < 0.001)
-      return;
-
-    // currently velocity published by stage is already given in the map frame
-//    double yaw = tf::getYaw(orientation.quaternion);
-//    ROS_INFO("Yaw: %f", yaw);
-//    Eigen::Rotation2Dd rot(yaw);
-//    vel = rot * vel;
-    setCentroidVelocity(vel);
-  }
-
-  void setCentroidVelocity(const geometry_msgs::msg::TwistWithCovariance& velocity,
-                           const geometry_msgs::msg::QuaternionStamped& orientation)
-  {
-    setCentroidVelocity(velocity, orientation.quaternion);
-  }
-
-  /**
-    * @brief Get the obstacle velocity (vx, vy) (w.r.t. to the centroid)
-    * @returns 2D vector containing the velocities of the centroid in x and y directions
-    */
-  const Eigen::Vector2d& getCentroidVelocity() const {return centroid_velocity_;}
-
-  //@}
-
-
-
-  /** @name Helper Functions */
-  //@{ 
-  
-  /**
-   * @brief Convert the obstacle to a polygon message
-   * 
-   * Convert the obstacle to a corresponding polygon msg.
-   * Point obstacles have one vertex, lines have two vertices 
-   * and polygons might are implictly closed such that the start vertex must not be repeated.
-   * @param[out] polygon the polygon message
-   */
-  virtual void toPolygonMsg(geometry_msgs::msg::Polygon& polygon) = 0;
-
-  virtual void toTwistWithCovarianceMsg(geometry_msgs::msg::TwistWithCovariance& twistWithCovariance)
-  {
-    if (dynamic_)
-    {
-      twistWithCovariance.twist.linear.x = centroid_velocity_(0);
-      twistWithCovariance.twist.linear.y = centroid_velocity_(1);
-    }
-    else
-    {
-      twistWithCovariance.twist.linear.x = 0;
-      twistWithCovariance.twist.linear.y = 0;
-    }
-
-    // TODO:Covariance
-  }
-
-  //@}
-	
-protected:
-	   
-  bool dynamic_; //!< Store flag if obstacle is dynamic (resp. a moving obstacle)
-  Eigen::Vector2d centroid_velocity_; //!< Store the corresponding velocity (vx, vy) of the centroid (zero, if _dynamic is \c true)
-  
 public:	
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
@@ -417,16 +281,7 @@ public:
   const double& x() const {return pos_.coeffRef(0);} //!< Return the current y-coordinate of the obstacle (read-only)
   double& y() {return pos_.coeffRef(1);} //!< Return the current x-coordinate of the obstacle
   const double& y() const {return pos_.coeffRef(1);} //!< Return the current y-coordinate of the obstacle (read-only)
-      
-  // implements toPolygonMsg() of the base class
-  virtual void toPolygonMsg(geometry_msgs::msg::Polygon& polygon)
-  {
-    polygon.points.resize(1);
-    polygon.points.front().x = pos_.x();
-    polygon.points.front().y = pos_.y();
-    polygon.points.front().z = 0;
-  }
-      
+        
 protected:
   
   Eigen::Vector2d pos_; //!< Store the position of the PointObstacle
@@ -564,17 +419,6 @@ public:
   double& radius() {return radius_;} //!< Return the current radius of the obstacle
   const double& radius() const {return radius_;} //!< Return the current radius of the obstacle
 
-  // implements toPolygonMsg() of the base class
-  virtual void toPolygonMsg(geometry_msgs::msg::Polygon& polygon)
-  {
-    // TODO(roesmann): the polygon message type cannot describe a "perfect" circle
-    //                 We could switch to ObstacleMsg if required somewhere...
-    polygon.points.resize(1);
-    polygon.points.front().x = pos_.x();
-    polygon.points.front().y = pos_.y();
-    polygon.points.front().z = 0;
-  }
-
 protected:
 
   Eigen::Vector2d pos_; //!< Store the center position of the CircularObstacle
@@ -594,7 +438,7 @@ class LineObstacle : public Obstacle
 {
 public:
   //! Abbrev. for a container storing vertices (2d points defining the edge points of the polygon)
-  typedef std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > VertexContainer;
+  typedef std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> > VertexContainer;
   
   /**
     * @brief Default constructor of the point obstacle class
@@ -639,7 +483,7 @@ public:
     return getMinimumDistance(point) <= min_dist;
   }
   
-  // implements checkLineIntersection() of the base class
+  // implements () of the base class
   virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const 
   {
     return check_line_segments_intersection_2d(line_start, line_end, start_, end_);
@@ -707,18 +551,6 @@ public:
   void setStart(const Eigen::Ref<const Eigen::Vector2d>& start) {start_ = start; calcCentroid();}
   const Eigen::Vector2d& end() const {return end_;}
   void setEnd(const Eigen::Ref<const Eigen::Vector2d>& end) {end_ = end; calcCentroid();}
-  
-  // implements toPolygonMsg() of the base class
-  virtual void toPolygonMsg(geometry_msgs::msg::Polygon& polygon)
-  {
-    polygon.points.resize(2);
-    polygon.points.front().x = start_.x();
-    polygon.points.front().y = start_.y();
-    
-    polygon.points.back().x = end_.x();
-    polygon.points.back().y = end_.y();
-    polygon.points.back().z = polygon.points.front().z = 0;
-  }
   
 protected:
   void calcCentroid()	{	centroid_ = 0.5*(start_ + end_); }
@@ -855,20 +687,6 @@ public:
   void setStart(const Eigen::Ref<const Eigen::Vector2d>& start) {start_ = start; calcCentroid();}
   const Eigen::Vector2d& end() const {return end_;}
   void setEnd(const Eigen::Ref<const Eigen::Vector2d>& end) {end_ = end; calcCentroid();}
-
-  // implements toPolygonMsg() of the base class
-  virtual void toPolygonMsg(geometry_msgs::msg::Polygon& polygon)
-  {
-    // Currently, we only export the line
-    // TODO(roesmann): export whole pill
-    polygon.points.resize(2);
-    polygon.points.front().x = start_.x();
-    polygon.points.front().y = start_.y();
-
-    polygon.points.back().x = end_.x();
-    polygon.points.back().y = end_.y();
-    polygon.points.back().z = polygon.points.front().z = 0;
-  }
 
 protected:
   void calcCentroid()    {    centroid_ = 0.5*(start_ + end_); }
@@ -1029,10 +847,6 @@ public:
     assert(finalized_ && "Finalize the polygon after all vertices are added.");
     return std::complex<double>(centroid_.coeffRef(0), centroid_.coeffRef(1));
   }
-  
-  // implements toPolygonMsg() of the base class
-  virtual void toPolygonMsg(geometry_msgs::msg::Polygon& polygon);
-
   
   /** @name Define the polygon */
   ///@{

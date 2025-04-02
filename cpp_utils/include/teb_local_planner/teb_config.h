@@ -39,14 +39,12 @@
 #ifndef TEB_CONFIG_H_
 #define TEB_CONFIG_H_
 
-#include <nav2_util/lifecycle_node.hpp>
 #include <memory>
-#include <rclcpp/rclcpp.hpp>
 #include <Eigen/Core>
 #include <Eigen/StdVector>
-#include <nav_2d_utils/parameters.hpp>
 #include "teb_local_planner/robot_footprint_model.h"
-#include <nav2_costmap_2d/footprint.hpp>
+
+#include "yaml-cpp/yaml.h"
 
 // Definitions
 #define USE_ANALYTIC_JACOBI // if available for a specific edge, use analytic jacobi
@@ -62,10 +60,6 @@ class TebConfig
 public:
   using UniquePtr = std::unique_ptr<TebConfig>;
   
-  std::string odom_topic; //!< Topic name of the odometry message, provided by the robot driver or simulator
-  std::string map_frame; //!< Global planning frame
-  std::string node_name; //!< node name used for parameter event callback
-
   RobotFootprintModelPtr robot_model;
   std::string model_name;
   double radius;
@@ -248,8 +242,8 @@ public:
   TebConfig()
   {
 
-    odom_topic = "odom";
-    map_frame = "odom";
+    // odom_topic = "odom";
+    // map_frame = "odom";
 
     // Trajectory
 
@@ -389,21 +383,6 @@ public:
     recovery.divergence_detection_max_chi_squared = 10;
   }
   
-  void declareParameters(const nav2_util::LifecycleNode::SharedPtr, const std::string name);
-
-  /**
-   * @brief Load parmeters from the ros param server.
-   * @param nh const reference to the local rclcpp::Node::SharedPtr
-   */
-  void loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name);
-  
-  /**
-   * @brief Callback executed when a paramter change is detected
-   * @param parameters list of changed parameters
-   */
-  rcl_interfaces::msg::SetParametersResult
-    dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
-  
   /**
    * @brief Check parameters and print warnings in case of discrepancies
    *
@@ -413,19 +392,22 @@ public:
   void checkParameters() const;
   
   /**
-   * @brief Check if some deprecated parameters are found and print warnings
-   * @param nh const reference to the local rclcpp::Node::SharedPtr
+   * @brief Load parameters directly from a yaml file without ROS dependencies
+   * @param yaml_filename Path to the yaml file
    */
-  void checkDeprecated(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name) const;
-  
-  /**
-   * @brief Return the internal config mutex
-   */
-  std::mutex& configMutex() {return config_mutex_;}
+  void loadParamsFromYaml(const std::string & yaml_filename);
 
 private:
-  std::mutex config_mutex_; //!< Mutex for config accesses and changes
-  rclcpp::Logger logger_{rclcpp::get_logger("TEBLocalPlanner")};
+
+  /**
+   * @brief Helper function to safely get a value from YAML node
+   * @param node YAML node
+   * @param key Parameter key
+   * @param default_value Default value to return if key not found
+   * @return Parameter value
+   */
+  template <typename T>
+  T getYamlValue(const YAML::Node& node, const std::string& key, const T& default_value) const;
 };
 } // namespace teb_local_planner
 

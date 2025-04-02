@@ -158,8 +158,8 @@ bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path
       // if number of samples is not larger than min_samples, insert manually
       if ( sizePoses() < min_samples-1 )
       {
-        RCLCPP_DEBUG(rclcpp::get_logger("teb_local_planner"),
-                     "initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
+        LOGGER_DEBUG("teb_local_planner", "initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
+        
         while (sizePoses() < min_samples-1) // subtract goal point that will be added later
         {
           // Each inserted point bisects the remaining distance. Thus the timestep is also bisected.
@@ -175,10 +175,8 @@ bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path
     }
     else // size!=0
     {
-      RCLCPP_DEBUG(rclcpp::get_logger("teb_local_planner"),
-                   "Cannot init TEB between given configuration and goal, because TEB vectors are not empty or TEB is already initialized (call this function before adding states yourself)!");
-      RCLCPP_DEBUG(rclcpp::get_logger("teb_local_planner"),
-                   "Number of TEB configurations: %d, Number of TEB timediffs: %d", sizePoses(), sizeTimeDiffs());
+      LOGGER_DEBUG("teb_local_planner", "Cannot init TEB between given configuration and goal, because TEB vectors are not empty or TEB is already initialized (call this function before adding states yourself)!");
+      LOGGER_DEBUG("teb_local_planner", "Number of TEB configurations: %d, Number of TEB timediffs: %d", sizePoses(), sizeTimeDiffs());
       return false;
     }
     return true;

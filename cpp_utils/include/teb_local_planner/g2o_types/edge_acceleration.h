@@ -51,8 +51,6 @@
 #include "teb_local_planner/g2o_types/base_teb_edges.h"
 #include "teb_local_planner/misc.h"
 
-#include <geometry_msgs/msg/twist.hpp>
-
 namespace teb_local_planner
 {
 
@@ -286,7 +284,7 @@ public:
  * @remarks Do not forget to call setTebConfig()
  * @remarks Refer to EdgeAccelerationGoal() for defining boundary values at the end of the trajectory!
  */      
-class EdgeAccelerationStart : public BaseTebMultiEdge<2, const geometry_msgs::msg::Twist*>
+class EdgeAccelerationStart : public BaseTebMultiEdge<2, const VelSE2*>
 {
 public:
 
@@ -346,7 +344,7 @@ public:
    * @brief Set the initial velocity that is taken into account for calculating the acceleration
    * @param vel_start twist message containing the translational and rotational velocity
    */    
-  void setInitialVelocity(const geometry_msgs::msg::Twist& vel_start)
+  void setInitialVelocity(const VelSE2& vel_start)
   {
     _measurement = &vel_start;
   }
@@ -377,7 +375,7 @@ public:
  * @remarks Do not forget to call setTebConfig()
  * @remarks Refer to EdgeAccelerationStart() for defining boundary (initial) values at the end of the trajectory
  */  
-class EdgeAccelerationGoal : public BaseTebMultiEdge<2, const geometry_msgs::msg::Twist*>
+class EdgeAccelerationGoal : public BaseTebMultiEdge<2, const VelSE2*>
 {
 public:
 
@@ -438,7 +436,7 @@ public:
    * @brief Set the goal / final velocity that is taken into account for calculating the acceleration
    * @param vel_goal twist message containing the translational and rotational velocity
    */    
-  void setGoalVelocity(const geometry_msgs::msg::Twist& vel_goal)
+  void setGoalVelocity(const VelSE2& vel_goal)
   {
     _measurement = &vel_goal;
   }
@@ -561,7 +559,7 @@ public:
  * @remarks Do not forget to call setTebConfig()
  * @remarks Refer to EdgeAccelerationHolonomicGoal() for defining boundary values at the end of the trajectory!
  */      
-class EdgeAccelerationHolonomicStart : public BaseTebMultiEdge<3, const geometry_msgs::msg::Twist*>
+class EdgeAccelerationHolonomicStart : public BaseTebMultiEdge<3, const VelSE2*>
 {
 public:
 
@@ -621,7 +619,7 @@ public:
    * @brief Set the initial velocity that is taken into account for calculating the acceleration
    * @param vel_start twist message containing the translational and rotational velocity
    */    
-  void setInitialVelocity(const geometry_msgs::msg::Twist& vel_start)
+  void setInitialVelocity(const VelSE2& vel_start)
   {
     _measurement = &vel_start;
   }
@@ -652,7 +650,7 @@ public:
  * @remarks Do not forget to call setTebConfig()
  * @remarks Refer to EdgeAccelerationHolonomicStart() for defining boundary (initial) values at the end of the trajectory
  */  
-class EdgeAccelerationHolonomicGoal : public BaseTebMultiEdge<3, const geometry_msgs::msg::Twist*>
+class EdgeAccelerationHolonomicGoal : public BaseTebMultiEdge<3, const VelSE2*>
 {
 public:
 
@@ -714,7 +712,7 @@ public:
    * @brief Set the goal / final velocity that is taken into account for calculating the acceleration
    * @param vel_goal twist message containing the translational and rotational velocity
    */    
-  void setGoalVelocity(const geometry_msgs::msg::Twist& vel_goal)
+  void setGoalVelocity(const VelSE2& vel_goal)
   {
     _measurement = &vel_goal;
   }

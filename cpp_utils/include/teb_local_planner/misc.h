@@ -39,14 +39,12 @@
 #ifndef MISC_H
 #define MISC_H
 
-#include <builtin_interfaces/msg/duration.hpp>
-
 #include <Eigen/Core>
+
+#include "teb_local_planner/logger.h"
 
 #include <exception>
 #include <type_traits>
-
-#include <rclcpp/logging.hpp>
 
 namespace teb_local_planner
 {
@@ -54,6 +52,25 @@ namespace teb_local_planner
 
 //! Symbols for left/none/right rotations      
 enum class RotType { left, none, right };
+
+// vel_se2 data structure in C++
+struct VelSE2
+{
+  float vx; // translational velocity [m/s]
+  float vy; // strafing velocity [m/s] 
+  float omega; // rotational velocity [rad/s]
+};
+
+// TrajectoryPointMsg is a message type that contains the trajectory point information
+// (pose, velocity, acceleration, time_from_start). It is used to represent a point in the trajectory.
+// define it using c++ package
+struct TrajectoryPointMsg
+{
+  PoseSE2 pose; // pose of the trajectory point
+  VelSE2 velocity; // velocity of the trajectory point
+  VelSE2 acceleration; // acceleration of the trajectory point
+  double time_from_start; // time from the start of the trajectory to this point
+};
 
 /** 
  * @brief Check whether two variables (double) are close to each other
@@ -150,28 +167,28 @@ inline const T& get_const_reference(const T* ptr) {return *ptr;}
 template<typename T>
 inline const T& get_const_reference(const T& val, typename std::enable_if_t<!std::is_pointer<T>::value, T>* dummy = nullptr) {return val;}
 
-inline builtin_interfaces::msg::Duration durationFromSec(double t_sec)
-{
-  int32_t sec;
-  uint32_t nsec;
-  sec = static_cast<int32_t>(floor(t_sec));
-  nsec = static_cast<int32_t>(std::round((t_sec - sec) * 1e9));
-  // avoid rounding errors
-  sec += (nsec / 1000000000l);
-  nsec %= 1000000000l;
+// inline builtin_interfaces::msg::Duration durationFromSec(double t_sec)
+// {
+//   int32_t sec;
+//   uint32_t nsec;
+//   sec = static_cast<int32_t>(floor(t_sec));
+//   nsec = static_cast<int32_t>(std::round((t_sec - sec) * 1e9));
+//   // avoid rounding errors
+//   sec += (nsec / 1000000000l);
+//   nsec %= 1000000000l;
 
-  builtin_interfaces::msg::Duration duration;
-  duration.sec = sec;
-  duration.nanosec = nsec;
-  return duration;
-}
+//   builtin_interfaces::msg::Duration duration;
+//   duration.sec = sec;
+//   duration.nanosec = nsec;
+//   return duration;
+// }
 
 struct TebAssertionFailureException : public std::runtime_error
 {
     TebAssertionFailureException(const std::string &msg)
         : std::runtime_error(msg)
     {
-        RCLCPP_ERROR(rclcpp::get_logger("teb_local_planner"), msg.c_str());
+        LOGGER_ERROR("teb_local_planner", msg.c_str());
     }
 };
 

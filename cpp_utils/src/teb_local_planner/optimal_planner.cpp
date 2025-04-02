@@ -36,10 +36,8 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include <tf2/time.h>
-#include <tf2_ros/buffer_interface.h>
-
 #include "teb_local_planner/optimal_planner.h"
+#include "teb_local_planner/logger.h"
 
 #include <map>
 // g2o custom edges and vertices for the TEB planner
@@ -67,9 +65,9 @@ TebOptimalPlanner::TebOptimalPlanner() : cfg_(nullptr), obstacles_(NULL), via_po
 {    
 }
   
-TebOptimalPlanner::TebOptimalPlanner(nav2_util::LifecycleNode::SharedPtr node, const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual, const ViaPointContainer* via_points)
+TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles, const ViaPointContainer* via_points)
 {    
-  initialize(node, cfg, obstacles, visual, via_points);
+  initialize(cfg, obstacles, via_points);
 }
 
 TebOptimalPlanner::~TebOptimalPlanner()
@@ -82,9 +80,8 @@ TebOptimalPlanner::~TebOptimalPlanner()
   //g2o::HyperGraphActionLibrary::destroy();
 }
 
-void TebOptimalPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual, const ViaPointContainer* via_points)
+void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, const ViaPointContainer* via_points)
 {    
-  node_ = node;
   // init optimizer (set solver and block ordering settings)
   optimizer_ = initOptimizer();
   
@@ -95,37 +92,16 @@ void TebOptimalPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, con
   prefer_rotdir_ = RotType::none;
 
   vel_start_.first = true;
-  vel_start_.second.linear.x = 0;
-  vel_start_.second.linear.y = 0;
-  vel_start_.second.angular.z = 0;
+  vel_start_.second.vx = 0;
+  vel_start_.second.vy = 0;
+  vel_start_.second.omega = 0;
 
   vel_goal_.first = true;
-  vel_goal_.second.linear.x = 0;
-  vel_goal_.second.linear.y = 0;
-  vel_goal_.second.angular.z = 0;
+  vel_goal_.second.vx = 0;
+  vel_goal_.second.vy = 0;
+  vel_goal_.second.omega = 0;
   initialized_ = true;
 
-  setVisualization(visual);
-}
-
-void TebOptimalPlanner::setVisualization(const TebVisualizationPtr& visualization)
-{
-  visualization_ = visualization;
-}
-
-void TebOptimalPlanner::visualize()
-{
-  if (!visualization_)
-    return;
-
-  visualization_->publishLocalPlanAndPoses(teb_);
-  
-  if (teb_.sizePoses() > 0)
-    visualization_->publishRobotFootprintModel(teb_.Pose(0), *cfg_->robot_model);
-  
-  if (cfg_->trajectory.publish_feedback)
-    visualization_->publishFeedbackMessage(*this, *obstacles_);
- 
 }
 
 /*
@@ -232,21 +208,21 @@ bool TebOptimalPlanner::optimizeTEB(int iterations_innerloop, int iterations_out
   return true;
 }
 
-void TebOptimalPlanner::setVelocityStart(const geometry_msgs::msg::Twist& vel_start)
+void TebOptimalPlanner::setVelocityStart(const VelSE2& vel_start)
 {
   vel_start_.first = true;
-  vel_start_.second.linear.x = vel_start.linear.x;
-  vel_start_.second.linear.y = vel_start.linear.y;
-  vel_start_.second.angular.z = vel_start.angular.z;
+  vel_start_.second.vx = vel_start.vx;
+  vel_start_.second.vy = vel_start.vy;
+  vel_start_.second.omega = vel_start.omega;
 }
 
-void TebOptimalPlanner::setVelocityGoal(const geometry_msgs::msg::Twist& vel_goal)
+void TebOptimalPlanner::setVelocityGoal(const VelSE2& vel_goal)
 {
   vel_goal_.first = true;
   vel_goal_.second = vel_goal;
 }
 
-bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::msg::PoseStamped>& initial_plan, const geometry_msgs::msg::Twist* start_vel, bool free_goal_vel)
+bool TebOptimalPlanner::plan(const std::vector<PoseSE2>& initial_plan, const VelSE2* start_vel, bool free_goal_vel)
 {    
   TEB_ASSERT_MSG(initialized_, "Call initialize() first.");
   if (!teb_.isInit())
@@ -264,7 +240,7 @@ bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::msg::PoseStamped>&
       teb_.updateAndPruneTEB(start_, goal_, cfg_->trajectory.min_samples); // update TEB
     else // goal too far away -> reinit
     {
-      RCLCPP_DEBUG(node_->get_logger(), "New goal: distance to existing goal is higher than the specified threshold. Reinitalizing trajectories.");
+      LOGGER_DEBUG("teb_local_planner", "New goal: distance to existing goal is higher than the specified threshold. Reinitalizing trajectories.");
       teb_.clearTimedElasticBand();
       teb_.initTrajectoryToGoal(initial_plan, cfg_->robot.max_vel_x, cfg_->robot.max_vel_theta, cfg_->trajectory.global_plan_overwrite_orientation,
         cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
@@ -282,14 +258,14 @@ bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::msg::PoseStamped>&
 }
 
 
-//bool TebOptimalPlanner::plan(const tf::Pose& start, const tf::Pose& goal, const geometry_msgs::msg::Twist* start_vel, bool free_goal_vel)
+//bool TebOptimalPlanner::plan(const tf::Pose& start, const tf::Pose& goal, const VelSE2* start_vel, bool free_goal_vel)
 //{
 //  PoseSE2 start_(start);
 //  PoseSE2 goal_(goal);
 //  return plan(start_, goal_, start_vel);
 //}
 
-bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::msg::Twist* start_vel, bool free_goal_vel)
+bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const VelSE2* start_vel, bool free_goal_vel)
 {	
   TEB_ASSERT_MSG(initialized_, "Call initialize() first.");
   if (!teb_.isInit())
@@ -305,7 +281,7 @@ bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const ge
       teb_.updateAndPruneTEB(start, goal, cfg_->trajectory.min_samples);
     else // goal too far away -> reinit
     {
-      RCLCPP_DEBUG(node_->get_logger(), "New goal: distance to existing goal is higher than the specified threshold. Reinitalizing trajectories.");
+      LOGGER_DEBUG("teb_local_planner", "New goal: distance to existing goal is higher than the specified threshold. Reinitalizing trajectories.");
       teb_.clearTimedElasticBand();
       teb_.initTrajectoryToGoal(start, goal, 0, cfg_->robot.max_vel_x, cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
     }
@@ -326,7 +302,7 @@ bool TebOptimalPlanner::buildGraph(double weight_multiplier)
 {
   if (!optimizer_->edges().empty() || !optimizer_->vertices().empty())
   {
-    RCLCPP_WARN(node_->get_logger(), "Cannot build graph, because it is not empty. Call graphClear()!");
+    LOGGER_WARN("teb_local_planner", "Cannot build graph, because it is not empty. Call graphClear()!");
     return false;
   }
 
@@ -371,14 +347,14 @@ bool TebOptimalPlanner::optimizeGraph(int no_iterations,bool clear_after)
 {
   if (cfg_->robot.max_vel_x<0.01)
   {
-    RCLCPP_WARN(node_->get_logger(), "optimizeGraph(): Robot Max Velocity is smaller than 0.01m/s. Optimizing aborted...");
+    LOGGER_WARN("teb_local_planner", "optimizeGraph(): Robot Max Velocity is smaller than 0.01m/s. Optimizing aborted...");
     if (clear_after) clearGraph();
     return false;	
   }
   
   if (!teb_.isInit() || teb_.sizePoses() < cfg_->trajectory.min_samples)
   {
-    RCLCPP_WARN(node_->get_logger(), "optimizeGraph(): TEB is empty or has too less elements. Skipping optimization.");
+    LOGGER_WARN("teb_local_planner", "optimizeGraph(): TEB is empty or has too less elements. Skipping optimization.");
     if (clear_after) clearGraph();
     return false;	
   }
@@ -394,7 +370,7 @@ bool TebOptimalPlanner::optimizeGraph(int no_iterations,bool clear_after)
 
   if(!iter)
   {
-    RCLCPP_ERROR(node_->get_logger(), "optimizeGraph(): Optimization failed! iter=%i", iter);
+    LOGGER_ERROR("teb_local_planner", "optimizeGraph(): Optimization failed! iter=%i", iter);
 	return false;
   }
 
@@ -424,7 +400,7 @@ void TebOptimalPlanner::clearGraph()
 void TebOptimalPlanner::AddTEBVertices()
 {
   // add vertices to graph
-  RCLCPP_DEBUG_EXPRESSION(node_->get_logger(), cfg_->optim.optimization_verbose, "Adding TEB vertices ...");
+  LOGGER_DEBUG_EXPRESSION(node_->get_logger(), cfg_->optim.optimization_verbose, "Adding TEB vertices ...");
   unsigned int id_counter = 0; // used for vertices ids
   obstacles_per_vertex_.resize(teb_.sizePoses());
   auto iter_obstacle = obstacles_per_vertex_.begin();
@@ -704,7 +680,7 @@ void TebOptimalPlanner::AddEdgesViaPoints()
       }
       else
       {
-        RCLCPP_DEBUG(node_->get_logger(), "TebOptimalPlanner::AddEdgesViaPoints(): skipping a via-point that is close or behind the current robot pose.");
+        LOGGER_DEBUG("teb_local_planner", "TebOptimalPlanner::AddEdgesViaPoints(): skipping a via-point that is close or behind the current robot pose.");
         continue; // skip via points really close or behind the current robot pose
       }
     }
@@ -974,7 +950,7 @@ void TebOptimalPlanner::AddEdgesPreferRotDir()
 
   if (prefer_rotdir_ != RotType::right && prefer_rotdir_ != RotType::left)
   {
-    RCLCPP_WARN(node_->get_logger(), "TebOptimalPlanner::AddEdgesPreferRotDir(): unsupported RotType selected. Skipping edge creation.");
+    LOGGER_WARN("teb_local_planner", "TebOptimalPlanner::AddEdgesPreferRotDir(): unsupported RotType selected. Skipping edge creation.");
     return;
   }
 
@@ -1138,7 +1114,7 @@ bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega
 {
   if (teb_.sizePoses()<2)
   {
-    RCLCPP_ERROR(node_->get_logger(), "TebOptimalPlanner::getVelocityCommand(): The trajectory contains less than 2 poses. Make sure to init and optimize/plan the trajectory fist.");
+    LOGGER_ERROR("teb_local_planner", "TebOptimalPlanner::getVelocityCommand(): The trajectory contains less than 2 poses. Make sure to init and optimize/plan the trajectory fist.");
     vx = 0;
     vy = 0;
     omega = 0;
@@ -1157,7 +1133,7 @@ bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega
   }
   if (dt<=0)
   {	
-    RCLCPP_ERROR(node_->get_logger(), "TebOptimalPlanner::getVelocityCommand() - timediff<=0 is invalid!");
+    LOGGER_ERROR("teb_local_planner", "TebOptimalPlanner::getVelocityCommand() - timediff<=0 is invalid!");
     vx = 0;
     vy = 0;
     omega = 0;
@@ -1169,34 +1145,28 @@ bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega
   return true;
 }
 
-void TebOptimalPlanner::getVelocityProfile(std::vector<geometry_msgs::msg::Twist>& velocity_profile) const
+void TebOptimalPlanner::getVelocityProfile(std::vector<VelSE2>& velocity_profile) const
 {
   int n = teb_.sizePoses();
   velocity_profile.resize( n+1 );
 
   // start velocity 
-  velocity_profile.front().linear.z = 0;
-  velocity_profile.front().angular.x = velocity_profile.front().angular.y = 0;  
-  velocity_profile.front().linear.x = vel_start_.second.linear.x;
-  velocity_profile.front().linear.y = vel_start_.second.linear.y;
-  velocity_profile.front().angular.z = vel_start_.second.angular.z;
+  velocity_profile.front().vx = vel_start_.second.vx;
+  velocity_profile.front().vy = vel_start_.second.vy;
+  velocity_profile.front().omega = vel_start_.second.omega;
   
   for (int i=1; i<n; ++i)
   {
-    velocity_profile[i].linear.z = 0;
-    velocity_profile[i].angular.x = velocity_profile[i].angular.y = 0;
-    extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), velocity_profile[i].linear.x, velocity_profile[i].linear.y, velocity_profile[i].angular.z);
+    extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), velocity_profile[i].vx, velocity_profile[i].vy, velocity_profile[i].omega);
   }
   
   // goal velocity
-  velocity_profile.back().linear.z = 0;
-  velocity_profile.back().angular.x = velocity_profile.back().angular.y = 0;  
-  velocity_profile.back().linear.x = vel_goal_.second.linear.x;
-  velocity_profile.back().linear.y = vel_goal_.second.linear.y;
-  velocity_profile.back().angular.z = vel_goal_.second.angular.z;
+  velocity_profile.back().vx = vel_goal_.second.vx;
+  velocity_profile.back().vy = vel_goal_.second.vy;
+  velocity_profile.back().omega = vel_goal_.second.omega;
 }
 
-void TebOptimalPlanner::getFullTrajectory(std::vector<teb_msgs::msg::TrajectoryPointMsg>& trajectory) const
+void TebOptimalPlanner::getFullTrajectory(std::vector<TrajectoryPointMsg>& trajectory) const
 {
   int n = teb_.sizePoses();
   
@@ -1208,119 +1178,39 @@ void TebOptimalPlanner::getFullTrajectory(std::vector<teb_msgs::msg::TrajectoryP
   double curr_time = 0;
   
   // start
-  teb_msgs::msg::TrajectoryPointMsg& start = trajectory.front();
-  teb_.Pose(0).toPoseMsg(start.pose);
-  start.velocity.linear.z = 0;
-  start.velocity.angular.x = start.velocity.angular.y = 0;
-  start.velocity.linear.x = vel_start_.second.linear.x;
-  start.velocity.linear.y = vel_start_.second.linear.y;
-  start.velocity.angular.z = vel_start_.second.angular.z;
-  start.time_from_start = durationFromSec(curr_time);
+  TrajectoryPointMsg& start = trajectory.front();
+  start.pose = teb_.Pose(0);
+  start.velocity.vx = vel_start_.second.vx;
+  start.velocity.vy = vel_start_.second.vy;
+  start.velocity.omega = vel_start_.second.omega;
+  start.time_from_start = curr_time;
   
   curr_time += teb_.TimeDiff(0);
   
   // intermediate points
   for (int i=1; i < n-1; ++i)
   {
-    teb_msgs::msg::TrajectoryPointMsg& point = trajectory[i];
-    teb_.Pose(i).toPoseMsg(point.pose);
-    point.velocity.linear.z = 0;
-    point.velocity.angular.x = point.velocity.angular.y = 0;
+    TrajectoryPointMsg& point = trajectory[i];
+    point.pose = teb_.Pose(i)
     double vel1_x, vel1_y, vel2_x, vel2_y, omega1, omega2;
     extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), vel1_x, vel1_y, omega1);
     extractVelocity(teb_.Pose(i), teb_.Pose(i+1), teb_.TimeDiff(i), vel2_x, vel2_y, omega2);
-    point.velocity.linear.x = 0.5*(vel1_x+vel2_x);
-    point.velocity.linear.y = 0.5*(vel1_y+vel2_y);
-    point.velocity.angular.z = 0.5*(omega1+omega2);    
-    point.time_from_start = durationFromSec(curr_time);
+    point.velocity.vx = 0.5*(vel1_x+vel2_x);
+    point.velocity.vy = 0.5*(vel1_y+vel2_y);
+    point.velocity.omega = 0.5*(omega1+omega2);    
+    point.time_from_start = curr_time;
     
     curr_time += teb_.TimeDiff(i);
   }
   
   // goal
-  teb_msgs::msg::TrajectoryPointMsg& goal = trajectory.back();
-  teb_.BackPose().toPoseMsg(goal.pose);
-  goal.velocity.linear.z = 0;
-  goal.velocity.angular.x = goal.velocity.angular.y = 0;
-  goal.velocity.linear.x = vel_goal_.second.linear.x;
-  goal.velocity.linear.y = vel_goal_.second.linear.y;
-  goal.velocity.angular.z = vel_goal_.second.angular.z;
-  goal.time_from_start = durationFromSec(curr_time);
+  TrajectoryPointMsg& goal = trajectory.back();
+  goal.pose = teb_.BackPose();
+  goal.velocity.vx = vel_goal_.second.vx;
+  goal.velocity.vy = vel_goal_.second.vy;
+  goal.velocity.omega = vel_goal_.second.omega;
+  goal.time_from_start = curr_time;
 }
 
-
-bool TebOptimalPlanner::isTrajectoryFeasible(dwb_critics::ObstacleFootprintCritic* costmap_model, const std::vector<geometry_msgs::msg::Point>& footprint_spec,
-                                             double inscribed_radius, double circumscribed_radius, int look_ahead_idx, double feasibility_check_lookahead_distance)
-{
-  if (look_ahead_idx < 0 || look_ahead_idx >= teb().sizePoses())
-    look_ahead_idx = teb().sizePoses() - 1;
-
-  if (feasibility_check_lookahead_distance > 0){
-    for (int i=1; i < teb().sizePoses(); ++i){
-      double pose_distance=std::hypot(teb().Pose(i).x()-teb().Pose(0).x(), teb().Pose(i).y()-teb().Pose(0).y());
-      if(pose_distance > feasibility_check_lookahead_distance){
-        look_ahead_idx = i - 1;
-        break;
-      }
-    }
-  }
-
-  geometry_msgs::msg::Pose2D pose2d;
-  for (int i=0; i <= look_ahead_idx; ++i)
-  {
-    teb().Pose(i).toPoseMsg(pose2d);
-    if (!isPoseValid(pose2d, costmap_model, footprint_spec)){
-      if (visualization_)
-      {
-        visualization_->publishInfeasibleRobotPose(teb().Pose(i), *cfg_->robot_model);
-      }
-      return false;
-    }
-    // Checks if the distance between two poses is higher than the robot radius or the orientation diff is bigger than the specified threshold
-    // and interpolates in that case.
-    // (if obstacles are pushing two consecutive poses away, the center between two consecutive poses might coincide with the obstacle ;-)!
-    if (i<look_ahead_idx)
-    {
-      double delta_rot = g2o::normalize_theta(g2o::normalize_theta(teb().Pose(i+1).theta()) -
-                                              g2o::normalize_theta(teb().Pose(i).theta()));
-      Eigen::Vector2d delta_dist = teb().Pose(i+1).position()-teb().Pose(i).position();
-      if(fabs(delta_rot) > cfg_->trajectory.min_resolution_collision_check_angular || delta_dist.norm() > inscribed_radius)
-      {
-        int n_additional_samples = std::max(std::ceil(fabs(delta_rot) / cfg_->trajectory.min_resolution_collision_check_angular), 
-                                            std::ceil(delta_dist.norm() / inscribed_radius)) - 1;
-        PoseSE2 intermediate_pose = teb().Pose(i);
-        for(int step = 0; step < n_additional_samples; ++step)
-        {
-          intermediate_pose.position() = intermediate_pose.position() + delta_dist / (n_additional_samples + 1.0);
-          intermediate_pose.theta() = g2o::normalize_theta(intermediate_pose.theta() + 
-                                                           delta_rot / (n_additional_samples + 1.0));
-          intermediate_pose.toPoseMsg(pose2d);
-
-          if (!isPoseValid(pose2d, costmap_model, footprint_spec)){
-            if (visualization_)
-            {
-              visualization_->publishInfeasibleRobotPose(intermediate_pose, *cfg_->robot_model);
-            }
-            return false;
-          }
-        }
-      }
-    }
-  }
-  return true;
-}
-
-bool TebOptimalPlanner::isPoseValid(geometry_msgs::msg::Pose2D pose2d, dwb_critics::ObstacleFootprintCritic* costmap_model,
-                           const std::vector<geometry_msgs::msg::Point>& footprint_spec)
-{
-  try {
-    if ( costmap_model->scorePose(pose2d, dwb_critics::getOrientedFootprint(pose2d, footprint_spec)) < 0 ) {
-      return false;
-    }
-  } catch (...) {
-    return false;
-  }
-  return true;
-}
 
 } // namespace teb_local_planner

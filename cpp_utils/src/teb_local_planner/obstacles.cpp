@@ -37,9 +37,8 @@
  *********************************************************************/
 
 #include "teb_local_planner/obstacles.h"
+#include "teb_local_planner/logger.h"
 // #include "teb_local_planner/misc.h"
-#include <rclcpp/logging.hpp>
-#include <rclcpp/logger.hpp>
 
 namespace teb_local_planner
 {
@@ -59,7 +58,7 @@ void PolygonObstacle::calcCentroid()
   if (vertices_.empty())
   {
     centroid_.setConstant(NAN);
-    RCLCPP_WARN(rclcpp::get_logger("teb_local_planner"),
+    LOGGER_WARN("teb_local_planner",
                 "PolygonObstacle::calcCentroid(): number of vertices is empty. the resulting centroid is a vector of NANs.");
     return;
   }
@@ -171,7 +170,7 @@ Eigen::Vector2d PolygonObstacle::getClosestPoint(const Eigen::Vector2d& position
     }
   }
 
-  RCLCPP_WARN(rclcpp::get_logger("teb_local_planner"),
+  LOGGER_WARN("teb_local_planner",
               "PolygonObstacle::getClosestPoint() cannot find any closest point. Polygon ill-defined?");
   return Eigen::Vector2d::Zero(); // todo: maybe boost::optional?
 }
@@ -191,26 +190,6 @@ bool PolygonObstacle::checkLineIntersection(const Eigen::Vector2d& line_start, c
   
   return check_line_segments_intersection_2d(line_start, line_end, vertices_.back(), vertices_.front()); //otherwise close polygon
 }
-
-
-
-// implements toPolygonMsg() of the base class
-void PolygonObstacle::toPolygonMsg(geometry_msgs::msg::Polygon& polygon)
-{
-  polygon.points.resize(vertices_.size());
-  for (std::size_t i=0; i<vertices_.size(); ++i)
-  {
-    polygon.points[i].x = vertices_[i].x();
-    polygon.points[i].y = vertices_[i].y();
-    polygon.points[i].z = 0;
-  }
-}
-
-
-
-
-
-
 
 
 } // namespace teb_local_planner

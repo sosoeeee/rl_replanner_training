@@ -51,8 +51,6 @@
 #include "teb_local_planner/teb_config.h"
 #include "teb_local_planner/misc.h"
 
-#include <rclcpp/logging.hpp>
-
 #include <exception>
 
 namespace teb_local_planner

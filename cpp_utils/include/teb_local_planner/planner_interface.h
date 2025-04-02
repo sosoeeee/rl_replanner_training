@@ -55,10 +55,10 @@
 // this package
 #include <teb_local_planner/pose_se2.h>
 #include <teb_local_planner/robot_footprint_model.h>
-#include "teb_local_planner/pose_se2.h"
+#include <teb_local_planner/logger.h>
 // #include "teb_local_planner/visualization.h"
 
-#include <tf2/transform_datatypes.h>
+// #include <tf2/transform_datatypes.h>
 
 
 namespace teb_local_planner
@@ -95,13 +95,13 @@ public:
    * 
    * Provide this method to create and optimize a trajectory that is initialized
    * according to an initial reference plan (given as a container of poses).
-   * @param initial_plan vector of geometry_msgs::msg::PoseStamped
-   * @param start_vel Current start velocity (e.g. the velocity of the robot, only linear.x and angular.z are used)
+   * @param initial_plan vector of PoseSE2
+   * @param start_vel Current start velocity (e.g. the velocity of the robot, only vx and omega are used)
    * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed,
    *        otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
    */
-  virtual bool plan(const std::vector<geometry_msgs::msg::PoseStamped>& initial_plan, const geometry_msgs::msg::Twist* start_vel = NULL, bool free_goal_vel=false) = 0;
+  virtual bool plan(const std::vector<PoseSE2>& initial_plan, const VelSE2* start_vel = NULL, bool free_goal_vel=false) = 0;
   
   /**
    * @brief Plan a trajectory between a given start and goal pose (tf::Pose version).
@@ -109,13 +109,13 @@ public:
    * Provide this method to create and optimize a trajectory that is initialized between a given start and goal pose.
    * @param start tf::Pose containing the start pose of the trajectory
    * @param goal tf::Pose containing the goal pose of the trajectory
-   * @param start_vel Current start velocity (e.g. the velocity of the robot, only linear.x and angular.z are used)
+   * @param start_vel Current start velocity (e.g. the velocity of the robot, only vx and omega are used)
    * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed,
    *        otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
    */
   // tf2 doesn't have tf2::Pose
-  //virtual bool plan(const tf::Pose& start, const tf::Pose& goal, const geometry_msgs::msg::Twist* start_vel = NULL, bool free_goal_vel=false) = 0;
+  //virtual bool plan(const tf::Pose& start, const tf::Pose& goal, const VelSE2* start_vel = NULL, bool free_goal_vel=false) = 0;
   
   /**
    * @brief Plan a trajectory between a given start and goal pose.
@@ -128,7 +128,7 @@ public:
    *        otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
    */
-  virtual bool plan(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::msg::Twist* start_vel = NULL, bool free_goal_vel=false) = 0;
+  virtual bool plan(const PoseSE2& start, const PoseSE2& goal, const VelSE2* start_vel = NULL, bool free_goal_vel=false) = 0;
   
   /**
    * @brief Get the velocity command from a previously optimized plan to control the robot at the current sampling interval.
@@ -157,36 +157,8 @@ public:
    * Initial means that the penalty is applied only to the first few poses of the trajectory.
    * @param dir This parameter might be RotType::left (prefer left), RotType::right (prefer right) or RotType::none (prefer none)
    */
-  virtual void setPreferredTurningDir(RotType dir) {
-      RCLCPP_WARN(rclcpp::get_logger("teb_local_planner"),
-                  "setPreferredTurningDir() not implemented for this planner.");}
-    
-  /**
-   * @brief Visualize planner specific stuff.
-   * Overwrite this method to provide an interface to perform all planner related visualizations at once.
-   */ 
-  virtual void visualize()
-  {
-  }
-
-  virtual void setVisualization(const TebVisualizationPtr & visualization) = 0;
-
-  /**
-   * @brief Check whether the planned trajectory is feasible or not.
-   * 
-   * This method currently checks only that the trajectory, or a part of the trajectory is collision free.
-   * Obstacles are here represented as costmap instead of the internal ObstacleContainer.
-   * @param costmap_model Pointer to the costmap model
-   * @param footprint_spec The specification of the footprint of the robot in world coordinates
-   * @param inscribed_radius The radius of the inscribed circle of the robot
-   * @param circumscribed_radius The radius of the circumscribed circle of the robot
-   * @param look_ahead_idx Number of poses along the trajectory that should be verified, if -1, the complete trajectory will be checked.
-   * @return \c true, if the robot footprint along the first part of the trajectory intersects with 
-   *         any obstacle in the costmap, \c false otherwise.
-   */
-  virtual bool isTrajectoryFeasible(dwb_critics::ObstacleFootprintCritic* costmap_model, const std::vector<geometry_msgs::msg::Point>& footprint_spec,
-        double inscribed_radius = 0.0, double circumscribed_radius=0.0, int look_ahead_idx=-1, double feasibility_check_lookahead_distance=-1.0) = 0;
-    
+  virtual void setPreferredTurningDir(RotType dir) {LOGGER_WARN("setPreferredTurningDir() not implemented for this planner.");}
+   
   /**
    * Compute and return the cost of the current optimization graph (supports multiple trajectories)
    * @param[out] cost current cost value for each trajectory
@@ -198,12 +170,11 @@ public:
   {
   }
   
-    /**
+  /**
    * @brief Returns true if the planner has diverged.
    */
   virtual bool hasDiverged() const = 0;
 
-  nav2_util::LifecycleNode::SharedPtr node_{nullptr};
 };
 
 //! Abbrev. for shared instances of PlannerInterface or it's subclasses 

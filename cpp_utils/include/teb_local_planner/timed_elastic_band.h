@@ -40,18 +40,12 @@
 #define TIMED_ELASTIC_BAND_H_
 #include <boost/optional.hpp>
 
-#include <rclcpp/rclcpp.hpp>
-
-#include <geometry_msgs/msg/pose2_d.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/pose_array.hpp>
-#include <tf2/buffer_core.h>
-
 #include <cassert>
 #include <complex>
 #include <iterator>
 
 #include "teb_local_planner/obstacles.h"
+#include "teb_local_planner/logger.h"
 
 // G2O Types
 #include "teb_local_planner/g2o_types/vertex_pose.h"
@@ -417,7 +411,7 @@ public:
    * (e.g. as local plan from the ros navigation stack). \n
    * The initial time difference between two consecutive poses can be uniformly set
    * via the argument \c dt.
-   * @param plan vector of geometry_msgs::msg::PoseStamped
+   * @param plan vector of PoseSE2
    * @param max_vel_x maximum translational velocity used for determining time differences
    * @param max_vel_theta maximum rotational velocity used for determining time differences
    * @param estimate_orient if \c true, calculate orientation using the straight line distance vector between consecutive poses
@@ -426,7 +420,7 @@ public:
    * @param guess_backwards_motion Allow the initialization of backwards oriented trajectories if the goal heading is pointing behind the robot (this parameter is used only if \c estimate_orient is enabled.
    * @return true if everything was fine, false otherwise
    */
-  bool initTrajectoryToGoal(const std::vector<geometry_msgs::msg::PoseStamped>& plan, double max_vel_x, double max_vel_theta, bool estimate_orient=false, int min_samples = 3, bool guess_backwards_motion = false);
+  bool initTrajectoryToGoal(const std::vector<PoseSE2>& plan, double max_vel_x, double max_vel_theta, bool estimate_orient=false, int min_samples = 3, bool guess_backwards_motion = false);
   
   //@}
   
