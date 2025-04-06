@@ -157,7 +157,7 @@ public:
    * Initial means that the penalty is applied only to the first few poses of the trajectory.
    * @param dir This parameter might be RotType::left (prefer left), RotType::right (prefer right) or RotType::none (prefer none)
    */
-  virtual void setPreferredTurningDir(RotType dir) {LOGGER_WARN("setPreferredTurningDir() not implemented for this planner.");}
+  virtual void setPreferredTurningDir(RotType dir) {LOGGER_WARN("PlannerInterface", "setPreferredTurningDir() not implemented for this planner.");}
    
   /**
    * Compute and return the cost of the current optimization graph (supports multiple trajectories)

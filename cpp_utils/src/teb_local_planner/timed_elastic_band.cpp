@@ -410,7 +410,8 @@ bool TimedElasticBand::initTrajectoryToGoal(const std::vector<PoseSE2>& plan, do
         }
         else
         {
-            yaw = tf2::getYaw(plan[i].orientation);
+            // yaw = tf2::getYaw(plan[i].orientation);
+            yaw = plan[i].theta();
         }
         PoseSE2 intermediate_pose(plan[i].x(), plan[i].y(), yaw);
         double dt = estimateDeltaT(BackPose(), intermediate_pose, max_vel_x, max_vel_theta);

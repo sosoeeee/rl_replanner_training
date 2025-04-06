@@ -148,7 +148,7 @@ public:
    * 	  see bool TimedElasticBand::updateAndPruneTEB
    * 	- Afterwards optimize the recently initialized or updated trajectory by calling optimizeTEB() and invoking g2o
    * @param initial_plan vector of PoseSE2
-   * @param start_vel Current start velocity (e.g. the velocity of the robot, only linear.x, linear.y (holonomic) and angular.z are used)
+   * @param start_vel Current start velocity (e.g. the velocity of the robot, only vx, vy (holonomic) and omega are used)
    * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed,
    *		      otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
@@ -166,7 +166,7 @@ public:
    * 	- Afterwards optimize the recently initialized or updated trajectory by calling optimizeTEB() and invoking g2o
    * @param start tf::Pose containing the start pose of the trajectory
    * @param goal tf::Pose containing the goal pose of the trajectory
-   * @param start_vel Current start velocity (e.g. the velocity of the robot, only linear.x, linear.y (holonomic) and angular.z are used)
+   * @param start_vel Current start velocity (e.g. the velocity of the robot, only vx, vy (holonomic) and omega are used)
    * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed,
    *		      otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
@@ -244,8 +244,8 @@ public:
   /**
    * @brief Set the initial velocity at the trajectory's start pose (e.g. the robot's velocity) [twist overload].
    * @remarks Calling this function is not neccessary if the initial velocity is passed via the plan() method
-   * @param vel_start Current start velocity (e.g. the velocity of the robot, only linear.x and angular.z are used,
-   *                  for holonomic robots also linear.y)
+   * @param vel_start Current start velocity (e.g. the velocity of the robot, only vx and omega are used,
+   *                  for holonomic robots also vy)
    */
   void setVelocityStart(const VelSE2& vel_start);
   

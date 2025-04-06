@@ -42,12 +42,9 @@
 #include <filesystem>
 #include "teb_local_planner/logger.h" 
 
-using nav2_util::declare_parameter_if_not_declared;
-
 namespace teb_local_planner
 {
 
-// 添加辅助函数模板实现
 template <typename T>
 T TebConfig::getYamlValue(const YAML::Node& node, const std::string& key, const T& default_value) const 
 {

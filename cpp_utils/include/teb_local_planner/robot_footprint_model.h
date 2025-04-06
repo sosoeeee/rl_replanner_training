@@ -317,16 +317,6 @@ class LineRobotFootprint : public BaseRobotFootprintModel
 public:
   
   /**
-    * @brief Default constructor of the abstract obstacle class
-    * @param line_start start coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
-    * @param line_end end coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
-    */
-  LineRobotFootprint(const geometry_msgs::msg::Point& line_start, const geometry_msgs::msg::Point& line_end)
-  {
-    setLine(line_start, line_end);
-  }
-  
-  /**
   * @brief Default constructor of the abstract obstacle class (Eigen Version)
   * @param line_start start coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
   * @param line_end end coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
@@ -341,18 +331,6 @@ public:
    */
   virtual ~LineRobotFootprint() { }
 
-  /**
-   * @brief Set vertices of the contour/footprint
-   * @param vertices footprint vertices (only x and y) around the robot center (0,0) (do not repeat the first and last vertex at the end)
-   */
-  void setLine(const geometry_msgs::msg::Point& line_start, const geometry_msgs::msg::Point& line_end)
-  {
-    line_start_.x() = line_start.x; 
-    line_start_.y() = line_start.y; 
-    line_end_.x() = line_end.x;
-    line_end_.y() = line_end.y;
-  }
-  
   /**
    * @brief Set vertices of the contour/footprint (Eigen version)
    * @param vertices footprint vertices (only x and y) around the robot center (0,0) (do not repeat the first and last vertex at the end)

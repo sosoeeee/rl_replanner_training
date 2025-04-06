@@ -45,6 +45,11 @@
 #include <Eigen/Geometry>
 
 #include <complex>
+#include <memory>
+
+// #include <geometry_msgs/msg/polygon.hpp>
+// #include <geometry_msgs/msg/twist_with_covariance.hpp>
+// #include <geometry_msgs/msg/quaternion_stamped.hpp>
 
 #include "teb_local_planner/distance_calculations.h"
 
@@ -144,6 +149,72 @@ public:
 
   //@}
 
+
+
+  /** @name Velocity related methods for non-static, moving obstacles */
+  //@{ 
+
+  /**
+    * @brief Get the estimated minimum spatiotemporal distance to the moving obstacle using a constant velocity model (point as reference)
+    * @param position 2d reference position
+    * @param t time, for which the minimum distance to the obstacle is estimated
+    * @return The nearest possible distance to the obstacle at time t
+    */
+  virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const = 0;
+
+  /**
+    * @brief Get the estimated minimum spatiotemporal distance to the moving obstacle using a constant velocity model (line as reference)
+    * @param line_start 2d position of the begin of the reference line
+    * @param line_end 2d position of the end of the reference line
+    * @param t time, for which the minimum distance to the obstacle is estimated
+    * @return The nearest possible distance to the obstacle at time t
+    */
+  virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const = 0;
+
+  /**
+    * @brief Get the estimated minimum spatiotemporal distance to the moving obstacle using a constant velocity model (polygon as reference)
+    * @param polygon Vertices (2D points) describing a closed polygon
+    * @param t time, for which the minimum distance to the obstacle is estimated
+    * @return The nearest possible distance to the obstacle at time t
+    */
+  virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const = 0;
+
+  /**
+    * @brief Predict position of the centroid assuming a constant velocity model
+    * @param[in]  t         time in seconds for the prediction (t>=0)
+    * @param[out] position  predicted 2d position of the centroid
+    */
+  virtual void predictCentroidConstantVelocity(double t, Eigen::Ref<Eigen::Vector2d> position) const
+  {
+    position = getCentroid() + t * getCentroidVelocity();
+  }
+
+  /**
+    * @brief Check if the obstacle is a moving with a (non-zero) velocity
+    * @return \c true if the obstacle is not marked as static, \c false otherwise
+    */	
+  bool isDynamic() const {return dynamic_;}
+
+  /**
+    * @brief Set the 2d velocity (vx, vy) of the obstacle w.r.t to the centroid
+    * @remarks Setting the velocity using this function marks the obstacle as dynamic (@see isDynamic)
+    * @param vel 2D vector containing the velocities of the centroid in x and y directions
+    */
+  void setCentroidVelocity(const Eigen::Ref<const Eigen::Vector2d>& vel) {centroid_velocity_ = vel; dynamic_=true;} 
+
+  /**
+    * @brief Get the obstacle velocity (vx, vy) (w.r.t. to the centroid)
+    * @returns 2D vector containing the velocities of the centroid in x and y directions
+    */
+  const Eigen::Vector2d& getCentroidVelocity() const {return centroid_velocity_;}
+
+  //@}
+	
+protected:
+	   
+  bool dynamic_; //!< Store flag if obstacle is dynamic (resp. a moving obstacle)
+  Eigen::Vector2d centroid_velocity_; //!< Store the corresponding velocity (vx, vy) of the centroid (zero, if _dynamic is \c true)
+  
 public:	
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
@@ -281,7 +352,7 @@ public:
   const double& x() const {return pos_.coeffRef(0);} //!< Return the current y-coordinate of the obstacle (read-only)
   double& y() {return pos_.coeffRef(1);} //!< Return the current x-coordinate of the obstacle
   const double& y() const {return pos_.coeffRef(1);} //!< Return the current y-coordinate of the obstacle (read-only)
-        
+      
 protected:
   
   Eigen::Vector2d pos_; //!< Store the position of the PointObstacle
@@ -438,7 +509,7 @@ class LineObstacle : public Obstacle
 {
 public:
   //! Abbrev. for a container storing vertices (2d points defining the edge points of the polygon)
-  typedef std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> > VertexContainer;
+  typedef std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > VertexContainer;
   
   /**
     * @brief Default constructor of the point obstacle class
@@ -483,7 +554,7 @@ public:
     return getMinimumDistance(point) <= min_dist;
   }
   
-  // implements () of the base class
+  // implements checkLineIntersection() of the base class
   virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const 
   {
     return check_line_segments_intersection_2d(line_start, line_end, start_, end_);

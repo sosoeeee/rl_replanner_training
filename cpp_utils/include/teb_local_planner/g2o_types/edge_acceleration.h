@@ -318,7 +318,7 @@ public:
         dist = fabs( angle_diff * radius ); // actual arg length!
     }
     
-    const double vel1 = _measurement->linear.x;
+    const double vel1 = _measurement->vx;
     double vel2 = dist / dt->dt();
 
     // consider directions
@@ -330,7 +330,7 @@ public:
     _error[0] = penaltyBoundToInterval(acc_lin,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
     
     // ANGULAR ACCELERATION
-    const double omega1 = _measurement->angular.z;
+    const double omega1 = _measurement->omega;
     const double omega2 = angle_diff / dt->dt();
     const double acc_rot  = (omega2 - omega1) / dt->dt();
       
@@ -411,7 +411,7 @@ public:
     }
     
     double vel1 = dist / dt->dt();
-    const double vel2 = _measurement->linear.x;
+    const double vel2 = _measurement->vx;
     
     // consider directions
     //vel1 *= g2o::sign(diff[0]*cos(pose_pre_goal->theta()) + diff[1]*sin(pose_pre_goal->theta())); 
@@ -423,7 +423,7 @@ public:
     
     // ANGULAR ACCELERATION
     const double omega1 = angle_diff / dt->dt();
-    const double omega2 = _measurement->angular.z;
+    const double omega2 = _measurement->omega;
     const double acc_rot  = (omega2 - omega1) / dt->dt();
       
     _error[1] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
@@ -592,8 +592,8 @@ public:
     double p1_dx =  cos_theta1*diff.x() + sin_theta1*diff.y();
     double p1_dy = -sin_theta1*diff.x() + cos_theta1*diff.y();
     
-    double vel1_x = _measurement->linear.x;
-    double vel1_y = _measurement->linear.y;
+    double vel1_x = _measurement->vx;
+    double vel1_y = _measurement->vy;
     double vel2_x = p1_dx / dt->dt();
     double vel2_y = p1_dy / dt->dt();
 
@@ -604,7 +604,7 @@ public:
     _error[1] = penaltyBoundToInterval(acc_lin_y,cfg_->robot.acc_lim_y,cfg_->optim.penalty_epsilon);
     
     // ANGULAR ACCELERATION
-    double omega1 = _measurement->angular.z;
+    double omega1 = _measurement->omega;
     double omega2 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt->dt();
     double acc_rot  = (omega2 - omega1) / dt->dt();
       
@@ -686,8 +686,8 @@ public:
    
     double vel1_x = p1_dx / dt->dt();
     double vel1_y = p1_dy / dt->dt();
-    double vel2_x = _measurement->linear.x;
-    double vel2_y = _measurement->linear.y;
+    double vel2_x = _measurement->vx;
+    double vel2_y = _measurement->vy;
     
     double acc_lin_x  = (vel2_x - vel1_x) / dt->dt();
     double acc_lin_y  = (vel2_y - vel1_y) / dt->dt();
@@ -697,7 +697,7 @@ public:
     
     // ANGULAR ACCELERATION
     double omega1 = g2o::normalize_theta(pose_goal->theta() - pose_pre_goal->theta()) / dt->dt();
-    double omega2 = _measurement->angular.z;
+    double omega2 = _measurement->omega;
     double acc_rot  = (omega2 - omega1) / dt->dt();
       
     _error[2] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);

@@ -232,8 +232,8 @@ bool TebOptimalPlanner::plan(const std::vector<PoseSE2>& initial_plan, const Vel
   }
   else // warm start
   {
-    PoseSE2 start_(initial_plan.front().pose);
-    PoseSE2 goal_(initial_plan.back().pose);
+    PoseSE2 start_(initial_plan.front());
+    PoseSE2 goal_(initial_plan.back());
     if (teb_.sizePoses()>0
         && (goal_.position() - teb_.BackPose().position()).norm() < cfg_->trajectory.force_reinit_new_goal_dist
         && fabs(g2o::normalize_theta(goal_.theta() - teb_.BackPose().theta())) < cfg_->trajectory.force_reinit_new_goal_angular) // actual warm start!
@@ -400,7 +400,7 @@ void TebOptimalPlanner::clearGraph()
 void TebOptimalPlanner::AddTEBVertices()
 {
   // add vertices to graph
-  LOGGER_DEBUG_EXPRESSION(node_->get_logger(), cfg_->optim.optimization_verbose, "Adding TEB vertices ...");
+  LOGGER_DEBUG_EXPRESSION("teb_local_planner", cfg_->optim.optimization_verbose, "Adding TEB vertices ...");
   unsigned int id_counter = 0; // used for vertices ids
   obstacles_per_vertex_.resize(teb_.sizePoses());
   auto iter_obstacle = obstacles_per_vertex_.begin();
@@ -1191,7 +1191,7 @@ void TebOptimalPlanner::getFullTrajectory(std::vector<TrajectoryPointMsg>& traje
   for (int i=1; i < n-1; ++i)
   {
     TrajectoryPointMsg& point = trajectory[i];
-    point.pose = teb_.Pose(i)
+    point.pose = teb_.Pose(i);
     double vel1_x, vel1_y, vel2_x, vel2_y, omega1, omega2;
     extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), vel1_x, vel1_y, omega1);
     extractVelocity(teb_.Pose(i), teb_.Pose(i+1), teb_.TimeDiff(i), vel2_x, vel2_y, omega2);

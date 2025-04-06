@@ -22,8 +22,8 @@ enum LogLevel {
 
 class Logger {
 private:
-    static std::mutex log_mutex_;
-    static LogLevel global_level_;
+    static inline std::mutex log_mutex_;
+    static inline LogLevel global_level_ = INFO;  // Inline definition
 
     static std::string get_current_time() {
         auto now = std::chrono::system_clock::now();
@@ -79,15 +79,19 @@ public:
         std::lock_guard<std::mutex> lock(log_mutex_);
         
         char buffer[1024];
-        snprintf(buffer, sizeof(buffer), msg.c_str(), args...);
+        if constexpr (sizeof...(args) > 0) {
+            // Use snprintf if there are additional arguments
+            snprintf(buffer, sizeof(buffer), msg.c_str(), args...);
+        } else {
+            // Directly copy the message if there are no additional arguments
+            strncpy(buffer, msg.c_str(), sizeof(buffer) - 1);
+            buffer[sizeof(buffer) - 1] = '\0'; // Ensure null termination
+        }
         
         std::cout << "[" << get_current_time() << "] [" << level_str << "] [" << name << "]: " 
                   << buffer << std::endl;
     }
 };
-
-std::mutex Logger::log_mutex_;
-LogLevel Logger::global_level_ = INFO;
 
 #define LOGGER_DEBUG(name, ...) teb_local_planner::Logger::debug(name, __VA_ARGS__)
 #define LOGGER_INFO(name, ...) teb_local_planner::Logger::info(name, __VA_ARGS__)

@@ -10,17 +10,16 @@ find_package(GRAPHICSMAGICKCPP REQUIRED)
 find_package(SUITESPARSE REQUIRED)
 find_package(G2O REQUIRED)
 find_package(Boost REQUIRED)
-# Eigen3 FindScript Backward compatibility (ubuntu saucy)
-# Since FindEigen.cmake is deprecated starting from jade.
-if (EXISTS "FindEigen3.cmake")
-  find_package(Eigen3 REQUIRED)
-  set(Eigen_INCLUDE_DIRS ${Eigen3_INCLUDE_DIRS})
-elseif (EXISTS "FindEigen.cmake")
-  find_package(Eigen REQUIRED)
-elseif (EXISTS "FindEigen.cmake")
-  message(WARNING "No findEigen cmake script found. You must provde one of them,
-  e.g. by adding it to ${PROJECT_SOURCE_DIR}/cmake_modules.")
-endif (EXISTS "FindEigen3.cmake")
+
+# Find Eigen3
+find_package(Eigen3 REQUIRED)
+if (Eigen3_FOUND)
+  set(Eigen_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+  message(STATUS "Found Eigen3: ${Eigen_INCLUDE_DIRS}")
+else()
+  message(FATAL_ERROR "Eigen3 not found. Please install Eigen3.")
+endif()
+
 set(TEB_EXTERNAL_INCLUDE_DIRS ${Eigen_INCLUDE_DIRS} ${SUITESPARSE_INCLUDE_DIRS} ${G2O_INCLUDE_DIR})
 set(TEB_EXTERNAL_LIBS ${Boost_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES})
 
@@ -44,10 +43,10 @@ add_library(${path_library_name} SHARED
 set(teb_local_planner_name teb_local_planner)
 
 add_library(${teb_local_planner_name} SHARED
-   src/timed_elastic_band.cpp
-   src/optimal_planner.cpp
-   src/obstacles.cpp
-   src/teb_config.cpp
+   src/${teb_local_planner_name}/timed_elastic_band.cpp
+   src/${teb_local_planner_name}/optimal_planner.cpp
+   src/${teb_local_planner_name}/obstacles.cpp
+   src/${teb_local_planner_name}/teb_config.cpp
 )
 
 # include_directories / target_include_directories

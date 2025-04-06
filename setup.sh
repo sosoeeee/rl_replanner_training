@@ -12,6 +12,17 @@ cd ./extern/pybind11 \
     && cmake .. \
     && sudo make install
 
+# build g2o with branch "20230806_git"
+cd ./extern/g2o \
+    && mkdir build \
+    && cd build \
+    && cmake .. \
+    && sudo make install
+
+# install Eigen3
+sudo apt update && sudo apt upgrade -y
+sudo apt install libeigen3-dev
+
 # build c++ library
 cd ./cpp_utils \
     && mkdir build \

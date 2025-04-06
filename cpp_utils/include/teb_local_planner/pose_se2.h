@@ -372,6 +372,25 @@ public:
 };
 
 
+// vel_se2 data structure in C++
+struct VelSE2
+{
+  double vx; // translational velocity [m/s]
+  double vy; // strafing velocity [m/s] 
+  double omega; // rotational velocity [rad/s]
+};
+
+// TrajectoryPointMsg is a message type that contains the trajectory point information
+// (pose, velocity, acceleration, time_from_start). It is used to represent a point in the trajectory.
+// define it using c++ package
+struct TrajectoryPointMsg
+{
+  PoseSE2 pose; // pose of the trajectory point
+  VelSE2 velocity; // velocity of the trajectory point
+  VelSE2 acceleration; // acceleration of the trajectory point
+  double time_from_start; // time from the start of the trajectory to this point
+};
+
 } // namespace teb_local_planner
 
 #endif // POSE_SE2_H_
