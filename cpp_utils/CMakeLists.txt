@@ -41,11 +41,17 @@ set(map_voronoi_name map_voronoi)
 
 # 添加共享库
 add_library(${map_voronoi_name} SHARED
-    src/${map_voronoi_name}/mapvoronoi.cpp
+    src/${map_voronoi_name}/voronoi.cpp
+    src/${map_voronoi_name}/voronoinode.cpp
+    src/${map_voronoi_name}/voronoigraph.cpp
     include/map_voronoi/bucketedqueue.h
     include/map_voronoi/bucketedqueue.hxx
-    include/map_voronoi/mapvoronoi.h
+    include/map_voronoi/voronoi.h
     include/map_voronoi/point.h
+    include/map_voronoi/voronoinode.h
+    include/map_voronoi/voronoigraph.h
+    include/map_loader/map_io.hpp
+    include/map_loader/costmap_2d.hpp
 )
 #add_exe
 # 设置可执行文件的名称

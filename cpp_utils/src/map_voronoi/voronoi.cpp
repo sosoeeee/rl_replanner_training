@@ -1,8 +1,8 @@
-#include "map_voronoi/mapvoronoi.h"
+#include "map_voronoi/voronoi.h"
 #include <math.h>
 #include <iostream>
 
-MapVoronoi::MapVoronoi() {
+Voronoi::Voronoi() {
   sqrt2_ = sqrt(2.0);
   data_ = NULL;
   gridMap_ = NULL;
@@ -10,7 +10,7 @@ MapVoronoi::MapVoronoi() {
   allocatedGridMap_ = false;
 }
 
-MapVoronoi::~MapVoronoi() {
+Voronoi::~Voronoi() {
   if (data_) {
     for (int x=0; x<sizeX_; x++) delete[] data_[x];
     delete[] data_;
@@ -21,7 +21,7 @@ MapVoronoi::~MapVoronoi() {
   }
 }
 
-void MapVoronoi::initializeEmpty(int _sizeX, int _sizeY, bool initGridMap) {
+void Voronoi::initializeEmpty(int _sizeX, int _sizeY, bool initGridMap) {
   //先清空历史数据
   if (data_) {
     for (int x=0; x<sizeX_; x++) delete[] data_[x];
@@ -74,7 +74,7 @@ void MapVoronoi::initializeEmpty(int _sizeX, int _sizeY, bool initGridMap) {
 }
 
 //输入二值地图gridmap，根据元素是否被占用，更新data_
-void MapVoronoi::initializeMap(int _sizeX, int _sizeY, bool** _gridMap) {
+void Voronoi::initializeMap(int _sizeX, int _sizeY, bool** _gridMap) {
   gridMap_ = _gridMap;
   initializeEmpty(_sizeX, _sizeY, false);
 
@@ -116,7 +116,7 @@ void MapVoronoi::initializeMap(int _sizeX, int _sizeY, bool** _gridMap) {
 }
 
 //只更新data_
-void MapVoronoi::setObstacle(int x, int y) {
+void Voronoi::setObstacle(int x, int y) {
   dataCell c = data_[x][y];
   if(isOccupied(x,y,c)) {               //如果data_中的(x,y)被占用
     return;
@@ -129,7 +129,7 @@ void MapVoronoi::setObstacle(int x, int y) {
 }
 
 //只更新data_
-void MapVoronoi::removeObstacle(int x, int y) {
+void Voronoi::removeObstacle(int x, int y) {
   dataCell c = data_[x][y];
   if(isOccupied(x,y,c) == false) {      //如果data_中的(x,y)没有被占用，无需处理
     return;
@@ -142,7 +142,7 @@ void MapVoronoi::removeObstacle(int x, int y) {
   data_[x][y] = c;
 }
 
-void MapVoronoi::update(bool updateRealDist) {
+void Voronoi::update(bool updateRealDist) {
   //将发生状态变化（占用<-->不占用）的元素加入open_优先队列
   commitAndColorize(updateRealDist);
 
@@ -241,25 +241,25 @@ void MapVoronoi::update(bool updateRealDist) {
   }
 }
 
-float MapVoronoi::getDistance( int x, int y ) {
+float Voronoi::getDistance( int x, int y ) {
   if( (x>0) && (x<sizeX_) && (y>0) && (y<sizeY_)) {
     return data_[x][y].dist;
   }
   else return -INFINITY;
 }
 
-bool MapVoronoi::isVoronoi( int x, int y ) {
+bool Voronoi::isVoronoi( int x, int y ) {
   dataCell c = data_[x][y];
   return (c.voronoi == free || c.voronoi == voronoiKeep);
 }
 
-bool MapVoronoi::isVoronoiAlternative(int x, int y) {
+bool Voronoi::isVoronoiAlternative(int x, int y) {
   int v = alternativeDiagram_[x][y];
   return (v == free || v == voronoiKeep);
 }
 
 //将发生状态变化（占用<-->不占用）的元素加入open_优先队列
-void MapVoronoi::commitAndColorize(bool updateRealDist) {
+void Voronoi::commitAndColorize(bool updateRealDist) {
   //addList_和removeList_中是触发Voronoi更新的元素，因此都要加入open_
   // ADD NEW OBSTACLES
   //addList_中都是障碍物边界点
@@ -309,7 +309,7 @@ void MapVoronoi::commitAndColorize(bool updateRealDist) {
 }
 
 
-void MapVoronoi::checkVoro(int x, int y, int nx, int ny, dataCell& c, dataCell& nc) {
+void Voronoi::checkVoro(int x, int y, int nx, int ny, dataCell& c, dataCell& nc) {
   if ((c.sqdist>1 || nc.sqdist>1) && nc.obstX!=invalidObstData) {
     if (abs(c.obstX-nc.obstX) > 1 || abs(c.obstY-nc.obstY) > 1) {
       //compute dist from x,y to obstacle of nx,ny
@@ -346,7 +346,7 @@ void MapVoronoi::checkVoro(int x, int y, int nx, int ny, dataCell& c, dataCell& 
 }
 
 
-void MapVoronoi::reviveVoroNeighbors(int &x, int &y) {
+void Voronoi::reviveVoroNeighbors(int &x, int &y) {
   for (int dx=-1; dx<=1; dx++) {
     int nx = x+dx;
     if (nx<=0 || nx>=sizeX_-1) continue;
@@ -365,27 +365,18 @@ void MapVoronoi::reviveVoroNeighbors(int &x, int &y) {
 }
 
 
-bool MapVoronoi::isOccupied(int x, int y) {
+bool Voronoi::isOccupied(int x, int y) {
   dataCell c = data_[x][y];
   return (c.obstX==x && c.obstY==y);
 }
 
-bool MapVoronoi::isOccupied(int &x, int &y, dataCell &c) {
+bool Voronoi::isOccupied(int &x, int &y, dataCell &c) {
   return (c.obstX==x && c.obstY==y);
 }
 
-void MapVoronoi::iscenter(){
-  //初始化centers_
-  centers_ = new int*[sizeX_];
-  for(int x=0; x<sizeX_; x++){
-    centers_[x] = new int[sizeY_];
-  }
-  for(int x=0; x<sizeX_; x++){
-    for(int y=0; y<sizeY_; y++){
-      centers_[x][y] = 0;
-    }
-  }
 
+// deal the wrong voronoi edges
+void Voronoi::mergeVoronoi(){
   for(int y = sizeY_-1; y >=0; y--){
     for(int x = 0; x<sizeX_; x++){
       if (alternativeDiagram_!=NULL && (alternativeDiagram_[x][y] == free || alternativeDiagram_[x][y]==voronoiKeep))
@@ -396,334 +387,29 @@ void MapVoronoi::iscenter(){
             if (alternativeDiagram_[x+nx][y+ny] != free && alternativeDiagram_[x+nx][y+ny]!=voronoiKeep) continue;
             if (alternativeDiagram_[x][y+ny] != free && alternativeDiagram_[x][y+ny]!=voronoiKeep) continue;
             if (alternativeDiagram_[x+nx][y] != free && alternativeDiagram_[x+nx][y]!=voronoiKeep) continue;
-            centers_[x+nx][y] = -1; //将其排除在外
-            centers_[x][y] = -1;
-            centers_[x][y+ny] = -1;
-            centers_[x+nx][y+ny] = -1;
-          }
-        }
-      }
-    }
-  }
-
-  //按照原来的逻辑处理centers_
-  for(int y = sizeY_-1; y >=0; y--){
-    for(int x = 0; x<sizeX_; x++){
-      if (alternativeDiagram_!=NULL && (alternativeDiagram_[x][y] == free || alternativeDiagram_[x][y]==voronoiKeep)&&centers_[x][y]!=-1) {
-        int num=0;
-        for(int nx=-1; nx<=1; nx++){
-          for(int ny=-1; ny<=1; ny++){
-            if (nx==0 && ny==0) continue;
-            if(nx*ny==-1||nx*ny==1) continue;
-            if (x+nx<0 || x+nx>=sizeX_ || y+ny<0 || y+ny>=sizeY_) continue;
-            if ((alternativeDiagram_[x+nx][y+ny] == free || alternativeDiagram_[x+nx][y+ny]==voronoiKeep)&&centers_[x+nx][y+ny]!=-1) {
-              num++;
+            int num=0;
+            for(int dx=-1; dx<=1; dx++){
+              for(int dy=-1; dy<=1; dy++){
+                if (x+dx<0 || x+dx>=sizeX_ || y+dy<0 || y+dy>=sizeY_) continue;
+                if (dx==0 && dy==0) continue;
+                if (dx*dy==-1||dx*dy==1) continue;
+                if(alternativeDiagram_[x+dx][y+dy] == free || alternativeDiagram_[x+dx][y+dy]==voronoiKeep){
+                  num++;
+                }
+              }
+            }
+            if(num<=2){
+              alternativeDiagram_[x][y] = cut;
             }
           }
         }
-        if(num>=3){
-          centers_[x][y] = 1;
-          continue;
-        }
       }
     }
   }
-  // //枝减
-  // for(int y = sizeY_-1; y >=0; y--){
-  //   for(int x = 0; x<sizeX_; x++){
-  //     if(centers_[x][y]==1){
-  //       int num=0;
-  //       for(int nx=-1; nx<=1; nx++){
-  //         for(int ny=-1; ny<=1; ny++){
-  //           if (x+nx<0 || x+nx>=sizeX_ || y+ny<0 || y+ny>=sizeY_) continue;
-  //           if (nx==0&&ny==0) continue;
-  //           if (centers_[x+nx][y+ny]!=1) continue;
-  //           num++;
-  //         }
-  //       }
-  //       if(num>=1){
-  //         centers_[x][y] = 0;
-  //       }
-  //     }
-  //   }
-  // }
-
-}
-
-//计算中心点的个数
-int MapVoronoi::getCenterNum(){
-  int num=0;
-  for(int y = sizeY_-1; y >=0; y--){
-    for(int x = 0; x<sizeX_; x++){
-      if(centers_[x][y]==1){
-        num++;
-      }
-    }
-  }
-  return num;
-}
-
-//存储中心点集合
-void MapVoronoi::getCenters(){
-  int num = getCenterNum();
-
-  //TEST
-  int test_num=num;
-  //TEST
-  
-  centers = new Center[num];
-  num--; //从后往前存储
-  for(int y = sizeY_-1; y >=0; y--){
-    for(int x = 0; x<sizeX_; x++){
-      if(centers_[x][y]==1){
-        Point p;
-        p.x = x;
-        p.y = y;
-        centers[num].point=p;
-        centers[num].flag=false;
-        centers[num].id=num;  //初始化时为每个节点确定唯一标识id
-        num--;
-        if(num==-1) break;
-      }
-    }
-  }
-  //TEST
-  for(int i=0;i<test_num;i++)
-  {
-    int x=centers[i].point.x;
-    int y=centers[i].point.y;
-    std::cout<<x<<" "<<y<<std::endl;
-  }
-  //TEST
-}
-
-// void MapVoronoi::MergeCenter(){
-//   int center_size = getCenterNum();
-//   int new_size = center_size;
-//   // center* cut_centers = new center[center_size];
-//   for(int i=0;i<center_size-1;i++){
-//     if(abs(centers[i].point.x-centers[i+1].point.x+centers[i].point.y-centers[i+1].point.y)<2){  //只有相邻点有重复性
-//       // 合并邻居节点
-//       centers[i].neighbors.insert(centers[i].neighbors.end(), centers[i+1].neighbors.begin(), centers[i+1].neighbors.end());
-//       int size = centers[i].neighbors.size();
-//       for(int j=0;j<size;j++){
-//         if(centers[i].neighbors[j]==i){
-//           centers[i].neighbors.erase(centers[i].neighbors.begin()+j);
-//           break;
-//         }
-//       }
-//       size = centers[i].neighbors.size();
-//       for(int j=0;j<size;j++){
-//         if(centers[i].neighbors[j]==i+1){
-//           centers[i].neighbors.erase(centers[i].neighbors.begin()+j);
-//           break;
-//         }
-//       }
-//       std::vector<int> new_neighbors;
-//       for(int j=0;j<center_size;j++){
-//         if(std::find(centers[i].neighbors.begin(), centers[i].neighbors.end(), j) != centers[i].neighbors.end()){
-//           new_neighbors.push_back(j);
-//         }
-//       }
-//       centers[i].neighbors = new_neighbors;
-//       // 合并路径
-//       centers[i].path.insert(centers[i].path.end(), centers[i+1].path.begin(), centers[i+1].path.end());
-//       centers[i+1].flag = true; // 标记后一个中心点为已访问
-//       new_size--;
-//     }
-//   }
-//   Center* cut_centers = new Center[new_size];
-//   int cut_num = 0;
-//   for(int i=0;i<center_size;i++){
-//     if(centers[i].flag==false){
-//       cut_centers[cut_num].point = centers[i].point;
-//       cut_centers[cut_num].neighbors = centers[i].neighbors;
-//       cut_centers[cut_num].path = centers[i].path;
-//       cut_centers[cut_num].flag = centers[i].flag;
-//       cut_centers[cut_num].id = centers[i].id;
-//       cut_num++;
-//     }
-//   }
-//   // for(int i=0;i<new_size;i++){
-//   //   int 
-//   // }
-//   //释放原有内存
-//   delete[] centers;
-//   centers = cut_centers;
-// }
-
-void MapVoronoi::fakeMerge(){
-  int center_size = getCenterNum();
-  // center* cut_centers = new center[center_size];
-  for(int i=0;i<center_size-1;i++){
-    if(abs(centers[i].point.x-centers[i+1].point.x+centers[i].point.y-centers[i+1].point.y)<2){  //只有相邻点有重复性
-      centers[i].friend_id=i+1;
-      centers[i+1].friend_id=i;
-    }
-  }
 }
 
 
-
-void MapVoronoi::pathFind(){
-  int num = getCenterNum();
-  for(int i=0;i<num;i++)
-  {
-    bool** map_flag=new bool*[sizeX_];
-    for(int x=0;x<sizeX_;x++){
-      map_flag[x]=new bool[sizeY_];
-    }
-    for(int x=0;x<sizeX_;x++){
-      for(int y=0;y<sizeY_;y++){
-        map_flag[x][y]=false;
-      }
-    }
-    while(true){
-      Path center_path;
-      Point start = centers[i].point;
-      center_path.path.push_back(start);
-      Point end;
-      end.x = start.x;
-      end.y = start.y;
-      bool flag = false;
-
-      // for(int nx=-1;nx<=1;nx++){
-      //   for(int ny=-1;ny<=1;ny++){
-      //     map_flag[end.x+nx][end.y+ny]=false;
-      //   }
-      // }
-      map_flag[end.x][end.y]=true;
-      
-      while(true){
-        if(end.x+1<sizeX_ && map_flag[end.x+1][end.y]==false && (alternativeDiagram_[end.x+1][end.y] == free || alternativeDiagram_[end.x+1][end.y]==voronoiKeep)){
-          end.x = end.x+1;
-          center_path.path.push_back(end);
-          map_flag[end.x][end.y]=true;
-        }else if(end.y+1<sizeY_ && map_flag[end.x][end.y+1]==false && (alternativeDiagram_[end.x][end.y+1] == free || alternativeDiagram_[end.x][end.y+1]==voronoiKeep)){
-          end.y = end.y+1;
-          center_path.path.push_back(end);
-          map_flag[end.x][end.y]=true;
-        }else if(end.x-1>=0 && map_flag[end.x-1][end.y]==false && (alternativeDiagram_[end.x-1][end.y] == free || alternativeDiagram_[end.x-1][end.y]==voronoiKeep)){
-          end.x = end.x-1;
-          center_path.path.push_back(end);
-          map_flag[end.x][end.y]=true;
-        }else if(end.y-1>=0 && map_flag[end.x][end.y-1]==false && (alternativeDiagram_[end.x][end.y-1] == free || alternativeDiagram_[end.x][end.y-1]==voronoiKeep)){
-          end.y = end.y-1;
-          center_path.path.push_back(end);
-          map_flag[end.x][end.y]=true;
-        }else if(end.x+1<sizeX_ && end.y+1<sizeY_ && map_flag[end.x+1][end.y+1]==false && (alternativeDiagram_[end.x+1][end.y+1] == free || alternativeDiagram_[end.x+1][end.y+1]==voronoiKeep)){
-          end.x = end.x+1;
-          end.y = end.y+1;
-          center_path.path.push_back(end);
-          map_flag[end.x][end.y]=true;
-        }else if(end.x-1>=0 && end.y-1>=0 && map_flag[end.x-1][end.y-1]==false && (alternativeDiagram_[end.x-1][end.y-1] == free || alternativeDiagram_[end.x-1][end.y-1]==voronoiKeep)){
-          end.x = end.x-1;
-          end.y = end.y-1;
-          center_path.path.push_back(end);
-          map_flag[end.x][end.y]=true;
-        }else if(end.x+1<sizeX_ && end.y-1>=0 && map_flag[end.x+1][end.y-1]==false && (alternativeDiagram_[end.x+1][end.y-1] == free || alternativeDiagram_[end.x+1][end.y-1]==voronoiKeep)){
-          end.x = end.x+1;
-          end.y = end.y-1;
-          center_path.path.push_back(end);
-          map_flag[end.x][end.y]=true;
-        }else if(end.x-1>=0 && end.y+1<sizeY_ && map_flag[end.x-1][end.y+1]==false && (alternativeDiagram_[end.x-1][end.y+1] == free || alternativeDiagram_[end.x-1][end.y+1]==voronoiKeep)){
-          end.x = end.x-1;
-          end.y = end.y+1;
-          center_path.path.push_back(end);
-          map_flag[end.x][end.y]=true;
-        }else{
-          // std::cout<<"error"<<std::endl;
-          flag=true;
-          break;
-        }
-        if(checkCenter(end)==true){ //需要定义一个用于判断是否是中心点的函数
-          center_path.id = checkCenterId(end);  //需要定义一个用于判断中心点id的函数
-          centers[i].path.push_back(center_path);
-          centers[i].neighbors.push_back(center_path.id);
-          break;
-        }
-      }
-      if(flag==true){
-        break;
-      }
-    }
-    for (int x = 0; x < sizeX_; x++) {
-      delete[] map_flag[x];
-    }
-    delete[] map_flag;
-  }
-
-  // MergeCenter();
-  //TEST
-  num=getCenterNum();
-  for(int i=0;i<num;i++)
-  {
-    int size=centers[i].neighbors.size();
-    std::cout<<centers[i].id<<std::endl;
-    for(int j=0;j<size;j++)
-    {
-      std::cout<<centers[i].neighbors[j]<<" ";
-    }
-    std::cout<<std::endl;
-  }
-  //TEST
-}
-
-bool MapVoronoi::checkCenter(Point p){
-  int center_size = getCenterNum();
-  for(int i=0;i<center_size;i++){
-    if(centers[i].point.x==p.x && centers[i].point.y==p.y){
-      return true;
-    }
-  }
-  return false;
-}
-
-int MapVoronoi::checkCenterId(Point p){
-  int center_size = getCenterNum();
-  for(int i=0;i<center_size;i++){
-    if(centers[i].point.x==p.x && centers[i].point.y==p.y){
-      return i;
-    }
-  }
-  return -1;
-}
-
-
-// //对voronoi图进行枝剪
-// void MapVoronoi::Cut(){
-//   for(int x;x<sizeX_;x++){
-//     for(int y;y<sizeY_;y++){
-//       if(alternativeDiagram_[x][y]==voronoiKeep){
-//         alternativeDiagram_[x][y]=free;
-//       }
-//     }
-//   }
-//   for(int x=0;x<sizeX_;x++){
-//     for(int y=0;y<sizeY_;y++){
-//       if(alternativeDiagram_[x][y]==voronoiKeep){
-//         if(alternativeDiagram_[x+1][y]==free && alternativeDiagram_[x+1][y+1]==free && alternativeDiagram_[x][y+1]==free){
-//           alternativeDiagram_[x][y]=cut;
-//       }
-//     }
-//   }
-//   return;
-// }
-
-// void pathFind(){
-//   int num = getCenterNum();
-//   //请确保在pathfind之前已经找到了centers节点
-//   for(int i=0;i<num;i++)
-//   {
-//     bool** map_flag=new bool*[sizeX_];
-//     for(int x=0;x<SizeX;x++){
-//       bool
-//     }
-//     for
-//   }
-// }
-
-void MapVoronoi::visualize(const char *filename) {
+void Voronoi::visualize(const char *filename) {
   // write ppm files
 
   FILE* F = fopen(filename, "w");
@@ -739,13 +425,13 @@ void MapVoronoi::visualize(const char *filename) {
     for(int x = 0; x<sizeX_; x++){
       unsigned char c = 0;
       if (alternativeDiagram_!=NULL && (alternativeDiagram_[x][y] == free || alternativeDiagram_[x][y]==voronoiKeep)) {
-        if(centers_[x][y] == 1)
-        {
-          fputc( 0, F );
-          fputc( 255, F );
-          fputc( 0, F );
-          continue;
-        }
+        // if(centers_[x][y] == 1)
+        // {
+        //   fputc( 0, F );
+        //   fputc( 255, F );
+        //   fputc( 0, F );
+        //   continue;
+        // }
         fputc( 255, F );
         fputc( 0, F );
         fputc( 0, F );
@@ -768,7 +454,7 @@ void MapVoronoi::visualize(const char *filename) {
 }
 
 
-void MapVoronoi::prune() {
+void Voronoi::prune() {
   // filler
   //先遍历pruneQueue_中的元素，判断是否要加入到sortedPruneQueue_，
   //这一步的目的是合并紧邻的Voronoi边，将2条边夹着的栅格也设置为备选
@@ -879,7 +565,7 @@ void MapVoronoi::prune() {
   }
 }
 
-void MapVoronoi::updateAlternativePrunedDiagram() {
+void Voronoi::updateAlternativePrunedDiagram() {
 
   if(alternativeDiagram_==NULL){
     alternativeDiagram_ = new int*[sizeX_];
@@ -962,7 +648,7 @@ void MapVoronoi::updateAlternativePrunedDiagram() {
   }
 }
 
-bool MapVoronoi::markerMatchAlternative(int x, int y) {
+bool Voronoi::markerMatchAlternative(int x, int y) {
   // prune if this returns true
 
   bool f[8];
@@ -1012,7 +698,7 @@ bool MapVoronoi::markerMatchAlternative(int x, int y) {
   return true;
 }
 
-int MapVoronoi::getNumVoronoiNeighborsAlternative(int x, int y) {
+int Voronoi::getNumVoronoiNeighborsAlternative(int x, int y) {
   int count = 0;
   for (int dx = -1; dx <= 1; dx++) {
     for (int dy = -1; dy <= 1; dy++) {
@@ -1034,7 +720,7 @@ int MapVoronoi::getNumVoronoiNeighborsAlternative(int x, int y) {
 }
 
 //根据(x,y)邻居栅格的连接模式，判断是否要对(x,y)剪枝
-MapVoronoi::markerMatchResult MapVoronoi::markerMatch(int x, int y) {
+Voronoi::markerMatchResult Voronoi::markerMatch(int x, int y) {
   // implementation of connectivity patterns
   bool f[8];
   int nx, ny;
