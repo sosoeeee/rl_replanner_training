@@ -62,23 +62,20 @@ void TebConfig::loadParamsFromYaml(const std::string & yaml_filename)
     YAML::Node params = config;
     
     // trajectory
-    trajectory.teb_autosize = getYamlValue<bool>(params, "teb_autosize", trajectory.teb_autosize);
+    trajectory.teb_autosize = getYamlValue<double>(params, "teb_autosize", trajectory.teb_autosize);
     trajectory.dt_ref = getYamlValue<double>(params, "dt_ref", trajectory.dt_ref);
     trajectory.dt_hysteresis = getYamlValue<double>(params, "dt_hysteresis", trajectory.dt_hysteresis);
     trajectory.max_samples = getYamlValue<int>(params, "max_samples", trajectory.max_samples);
     trajectory.global_plan_overwrite_orientation = getYamlValue<bool>(params, "global_plan_overwrite_orientation", trajectory.global_plan_overwrite_orientation);
     trajectory.allow_init_with_backwards_motion = getYamlValue<bool>(params, "allow_init_with_backwards_motion", trajectory.allow_init_with_backwards_motion);
-    trajectory.max_global_plan_lookahead_dist = getYamlValue<double>(params, "max_global_plan_lookahead_dist", trajectory.max_global_plan_lookahead_dist);
-    trajectory.global_plan_viapoint_sep = getYamlValue<double>(params, "global_plan_viapoint_sep", trajectory.global_plan_viapoint_sep);
-    trajectory.global_plan_prune_distance = getYamlValue<double>(params, "global_plan_prune_distance", trajectory.global_plan_prune_distance);
     trajectory.exact_arc_length = getYamlValue<bool>(params, "exact_arc_length", trajectory.exact_arc_length);
-    trajectory.feasibility_check_no_poses = getYamlValue<int>(params, "feasibility_check_no_poses", trajectory.feasibility_check_no_poses);
-    trajectory.publish_feedback = getYamlValue<bool>(params, "publish_feedback", trajectory.publish_feedback);
     
     // robot
     robot.max_vel_x = getYamlValue<double>(params, "max_vel_x", robot.max_vel_x);
+    robot.max_vel_y = getYamlValue<double>(params, "max_vel_y", robot.max_vel_y);
     robot.max_vel_theta = getYamlValue<double>(params, "max_vel_theta", robot.max_vel_theta);
     robot.acc_lim_x = getYamlValue<double>(params, "acc_lim_x", robot.acc_lim_x);
+    robot.acc_lim_y = getYamlValue<double>(params, "acc_lim_y", robot.acc_lim_y);
     robot.acc_lim_theta = getYamlValue<double>(params, "acc_lim_theta", robot.acc_lim_theta);
     
     if (params["footprint_model"]) {
@@ -91,7 +88,6 @@ void TebConfig::loadParamsFromYaml(const std::string & yaml_filename)
       } else if (model_name == "point") {
         robot_model = std::make_shared<PointRobotFootprint>();
       } else if (model_name == "line") {
-        // 假设line_start和line_end是数组形式的vector
         if (footprint_node["line_start"] && footprint_node["line_end"]) {
           line_start = footprint_node["line_start"].as<std::vector<double>>();
           line_end = footprint_node["line_end"].as<std::vector<double>>();
@@ -112,7 +108,6 @@ void TebConfig::loadParamsFromYaml(const std::string & yaml_filename)
         robot_model = std::make_shared<TwoCirclesRobotFootprint>(front_offset, front_radius, rear_offset, rear_radius);
       } else if (model_name == "polygon") {
         footprint_string = getYamlValue<std::string>(footprint_node, "vertices", "");
-        // 解析多边形顶点 - 这部分可能需要特殊处理
         std::cerr << "Polygon footprint not fully implemented in loadParamsFromYaml" << std::endl;
         robot_model = std::make_shared<PointRobotFootprint>();
       } else {
@@ -143,8 +138,10 @@ void TebConfig::loadParamsFromYaml(const std::string & yaml_filename)
     optim.optimization_verbose = getYamlValue<bool>(params, "optimization_verbose", optim.optimization_verbose);
     optim.penalty_epsilon = getYamlValue<double>(params, "penalty_epsilon", optim.penalty_epsilon);
     optim.weight_max_vel_x = getYamlValue<double>(params, "weight_max_vel_x", optim.weight_max_vel_x);
+    optim.weight_max_vel_y = getYamlValue<double>(params, "weight_max_vel_y", optim.weight_max_vel_y);
     optim.weight_max_vel_theta = getYamlValue<double>(params, "weight_max_vel_theta", optim.weight_max_vel_theta);
     optim.weight_acc_lim_x = getYamlValue<double>(params, "weight_acc_lim_x", optim.weight_acc_lim_x);
+    optim.weight_acc_lim_y = getYamlValue<double>(params, "weight_acc_lim_y", optim.weight_acc_lim_y);
     optim.weight_acc_lim_theta = getYamlValue<double>(params, "weight_acc_lim_theta", optim.weight_acc_lim_theta);
     optim.weight_kinematics_nh = getYamlValue<double>(params, "weight_kinematics_nh", optim.weight_kinematics_nh);
     optim.weight_kinematics_forward_drive = getYamlValue<double>(params, "weight_kinematics_forward_drive", optim.weight_kinematics_forward_drive);
@@ -189,7 +186,6 @@ void TebConfig::loadParamsFromYaml(const std::string & yaml_filename)
     recovery.oscillation_recovery_min_duration = getYamlValue<double>(params, "oscillation_recovery_min_duration", recovery.oscillation_recovery_min_duration);
     recovery.oscillation_filter_duration = getYamlValue<double>(params, "oscillation_filter_duration", recovery.oscillation_filter_duration);
     
-    // 检查参数有效性
     checkParameters();
     std::cout << "TEB parameters loaded from " << yaml_filename << std::endl;
     

@@ -37,6 +37,8 @@ cd ./cpp_utils \
 # rosdep install -y --ignore-src --from-paths ./extern/teb_planner/src -r
 # cd ./extern/teb_planner/
 # colcon build --symlink-install
+pip install matplotlib # temporary pkg for debugging
+sudo apt-get install python3-tk
 
 # RUN the following command to test the installation
 # python3 ./rl_replanner_train/tests/test_env.py

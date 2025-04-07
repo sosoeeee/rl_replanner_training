@@ -65,7 +65,7 @@ TebOptimalPlanner::TebOptimalPlanner() : cfg_(nullptr), obstacles_(NULL), via_po
 {    
 }
   
-TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles, const ViaPointContainer* via_points)
+TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, std::shared_ptr<ObstContainer> obstacles, const ViaPointContainer* via_points)
 {    
   initialize(cfg, obstacles, via_points);
 }
@@ -80,12 +80,13 @@ TebOptimalPlanner::~TebOptimalPlanner()
   //g2o::HyperGraphActionLibrary::destroy();
 }
 
-void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, const ViaPointContainer* via_points)
+void TebOptimalPlanner::initialize(const TebConfig& cfg, std::shared_ptr<ObstContainer> obstacles, const ViaPointContainer* via_points)
 {    
   // init optimizer (set solver and block ordering settings)
   optimizer_ = initOptimizer();
   
   cfg_ = &cfg;
+  robot_model_ = cfg_->robot_model;
   obstacles_ = obstacles;
   via_points_ = via_points;
   cost_ = HUGE_VAL;
@@ -102,6 +103,22 @@ void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacle
   vel_goal_.second.omega = 0;
   initialized_ = true;
 
+  // // debug print obstacle container
+  // // print the address of the obstacles
+  // LOGGER_INFO("teb_local_planner", "Obstacle container address: %p", obstacles_);  
+  // LOGGER_INFO("teb_local_planner", "Obstacle container address: %p", obstacles);  
+  // if (obstacles_)
+  // {
+  //   LOGGER_INFO("teb_local_planner", "Obstacle container size: %zu", obstacles_->size());
+  //   for (const auto& obst : *obstacles_)
+  //   {
+  //     LOGGER_INFO("teb_local_planner", "Obstacle: %f", obst->getCentroid().x());
+  //   }
+  // }
+  // else
+  // {
+  //   LOGGER_INFO("teb_local_planner", "No obstacles set.");
+  // }
 }
 
 /*
@@ -466,7 +483,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
       ObstaclePtr right_obstacle;
       
       const Eigen::Vector2d pose_orient = teb_.Pose(i).orientationUnitVec();
-      
+
       // iterate obstacles
       for (const ObstaclePtr& obst : *obstacles_)
       {
@@ -476,7 +493,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
 
           // calculate distance to robot model
           double dist = cfg_->robot_model->calculateDistance(teb_.Pose(i), obst.get());
-          
+
           // force considering obstacle if really close to the current pose
         if (dist < cfg_->obstacles.min_obstacle_dist*cfg_->obstacles.obstacle_association_force_inclusion_factor)
           {

@@ -86,6 +86,22 @@ typedef g2o::LinearSolverCSparse<TEBBlockSolver::PoseMatrixType> TEBLinearSolver
 //! Typedef for a container storing via-points
 typedef std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> > ViaPointContainer;
 
+// Via point class (for pybindings)
+class viaPointContainerClass {
+public:
+    void push_back(double x, double y) {
+        via_points_.emplace_back(x, y);
+    }
+
+    void clear() {
+        via_points_.clear();
+    }
+
+    const ViaPointContainer* getViaPoints() const {return &via_points_;}
+
+private:
+    ViaPointContainer via_points_;
+};
 
 /**
  * @class TebOptimalPlanner
@@ -117,7 +133,7 @@ public:
    * @param obstacles Container storing all relevant obstacles (see Obstacle)
    * @param via_points Container storing via-points (optional)
    */
-  TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, const ViaPointContainer* via_points = NULL);
+  TebOptimalPlanner(const TebConfig& cfg, std::shared_ptr<ObstContainer> obstacles = NULL, const ViaPointContainer* via_points = NULL);
   
   /**
    * @brief Destruct the optimal planner.
@@ -131,8 +147,8 @@ public:
     * @param robot_model Shared pointer to the robot shape model used for optimization (optional)
     * @param via_points Container storing via-points (optional)
     */
-  void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, const ViaPointContainer* via_points = NULL);
-  
+  void initialize(const TebConfig& cfg, std::shared_ptr<ObstContainer> obstacles = NULL, const ViaPointContainer* via_points = NULL);
+
   /** @name Plan a trajectory  */
   //@{
   
@@ -274,7 +290,7 @@ public:
    * @param obst_vector pointer to an obstacle container (can also be a nullptr)
    * @remarks This method overrids the obstacle container optinally assigned in the constructor.
    */
-  void setObstVector(ObstContainer* obst_vector) {obstacles_ = obst_vector;}
+  void setObstVector(std::shared_ptr<ObstContainer> obst_vector) {obstacles_ = obst_vector;}
   
   /**
    * @brief Access the internal obstacle container.
@@ -464,6 +480,13 @@ public:
    * @param[out] trajectory the resulting trajectory
    */
   void getFullTrajectory(std::vector<TrajectoryPointMsg>& trajectory) const;
+
+  std::vector<TrajectoryPointMsg> py_getFullTrajectory() const
+  {
+    std::vector<TrajectoryPointMsg> trajectory;
+    getFullTrajectory(trajectory);
+    return trajectory;
+  }
   
   //@}
   
@@ -638,7 +661,7 @@ protected:
 
   // external objects (store weak pointers)
   const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
-  ObstContainer* obstacles_; //!< Store obstacles that are relevant for planning
+  std::shared_ptr<ObstContainer> obstacles_; //!< Store obstacles that are relevant for planning
   const ViaPointContainer* via_points_; //!< Store via points for planning
   std::vector<ObstContainer> obstacles_per_vertex_; //!< Store the obstacles associated with the n-1 initial vertices
   

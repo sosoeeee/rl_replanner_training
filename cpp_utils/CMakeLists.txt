@@ -6,6 +6,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake_modules)
 # find_package
 find_package(yaml_cpp_vendor REQUIRED)
 find_package(GRAPHICSMAGICKCPP REQUIRED)
+
 # teb_local_planner
 find_package(SUITESPARSE REQUIRED)
 find_package(G2O REQUIRED)
@@ -59,7 +60,7 @@ target_include_directories(${map_library_name} SYSTEM PRIVATE
 target_include_directories(${path_library_name} PUBLIC ./include)
 
 target_include_directories(${teb_local_planner_name} PUBLIC ./include)
-target_include_directories(${teb_local_planner_name} SYSTEM PRIVATE
+target_include_directories(${teb_local_planner_name} SYSTEM PUBLIC
   ${TEB_EXTERNAL_INCLUDE_DIRS})
 target_include_directories(${teb_local_planner_name} SYSTEM PRIVATE
   ${yaml_cpp_vendor_INCLUDE_DIRS})
