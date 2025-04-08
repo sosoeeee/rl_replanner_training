@@ -106,7 +106,6 @@ void TebOptimalPlanner::initialize(const TebConfig& cfg, std::shared_ptr<ObstCon
   // // debug print obstacle container
   // // print the address of the obstacles
   // LOGGER_INFO("teb_local_planner", "Obstacle container address: %p", obstacles_);  
-  // LOGGER_INFO("teb_local_planner", "Obstacle container address: %p", obstacles);  
   // if (obstacles_)
   // {
   //   LOGGER_INFO("teb_local_planner", "Obstacle container size: %zu", obstacles_->size());

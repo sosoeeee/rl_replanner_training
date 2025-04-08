@@ -992,6 +992,380 @@ public:
 };
 
 
+/**
+ * @class CircularCorridor
+ * @brief Implements a 2D circular corridor (a group of circular obstacles with free space in between)
+ */
+class CircularCorridor : public Obstacle
+{
+public:
+
+  /**
+    * @brief Default constructor of the circular obstacle class
+    */
+  CircularCorridor() : Obstacle() {}
+
+  void addCircle(double x, double y, double radius)
+  {
+    if (pos_set.size() == 0)
+      avg_pos = Eigen::Vector2d(x,y);
+    else
+    {
+      avg_pos = (avg_pos*pos_set.size() + Eigen::Vector2d(x,y)) / (pos_set.size() + 1);
+
+      // calculate interaction of two circles
+      std::vector<Eigen::Vector2d> interactions;
+      double R_ = sqrt((x - pos_set.back()[0])*(x - pos_set.back()[0]) + (y - pos_set.back()[1])*(y - pos_set.back()[1]));
+      double temp = radius_set.back()*radius_set.back() - radius*radius;
+      double a_ = temp/(2.0*R_*R_);
+      double b_ = 0.5 * sqrt(2.0*(radius_set.back()*radius_set.back() + radius*radius)/(R_*R_) - temp*temp/(R_*R_*R_*R_) - 1);
+      interactions.push_back(Eigen::Vector2d(
+        0.5*(pos_set.back()[0] + x) + a_ * (x - pos_set.back()[0]) + b_ * (y - pos_set.back()[1]),
+        0.5*(pos_set.back()[1] + y) + a_ * (y - pos_set.back()[1]) + b_ * (pos_set.back()[0] - x)));
+      interactions.push_back(Eigen::Vector2d(
+        0.5*(pos_set.back()[0] + x) + a_ * (x - pos_set.back()[0]) - b_ * (y - pos_set.back()[1]),
+        0.5*(pos_set.back()[1] + y) + a_ * (y - pos_set.back()[1]) - b_ * (pos_set.back()[0] - x)));
+
+      intersections_set.push_back(interactions);
+      // debug
+      // LOGGER_INFO("teb_local_planner", "Circle %d: (%f,%f) with radius %f intersects with circle %d: (%f,%f) with radius %f", (int)pos_set.size(), x, y, radius, (int)pos_set.size()-1, pos_set.back()[0], pos_set.back()[1], radius_set.back());
+      // LOGGER_INFO("teb_local_planner", "Intersection 1: (%f,%f)", interactions[0][0], interactions[0][1]);
+      // LOGGER_INFO("teb_local_planner", "Intersection 2: (%f,%f)", interactions[1][0], interactions[1][1]);
+    }
+    pos_set.push_back(Eigen::Vector2d(x,y));
+    radius_set.push_back(radius);
+  }
+
+  // void addCircle(const Eigen::Ref<const Eigen::Vector2d>& position, double radius)
+  // {
+  //   pos_set.push_back(position);
+  //   radius_set.push_back(radius);
+  // }
+
+  void clearCircles()
+  {
+    pos_set.clear();
+    radius_set.clear();
+  }
+
+  // implements checkCollision() of the base class
+  virtual bool checkCollision(const Eigen::Vector2d& point, double min_dist) const
+  {
+      return getMinimumDistance(point) < min_dist;
+  }
+
+
+  // // implements checkLineIntersection() of the base class
+  virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const
+  {
+      // // Distance Line - Circle
+      // // refer to http://www.spieleprogrammierer.de/wiki/2D-Kollisionserkennung#Kollision_Kreis-Strecke
+      // Eigen::Vector2d a = line_end-line_start; // not normalized!  a=y-x
+      // Eigen::Vector2d b = pos_-line_start; // b=m-x
+
+      // // Now find nearest point to circle v=x+a*t with t=a*b/(a*a) and bound to 0<=t<=1
+      // double t = a.dot(b)/a.dot(a);
+      // if (t<0) t=0; // bound t (since a is not normalized, t can be scaled between 0 and 1 to parametrize the line
+      // else if (t>1) t=1;
+      // Eigen::Vector2d nearest_point = line_start + a*t;
+
+      // // check collision
+      // return checkCollision(nearest_point, min_dist);
+
+      // UNSUPPORTED
+      LOGGER_ERROR("teb_local_planner", "checkLineIntersection() is not supported for CircularCorridor.");
+      return true;
+  }
+
+
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& position) const
+  {
+    if (pos_set.size() == 0)
+    {
+      LOGGER_INFO("teb_local_planner", "No circles in the corridor. Cannot compute minimum distance.");
+      return -1.0; // outside the corridor
+    }
+    
+    if (pos_set.size() == 1)
+    {
+      LOGGER_INFO("teb_local_planner", "Only one circle in the corridor. Minimum distance is %f", (position-pos_set[0]).norm() - radius_set[0]);
+      return (position-pos_set[0]).norm() - radius_set[0];
+    }
+    else
+    {
+      double min_dist = std::numeric_limits<double>::max();
+      std::size_t min_idx = 0;
+      for (std::size_t i = 0; i < pos_set.size(); ++i)
+      {
+        double dist = (position-pos_set[i]).norm();
+        if (dist < min_dist)
+        {
+          min_dist = dist;
+          min_idx = i;
+        }
+      }
+
+      // LOGGER_INFO("teb_local_planner", "Minimum distance to circle %d: %f", (int)min_idx, min_dist);
+
+      // check if the point is closer to circles intersection
+      std::size_t checked_idx;
+      double theta_section, theta_point;
+      Eigen::Vector2d v_section, v_between, v_point;
+      if (min_idx == pos_set.size() - 1)
+      {
+        // check the intersection with the previous circle
+        checked_idx = min_idx - 1;
+        v_section = intersections_set[checked_idx][0] - pos_set[min_idx];
+        v_between = pos_set[checked_idx] - pos_set[min_idx];
+        v_point = position - pos_set[min_idx];
+        theta_section = acos(v_section.dot(v_between) / (v_section.norm() * v_between.norm()));
+        theta_point = acos(v_point.dot(v_between) / (v_point.norm() * v_between.norm()));
+
+        // LOGGER_INFO("teb_local_planner", "=============== the last circle ===============");
+        // LOGGER_INFO("teb_local_planner", "checked_idx: %d", checked_idx);
+        // LOGGER_INFO("teb_local_planner", "v_section: (%f, %f) ", v_section[0], v_section[1]);
+        // LOGGER_INFO("teb_local_planner", "v_between: (%f, %f) ", v_between[0], v_between[1]);
+        // LOGGER_INFO("teb_local_planner", "v_point: (%f, %f) ", v_point[0], v_point[1]);
+        // LOGGER_INFO("teb_local_planner", "theta_section: %f, theta_point: %f", theta_section, theta_point);
+
+        if (theta_point < theta_section)
+          return std::min((position - intersections_set[checked_idx][0]).norm(),
+                          (position - intersections_set[checked_idx][1]).norm());
+      }
+      else if (min_idx == 0)
+      {
+        // check the intersection with the next circle
+        v_section = intersections_set[min_idx][0] - pos_set[min_idx];
+        v_between = pos_set[min_idx + 1] - pos_set[min_idx];
+        v_point = position - pos_set[min_idx];
+        theta_section = acos(v_section.dot(v_between) / (v_section.norm() * v_between.norm()));
+        theta_point = acos(v_point.dot(v_between) / (v_point.norm() * v_between.norm()));
+
+        // LOGGER_INFO("teb_local_planner", "=============== the first circle ===============");
+        // LOGGER_INFO("teb_local_planner", "checked_idx: %d", min_idx); 
+        // LOGGER_INFO("teb_local_planner", "v_section: (%f, %f) ", v_section[0], v_section[1]);
+        // LOGGER_INFO("teb_local_planner", "v_between: (%f, %f) ", v_between[0], v_between[1]);
+        // LOGGER_INFO("teb_local_planner", "v_point: (%f, %f) ", v_point[0], v_point[1]);
+        // LOGGER_INFO("teb_local_planner", "theta_section: %f, theta_point: %f", theta_section, theta_point);
+
+        if (theta_point < theta_section)
+          return std::min((position - intersections_set[min_idx][0]).norm(),
+                          (position - intersections_set[min_idx][1]).norm());
+      }
+      else
+      {
+        // check the intersection with the previous circle
+        checked_idx = min_idx - 1;
+        v_section = intersections_set[checked_idx][0] - pos_set[min_idx];
+        v_between = pos_set[checked_idx] - pos_set[min_idx];
+        v_point = position - pos_set[min_idx];
+        theta_section = acos(v_section.dot(v_between) / (v_section.norm() * v_between.norm()));
+        theta_point = acos(v_point.dot(v_between) / (v_point.norm() * v_between.norm()));
+
+        // LOGGER_INFO("teb_local_planner", "=============== the middle circle ===============");
+        // LOGGER_INFO("teb_local_planner", "check the intersection with the previous circle");
+        // LOGGER_INFO("teb_local_planner", "checked_idx: %d", checked_idx);
+        // LOGGER_INFO("teb_local_planner", "v_section: (%f, %f) ", v_section[0], v_section[1]);
+        // LOGGER_INFO("teb_local_planner", "v_between: (%f, %f) ", v_between[0], v_between[1]);
+        // LOGGER_INFO("teb_local_planner", "v_point: (%f, %f) ", v_point[0], v_point[1]);
+        // LOGGER_INFO("teb_local_planner", "theta_section: %f, theta_point: %f", theta_section, theta_point);
+
+        if (theta_point < theta_section)
+          return std::min((position - intersections_set[checked_idx][0]).norm(),
+                          (position - intersections_set[checked_idx][1]).norm());
+
+        // check the intersection with the next circle
+        v_section = intersections_set[min_idx][0] - pos_set[min_idx];
+        v_between = pos_set[min_idx + 1] - pos_set[min_idx];
+        v_point = position - pos_set[min_idx];
+        theta_section = acos(v_section.dot(v_between) / (v_section.norm() * v_between.norm()));
+        theta_point = acos(v_point.dot(v_between) / (v_point.norm() * v_between.norm()));
+
+        // LOGGER_INFO("teb_local_planner", "check the intersection with the next circle");
+        // LOGGER_INFO("teb_local_planner", "checked_idx: %d", min_idx);
+        // LOGGER_INFO("teb_local_planner", "v_section: (%f, %f) ", v_section[0], v_section[1]);
+        // LOGGER_INFO("teb_local_planner", "v_between: (%f, %f) ", v_between[0], v_between[1]);
+        // LOGGER_INFO("teb_local_planner", "v_point: (%f, %f) ", v_point[0], v_point[1]);
+        // LOGGER_INFO("teb_local_planner", "theta_section: %f, theta_point: %f", theta_section, theta_point);
+
+        if (theta_point < theta_section)
+          return std::min((position - intersections_set[min_idx][0]).norm(),
+                          (position - intersections_set[min_idx][1]).norm());
+      }
+
+      if (radius_set[min_idx] > min_dist)
+        return radius_set[min_idx] - min_dist;
+      else
+        return -1.0; // outside the corridor
+    }
+  }
+
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+  {
+    // return distance_point_to_segment_2d(pos_, line_start, line_end) - radius_;
+    
+    // UNSUPPORTED
+    LOGGER_ERROR("teb_local_planner", "getMinimumDistance for line is not supported for CircularCorridor.");
+    return -1.0;
+  }
+
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Point2dContainer& polygon) const
+  {
+    // return distance_point_to_polygon_2d(pos_, polygon) - radius_;
+
+    // UNSUPPORTED
+    LOGGER_ERROR("teb_local_planner", "getMinimumDistance for polygon is not supported for CircularCorridor.");
+    return -1.0;
+  }
+
+  // implements getMinimumDistanceVec() of the base class
+  virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
+  {
+    if (pos_set.size() == 1)
+      return pos_set[0] + radius_set[0]*(position-pos_set[0]).normalized();
+    else
+    {
+      double min_dist = std::numeric_limits<double>::max();
+      std::size_t min_idx = 0;
+      for (std::size_t i = 0; i < pos_set.size(); ++i)
+      {
+        double dist = (position-pos_set[i]).norm();
+        if (dist < min_dist)
+        {
+          min_dist = dist;
+          min_idx = i;
+        }
+      }
+
+      // check if the point is closer to circles intersection
+      std::size_t checked_idx;
+      double theta_section, theta_point;
+      Eigen::Vector2d v_section, v_between, v_point;
+      if (min_idx == pos_set.size() - 1)
+      {
+        // check the intersection with the previous circle
+        checked_idx = min_idx - 1;
+        v_section = intersections_set[checked_idx][0] - pos_set[min_idx];
+        v_between = pos_set[checked_idx] - pos_set[min_idx];
+        v_point = position - pos_set[min_idx];
+        theta_section = acos(v_section.dot(v_between) / (v_section.norm() * v_between.norm()));
+        theta_point = acos(v_point.dot(v_between) / (v_point.norm() * v_between.norm()));
+
+        if (theta_point < theta_section)
+          return (position - intersections_set[checked_idx][0]).norm() > 
+                 (position - intersections_set[checked_idx][1]).norm() ?
+                  intersections_set[checked_idx][1] : intersections_set[checked_idx][0];
+      }
+      else if (min_idx == 0)
+      {
+        // check the intersection with the next circle
+        v_section = intersections_set[min_idx][0] - pos_set[min_idx];
+        v_between = pos_set[min_idx + 1] - pos_set[min_idx];
+        v_point = position - pos_set[min_idx];
+        theta_section = acos(v_section.dot(v_between) / (v_section.norm() * v_between.norm()));
+        theta_point = acos(v_point.dot(v_between) / (v_point.norm() * v_between.norm()));
+
+        if (theta_point < theta_section)
+          return (position - intersections_set[min_idx][0]).norm() > 
+                 (position - intersections_set[min_idx][1]).norm() ?
+                  intersections_set[min_idx][1] : intersections_set[min_idx][0];
+      }
+      else
+      {
+        // check the intersection with the previous circle
+        checked_idx = min_idx - 1;
+        v_section = intersections_set[checked_idx][0] - pos_set[min_idx];
+        v_between = pos_set[checked_idx] - pos_set[min_idx];
+        v_point = position - pos_set[min_idx];
+        theta_section = acos(v_section.dot(v_between) / (v_section.norm() * v_between.norm()));
+        theta_point = acos(v_point.dot(v_between) / (v_point.norm() * v_between.norm()));
+
+        if (theta_point < theta_section)
+          return (position - intersections_set[checked_idx][0]).norm() > 
+                 (position - intersections_set[checked_idx][1]).norm() ?
+                  intersections_set[checked_idx][1] : intersections_set[checked_idx][0];
+
+        // check the intersection with the next circle
+        v_section = intersections_set[min_idx][0] - pos_set[min_idx];
+        v_between = pos_set[min_idx + 1] - pos_set[min_idx];
+        v_point = position - pos_set[min_idx];
+        theta_section = acos(v_section.dot(v_between) / (v_section.norm() * v_between.norm()));
+        theta_point = acos(v_point.dot(v_between) / (v_point.norm() * v_between.norm()));
+
+        if (theta_point < theta_section)
+          return (position - intersections_set[min_idx][0]).norm() > 
+                 (position - intersections_set[min_idx][1]).norm() ?
+                  intersections_set[min_idx][1] : intersections_set[min_idx][0];
+      }
+
+      return pos_set[min_idx] + radius_set[min_idx]*(position-pos_set[min_idx]).normalized();
+    }
+  }
+
+  // implements getMinimumSpatioTemporalDistance() of the base class
+  virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const
+  {
+    return getMinimumDistance(position - t*centroid_velocity_);
+  }
+
+  // implements getMinimumSpatioTemporalDistance() of the base class
+  virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const
+  {
+    // return distance_point_to_segment_2d(pos_ + t*centroid_velocity_, line_start, line_end) - radius_;
+
+    // UNSUPPORTED
+    LOGGER_ERROR("teb_local_planner", "getMinimumSpatioTemporalDistance for line is not supported for CircularCorridor.");
+    return -1.0;
+  }
+
+  // implements getMinimumSpatioTemporalDistance() of the base class
+  virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const
+  {
+    // return distance_point_to_polygon_2d(pos_ + t*centroid_velocity_, polygon) - radius_;
+
+    // UNSUPPORTED
+    LOGGER_ERROR("teb_local_planner", "getMinimumSpatioTemporalDistance for polygon is not supported for CircularCorridor.");
+    return -1.0;
+  }
+
+  // implements predictCentroidConstantVelocity() of the base class
+  virtual void predictCentroidConstantVelocity(double t, Eigen::Ref<Eigen::Vector2d> position) const
+  {
+    position = avg_pos + t*centroid_velocity_;
+  }
+
+  // implements getCentroid() of the base class
+  virtual const Eigen::Vector2d& getCentroid() const
+  {
+    return avg_pos;
+  }
+
+  // implements getCentroidCplx() of the base class
+  virtual std::complex<double> getCentroidCplx() const
+  {
+    return std::complex<double>(avg_pos[0],avg_pos[1]);
+  }
+
+  // Accessor methods
+  const std::vector<Eigen::Vector2d>& centers() const {return pos_set;} //!< Return the centers of the circular (costc)
+  std::vector<Eigen::Vector2d>& centers() {return pos_set;} //!< Return the current position of the obstacle
+  std::vector<double>& radius() {return radius_set;} //!< Return the current radius of the obstacle
+  const std::vector<double>& radradiusius() const {return radius_set;} //!< Return the current radius of the obstacle
+
+protected:
+
+  std::vector<Eigen::Vector2d> pos_set; //!< Store the center position of the Circular
+  Eigen::Vector2d avg_pos;
+  std::vector<double> radius_set;       //!< Radius of the circular
+
+  std::vector<std::vector<Eigen::Vector2d> > intersections_set; 
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
 } // namespace teb_local_planner
 
 #endif /* OBSTACLES_H */

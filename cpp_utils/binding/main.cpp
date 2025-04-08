@@ -116,6 +116,12 @@ PYBIND11_MODULE(cpp_utils, m) {
         .def(py::init<double, double, double>(), py::arg("x"), py::arg("y"), py::arg("radius"));
     py::class_<PointObstacle, Obstacle, std::shared_ptr<PointObstacle>>(m, "PointObstacle")
         .def(py::init<double, double>(), py::arg("x"), py::arg("y"));
+    py::class_<CircularCorridor, Obstacle, std::shared_ptr<CircularCorridor>>(m, "CircularCorridor")
+        .def(py::init())
+        .def("addCircle", static_cast<void (CircularCorridor::*)(double, double, double)>(&CircularCorridor::addCircle), 
+            "Extend the corridor", py::arg("x"), py::arg("y"), py::arg("radius"))
+        .def("clear", &CircularCorridor::clearCircles, 
+            "Clear all circles from the corridor");
 
     // Bind the TebConfig class
     py::class_<TebConfig, std::shared_ptr<TebConfig>>(m, "TebConfig")

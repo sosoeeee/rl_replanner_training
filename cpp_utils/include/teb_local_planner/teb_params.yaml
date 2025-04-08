@@ -22,7 +22,7 @@ footprint_model: # types: "point", "circular", "two_circles", "line", "polygon"
 free_goal_vel: False
     
 # Obstacles
-min_obstacle_dist: 0.1
+min_obstacle_dist: 0.3
 inflation_dist: 0.6
 obstacle_poses_affected: 15
 
