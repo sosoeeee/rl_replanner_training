@@ -1081,6 +1081,7 @@ public:
   // implements getMinimumDistance() of the base class
   virtual double getMinimumDistance(const Eigen::Vector2d& position) const
   {
+    // LOGGER_INFO("teb_local_planner", "current position: (%f, %f)", position[0], position[1]);
     if (pos_set.size() == 0)
     {
       LOGGER_INFO("teb_local_planner", "No circles in the corridor. Cannot compute minimum distance.");
@@ -1094,15 +1095,17 @@ public:
     }
     else
     {
+      // find first circle that contains the point
       double min_dist = std::numeric_limits<double>::max();
       std::size_t min_idx = 0;
       for (std::size_t i = 0; i < pos_set.size(); ++i)
       {
         double dist = (position-pos_set[i]).norm();
-        if (dist < min_dist)
+        if (dist <= radius_set[i])
         {
           min_dist = dist;
           min_idx = i;
+          break;
         }
       }
 
@@ -1172,8 +1175,13 @@ public:
         // LOGGER_INFO("teb_local_planner", "theta_section: %f, theta_point: %f", theta_section, theta_point);
 
         if (theta_point < theta_section)
+        {
+          // LOGGER_INFO("teb_local_planner", "MINIMUM DISTANCE: %f", std::min((position - intersections_set[checked_idx][0]).norm(),
+                          // (position - intersections_set[checked_idx][1]).norm()));
           return std::min((position - intersections_set[checked_idx][0]).norm(),
                           (position - intersections_set[checked_idx][1]).norm());
+        }
+
 
         // check the intersection with the next circle
         v_section = intersections_set[min_idx][0] - pos_set[min_idx];
@@ -1190,8 +1198,12 @@ public:
         // LOGGER_INFO("teb_local_planner", "theta_section: %f, theta_point: %f", theta_section, theta_point);
 
         if (theta_point < theta_section)
+        {
+          // LOGGER_INFO("teb_local_planner", "MINIMUM DISTANCE: %f", std::min((position - intersections_set[min_idx][0]).norm(),
+                          // (position - intersections_set[min_idx][1]).norm()));
           return std::min((position - intersections_set[min_idx][0]).norm(),
                           (position - intersections_set[min_idx][1]).norm());
+        }
       }
 
       if (radius_set[min_idx] > min_dist)
@@ -1228,15 +1240,17 @@ public:
       return pos_set[0] + radius_set[0]*(position-pos_set[0]).normalized();
     else
     {
+      // find first circle that contains the point
       double min_dist = std::numeric_limits<double>::max();
       std::size_t min_idx = 0;
       for (std::size_t i = 0; i < pos_set.size(); ++i)
       {
         double dist = (position-pos_set[i]).norm();
-        if (dist < min_dist)
+        if (dist <= radius_set[i])
         {
           min_dist = dist;
           min_idx = i;
+          break;
         }
       }
 
