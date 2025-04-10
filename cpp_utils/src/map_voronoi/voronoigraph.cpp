@@ -8,12 +8,20 @@ void VoronoiGraph::visualizeVoronoi(const std::string& filename) {
     }
 }
 
+bool** VoronoiGraph::getBoolMap(std::shared_ptr<Costmap2D> costmap){
+    int sizeX = costmap->getSizeInCellsX();
+    int sizeY = costmap->getSizeInCellsY();
+    bool **map = new bool*[sizeX];
+    for (int x = 0; x < sizeX; ++x) {
+        map[x] = new bool[sizeY];
+        for (int y = 0; y < sizeY; ++y) {
+            map[x][y] = (costmap->getCost(x, y) >= nav2_costmap_2d::MAX_NON_OBSTACLE);
+        }
+    }
+    return map;
+}
+
 void VoronoiGraph::getVoronoiGraph(){
-    // voronoi->initializeMap(sizeX,sizeY,map);
-    // voronoi->update();
-    // voronoi->alternativePrunedDiagram(); // prune the Voronoi
-    // voronoi->updateAlternativePrunedDiagram();  // prune the Voronoi
-    // voronoi->mergeVoronoi();
     int sizeX = voronoi->getSizeX();
     int sizeY = voronoi->getSizeY();
     int id=0;
@@ -201,6 +209,6 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
     resetAllProbabilities();
     int next_id = voronoi_nodes[start_id].getAdjacent();
     while (next_id != end_id) {
-
+        
     }
 }
