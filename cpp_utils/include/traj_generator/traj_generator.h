@@ -5,7 +5,9 @@
 
 #include "map_loader/costmap_2d.hpp"
 #include "map_voronoi/voronoigraph.h"
+
 #include "teb_local_planner/pose_se2.h"
+#include "teb_local_planner/optimal_planner.h"
 
 using namespace nav2_costmap_2d;
 using namespace teb_local_planner;
@@ -30,8 +32,8 @@ public:
     ~traj_generator(){};
     
     // initialize the static costmap and voronoi graph
-    void initialize(const std::string &yaml_file, double path_resolution, double time_resolution);
-    void sampleTraj(point start, point end, double time_resolution);
+    void initialize(const std::string &map_file, const std::string &planner_file, double path_resolution, double time_resolution);
+    std::vector<point> sampleTraj(point start, point end, double time_resolution);
 
 private:
     void getInitPlan(std::vector<int> passby_nodes, const point& start, const point& end);
@@ -42,16 +44,20 @@ private:
 
     std::shared_ptr<Costmap2D> costmap_;
     VoronoiGraph voronoi_graph_;
-    double path_resolution_; // resolution of the path
+    double path_resolution_; // resolution of the init path
     double time_resolution_; // resolution of the time
 
     // constraints
     std::vector<circle> circles_;  // circles consitute the corridor
-    std::vector<point> via_points_; // via points
+    ViaPointContainer via_points_; // via points
     
     // trajectory planning
     std::vector<PoseSE2> init_plan_; // trajectory points
     std::vector<point> trajectory_; // trajectory points in 2D space sampled in time resolution
+
+    // teb planner
+    TebConfig cfg_;
+    ObstContainer obstacles_;
 };
 
 # endif

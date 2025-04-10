@@ -387,7 +387,7 @@ bool TebOptimalPlanner::optimizeGraph(int no_iterations,bool clear_after)
   if(!iter)
   {
     LOGGER_ERROR("teb_local_planner", "optimizeGraph(): Optimization failed! iter=%i", iter);
-	return false;
+	  return false;
   }
 
   if (clear_after) clearGraph();	

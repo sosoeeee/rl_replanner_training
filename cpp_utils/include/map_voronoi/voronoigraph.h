@@ -37,9 +37,7 @@ public:
     float getDistance(int x, int y) { return voronoi->getDistance(x, y); }
 
     // get all nodes by pointer
-    const std::vector<VoronoiNode>& getAllNodes() const {
-        return voronoi_nodes;
-    }
+    const std::vector<VoronoiNode>& getAllNodes() const {return voronoi_nodes;}
 
     // get node by id
     const VoronoiNode& getNodeById(int id) const {
@@ -49,12 +47,7 @@ public:
         return voronoi_nodes[id];
     } 
 
-    // TODO: sample passby nodes
-    void resetAllProbabilities() {
-        for (auto& node : voronoi_nodes) {
-            node.resetProbability();
-        }
-    }
+    void resetAllProbabilities();
     std::vector<int> getPassbyNodes(int start_id, int end_id);
 
 private:

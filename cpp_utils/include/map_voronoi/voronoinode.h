@@ -43,7 +43,8 @@ public:
     void addPath(Path path);
 
     // Set the node that has been visited as 0, then update the probability of the left adjacent nodes
-    void updateProbability(int id);
+    // return true if node still has adjacent nodes, else return false
+    bool updateProbability(int id);
 
     void resetProbability();
 
