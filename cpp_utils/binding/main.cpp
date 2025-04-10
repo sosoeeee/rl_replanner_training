@@ -9,6 +9,8 @@
 #include "teb_local_planner/teb_config.h"
 #include "teb_local_planner/optimal_planner.h"
 
+#include "utils.h"
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <tuple>

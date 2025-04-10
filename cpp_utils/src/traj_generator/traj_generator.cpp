@@ -35,9 +35,9 @@ void traj_generator::initialize(const std::string &map_file, const std::string &
     cfg_.checkParameters();
 }
 
-void traj_generator::getNearestNode(point p, int &node_id)
+void traj_generator::getNearestNode(Point p, int &node_id)
 {
-    // get the nearest voronoi node to the point p
+    // get the nearest voronoi node to the Point p
     // TODO: Optimize the searching efficiency by using kd-tree or other methods
     std::vector<VoronoiNode> nodes = voronoi_graph_.getAllNodes();
     double min_dist = std::numeric_limits<double>::max();
@@ -53,7 +53,7 @@ void traj_generator::getNearestNode(point p, int &node_id)
     }
 }
 
-void traj_generator::getInitPlan(std::vector<int> passby_nodes, const point& start, const point& end)
+void traj_generator::getInitPlan(std::vector<int> passby_nodes, const Point& start, const Point& end)
 {
     init_plan_.clear();
     
@@ -61,7 +61,7 @@ void traj_generator::getInitPlan(std::vector<int> passby_nodes, const point& sta
     VoronoiNode start_node = voronoi_graph_.getNodeById(passby_nodes[0]);
     double start_wx, start_wy;
     costmap_->mapToWorld(start_node.getPosition().x, start_node.getPosition().y, start_wx, start_wy);
-    // connect the start point to the start node according to path resolution
+    // connect the start Point to the start node according to path resolution
     double dist = sqrt(pow(start_wx - start.x, 2) + pow(start_wy - start.y, 2));
     int num_points = static_cast<int>(dist / path_resolution_);
     double dx = (start_wx - start.x) / num_points;
@@ -79,8 +79,8 @@ void traj_generator::getInitPlan(std::vector<int> passby_nodes, const point& sta
         double last_wx, last_wy;
         double cur_wx, cur_wy;
         costmap_->mapToWorld(start_node.getPosition().x, start_node.getPosition().y, last_wx, last_wy);
-        for (const auto& point : path_points) {
-            costmap_->mapToWorld(point.x, point.y, cur_wx, cur_wy);
+        for (const auto& Point : path_points) {
+            costmap_->mapToWorld(Point.x, Point.y, cur_wx, cur_wy);
             dist = sqrt(pow(cur_wx - last_wx, 2) + pow(cur_wy - last_wy, 2));
             if (dist > path_resolution_) {
                 init_plan_.push_back(PoseSE2(cur_wx, cur_wy, 0.0));
@@ -89,7 +89,7 @@ void traj_generator::getInitPlan(std::vector<int> passby_nodes, const point& sta
             }
             else
             {
-                // if the distance is less than path resolution, we can skip this point
+                // if the distance is less than path resolution, we can skip this Point
                 continue;
             }
         }
@@ -99,7 +99,7 @@ void traj_generator::getInitPlan(std::vector<int> passby_nodes, const point& sta
     VoronoiNode end_node = voronoi_graph_.getNodeById(passby_nodes.back());
     double end_wx, end_wy;
     costmap_->mapToWorld(end_node.getPosition().x, end_node.getPosition().y, end_wx, end_wy);
-    // connect the end node to the end point according to path resolution
+    // connect the end node to the end Point according to path resolution
     dist = sqrt(pow(end_wx - end.x, 2) + pow(end_wy - end.y, 2));
     num_points = static_cast<int>(dist / path_resolution_);
     dx = (end.x - end_wx) / num_points;
@@ -116,7 +116,7 @@ void traj_generator::getCorridor()
     circles_.clear();
     double resolution = costmap_->getResolution();
     double dist;
-    circle cur_circle;
+    Circle cur_circle;
     unsigned int mx, my;
     int map_x, map_y;
 
@@ -181,10 +181,10 @@ void traj_generator::getViaPoints()
         std::normal_distribution<double> dist_y(circle.y, circle.radius / sigma_factor);
         py = dist_y(gen);
 
-        // check if the point is in the circle
+        // check if the Point is in the circle
         dist = sqrt(pow(px - circle.x, 2) + pow(py - circle.y, 2));
         while (dist >= circle.radius) {
-            // resample the point
+            // resample the Point
             px = dist_x(gen);
             py = dist_y(gen);
             dist = sqrt(pow(px - circle.x, 2) + pow(py - circle.y, 2));
@@ -228,7 +228,7 @@ void traj_generator::getTrajectory()
         (traj.back().time_from_start - traj.front().time_from_start) / time_resolution_ + 1);
     trajectory_.reserve(estimated_size);
 
-    // Add initial point
+    // Add initial Point
     trajectory_.push_back({traj[0].pose.x(), traj[0].pose.y()});
     
     double cur_time = traj[0].time_from_start;
@@ -248,7 +248,7 @@ void traj_generator::getTrajectory()
         const double segment_time = traj[idx + 1].time_from_start - traj[idx].time_from_start;
         if (segment_time > 0) {
             const double alpha = (cur_time - traj[idx].time_from_start) / segment_time;
-            const point p = {
+            const Point p = {
                 traj[idx].pose.x() + alpha * (traj[idx + 1].pose.x() - traj[idx].pose.x()),
                 traj[idx].pose.y() + alpha * (traj[idx + 1].pose.y() - traj[idx].pose.y())
             };
@@ -256,15 +256,15 @@ void traj_generator::getTrajectory()
         }
     }
 
-    // Add final point if not already added
+    // Add final Point if not already added
     if (std::abs(trajectory_.back().x - traj.back().pose.x()) > 1e-6 || std::abs(trajectory_.back().y - traj.back().pose.y()) > 1e-6) {
         trajectory_.push_back({traj.back().pose.x(), traj.back().pose.y()});
     }
 }
 
-std::vector<point> traj_generator::sampleTraj(point start, point end, double time_resolution)
+std::vector<Point> traj_generator::sampleTraj(Point start, Point end, double time_resolution)
 {
-    // get the nearest voronoi node to the start point and end point
+    // get the nearest voronoi node to the start Point and end Point
     int start_node_id, end_node_id;
     getNearestNode(start, start_node_id);
     getNearestNode(end, end_node_id);

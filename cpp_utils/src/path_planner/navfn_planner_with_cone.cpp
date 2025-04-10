@@ -435,8 +435,8 @@ NavfnPlannerWithCone::loadConeToMap(float robot_x, float robot_y)
   std::vector<Point> inflated_vertices;
   for (int i = 0; i < 2; i++) {
     Point vertex;
-    vertex.x = inflated_center[0] + inflated_radius * height_dirc[1] * cos(i * M_PI);
-    vertex.y = inflated_center[1] - inflated_radius * height_dirc[0] * cos(i * M_PI);
+    vertex.x = static_cast<double>(inflated_center[0] + inflated_radius * height_dirc[1] * cos(i * M_PI));
+    vertex.y = static_cast<double>(inflated_center[1] - inflated_radius * height_dirc[0] * cos(i * M_PI));
     inflated_vertices.push_back(vertex);
   }
 
@@ -446,8 +446,8 @@ NavfnPlannerWithCone::loadConeToMap(float robot_x, float robot_y)
   std::vector<Point> inflated_robot_vertices;
   for (int i = 0; i < 2; i++) {
     Point vertex;
-    vertex.x = inflated_robot_x + inflated_distance_ * std::tan(phi/2) * height_dirc[1] * cos(i * M_PI);
-    vertex.y = inflated_robot_y - inflated_distance_ * std::tan(phi/2) * height_dirc[0] * cos(i * M_PI);
+    vertex.x = static_cast<double>(inflated_robot_x + inflated_distance_ * std::tan(phi/2) * height_dirc[1] * cos(i * M_PI));
+    vertex.y = static_cast<double>(inflated_robot_y - inflated_distance_ * std::tan(phi/2) * height_dirc[0] * cos(i * M_PI));
     inflated_robot_vertices.push_back(vertex);
   }
 
