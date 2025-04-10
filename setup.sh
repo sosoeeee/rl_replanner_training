@@ -12,6 +12,14 @@ cd ./extern/pybind11 \
     && cmake .. \
     && sudo make install
 
+# build g2o with branch "20230806_git"
+cd ./extern/g2o \
+    && mkdir build \
+    && cd build \
+    && cmake .. \
+    && sudo make install
+
+
 # build c++ library
 cd ./cpp_utils \
     && mkdir build \
@@ -19,6 +27,10 @@ cd ./cpp_utils \
     && cmake .. \
     && make \
     && sudo make install
+
+# temporary pkg for debugging
+# pip install matplotlib 
+# sudo apt-get install python3-tk
 
 # RUN the following command to test the installation
 # python3 ./rl_replanner_train/tests/test_env.py

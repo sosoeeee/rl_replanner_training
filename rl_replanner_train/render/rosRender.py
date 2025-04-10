@@ -76,6 +76,7 @@ class rosRender():
         self.partial_map_pub = self.node.create_publisher(OccupancyGrid, 'obs_partial_map', 10)
         self.partial_map = PyCostmap2D(self.node)
         self.human_local_path_pub = self.node.create_publisher(Path, 'obs_human_path', 10)
+        self.human_future_path_pub = self.node.create_publisher(Path, 'rew_human_furture_path', 10)
         self.robot_local_path_pub = self.node.create_publisher(Path, 'obs_robot_path', 10)
         self.global_goal_pub = self.node.create_publisher(PoseStamped, 'obs_global_goal', 10)
 
@@ -133,8 +134,9 @@ class rosRender():
     def pub_robot_path(self, robot_path: list[list[float]]):    
         self.robot_path_pub.publish(self._get_path_msg(robot_path))
     
-    def pub_local_human_path(self, human_local_path: list[list[float]], robot_direrction: list[float]):
+    def pub_local_human_path(self, human_local_path: list[list[float]], human_future_path: list[list[float]], robot_direrction: list[float]):
         self.human_local_path_pub.publish(self._get_path_msg(human_local_path))
+        self.human_future_path_pub.publish(self._get_path_msg(human_future_path))
 
         cur_pose = PoseStamped()
         cur_pose.header.frame_id = self.global_frame_

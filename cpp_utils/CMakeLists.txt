@@ -19,6 +19,23 @@ find_package(GRAPHICSMAGICKCPP REQUIRED)
 # include_directories(${OpenCV_INCLUDE_DIRS})
 #find
 
+# teb_local_planner
+find_package(SUITESPARSE REQUIRED)
+find_package(G2O REQUIRED)
+find_package(Boost REQUIRED)
+
+# Find Eigen3
+find_package(Eigen3 REQUIRED)
+if (Eigen3_FOUND)
+  set(Eigen_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+  message(STATUS "Found Eigen3: ${Eigen_INCLUDE_DIRS}")
+else()
+  message(FATAL_ERROR "Eigen3 not found. Please install Eigen3.")
+endif()
+
+set(TEB_EXTERNAL_INCLUDE_DIRS ${Eigen_INCLUDE_DIRS} ${SUITESPARSE_INCLUDE_DIRS} ${G2O_INCLUDE_DIR})
+set(TEB_EXTERNAL_LIBS ${Boost_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES})
+
 # add_executable / add_library
 set(map_library_name map_loader)
 
@@ -63,6 +80,14 @@ add_executable(${voronoi_executable_name} src/${map_voronoi_name}/my.cpp)
 # 链接库
 target_link_libraries(${voronoi_executable_name} PRIVATE ${map_voronoi_name})
 # target_include_directories(${map_voronoi_name} PUBLIC ./include)
+set(teb_local_planner_name teb_local_planner)
+
+add_library(${teb_local_planner_name} SHARED
+   src/${teb_local_planner_name}/timed_elastic_band.cpp
+   src/${teb_local_planner_name}/optimal_planner.cpp
+   src/${teb_local_planner_name}/obstacles.cpp
+   src/${teb_local_planner_name}/teb_config.cpp
+)
 
 # include_directories / target_include_directories
 target_include_directories(${map_library_name} PUBLIC ./include)
@@ -73,7 +98,13 @@ target_include_directories(${map_library_name} SYSTEM PRIVATE
 
 target_include_directories(${path_library_name} PUBLIC ./include)
 
-#tar_inclu_*2
+target_include_directories(${teb_local_planner_name} PUBLIC ./include)
+target_include_directories(${teb_local_planner_name} SYSTEM PUBLIC
+  ${TEB_EXTERNAL_INCLUDE_DIRS})
+target_include_directories(${teb_local_planner_name} SYSTEM PRIVATE
+  ${yaml_cpp_vendor_INCLUDE_DIRS})
+target_include_directories(${teb_local_planner_name} SYSTEM PRIVATE
+  ${Boost_INCLUDE_DIRS})
 
 # Linking and Dependencies
 target_link_libraries(${map_library_name} 
@@ -83,11 +114,12 @@ target_link_libraries(${map_library_name}
 
 target_link_libraries(${path_library_name} ${yaml_cpp_vendor_LIBRARIES})
 
-
+target_link_libraries(${teb_local_planner_name} ${TEB_EXTERNAL_LIBS} ${yaml_cpp_vendor_LIBRARIES})
 
 # install
 install(TARGETS ${map_library_name} DESTINATION lib)
 install(TARGETS ${path_library_name} DESTINATION lib)
+install(TARGETS ${teb_local_planner_name} DESTINATION lib)
 # install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 
 add_subdirectory(binding)

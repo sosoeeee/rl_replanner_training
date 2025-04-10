@@ -15,6 +15,7 @@ RUN apt update -q \
     ros-dev-tools \
     # graphicsmagick \
     libgraphicsmagick++-dev \
+    libeigen3-dev \
     && apt clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

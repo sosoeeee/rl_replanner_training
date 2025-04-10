@@ -5,6 +5,10 @@
 
 #include "path_planner/navfn_planner_with_cone.hpp"
 
+#include "teb_local_planner/obstacles.h"
+#include "teb_local_planner/teb_config.h"
+#include "teb_local_planner/optimal_planner.h"
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <tuple>
@@ -16,6 +20,7 @@ namespace py = pybind11;
 using namespace nav2_map_server;
 using namespace nav2_costmap_2d;
 using namespace nav2_navfn_planner_with_cone;
+using namespace teb_local_planner;
 
 std::tuple<LOAD_MAP_STATUS, Costmap2D>
 loadMap(const std::string &yaml_file) {
@@ -84,6 +89,79 @@ PYBIND11_MODULE(cpp_utils, m) {
 
     // Bind the loadMap function
     m.def("loadMap", &loadMap, "Load map from YAML into OccupancyGrid", py::arg("yaml_file"));
+
+    // Bind the msg
+    py::class_<PoseSE2, std::shared_ptr<PoseSE2>>(m, "PoseSE2")
+        .def(py::init<double, double, double>(), py::arg("x"), py::arg("y"), py::arg("theta"))
+        .def_property("x", static_cast<double& (PoseSE2::*)()>(&PoseSE2::x), nullptr)
+        .def_property("y", static_cast<double& (PoseSE2::*)()>(&PoseSE2::y), nullptr)
+        .def_property("theta", static_cast<double& (PoseSE2::*)()>(&PoseSE2::theta), nullptr);
+
+    py::class_<VelSE2>(m, "VelSE2")
+        .def(py::init<double, double, double>(), py::arg("vx"), py::arg("vy"), py::arg("omega"))
+        .def_readwrite("vx", &VelSE2::vx)
+        .def_readwrite("vy", &VelSE2::vy)
+        .def_readwrite("omega", &VelSE2::omega);
+
+    py::class_<TrajectoryPointMsg>(m, "TrajectoryPointMsg")
+        .def(py::init())
+        .def_readwrite("pose", &TrajectoryPointMsg::pose)
+        .def_readwrite("velocity", &TrajectoryPointMsg::velocity)
+        .def_readwrite("acceleration", &TrajectoryPointMsg::acceleration)
+        .def_readwrite("time_from_start", &TrajectoryPointMsg::time_from_start);
+
+    // Bind the obstacle class
+    py::class_<Obstacle, std::shared_ptr<Obstacle>>(m, "Obstacle");
+    py::class_<CircularObstacle, Obstacle, std::shared_ptr<CircularObstacle>>(m, "CircularObstacle")
+        .def(py::init<double, double, double>(), py::arg("x"), py::arg("y"), py::arg("radius"));
+    py::class_<PointObstacle, Obstacle, std::shared_ptr<PointObstacle>>(m, "PointObstacle")
+        .def(py::init<double, double>(), py::arg("x"), py::arg("y"));
+    py::class_<CircularCorridor, Obstacle, std::shared_ptr<CircularCorridor>>(m, "CircularCorridor")
+        .def(py::init())
+        .def("addCircle", static_cast<void (CircularCorridor::*)(double, double, double)>(&CircularCorridor::addCircle), 
+            "Extend the corridor", py::arg("x"), py::arg("y"), py::arg("radius"))
+        .def("clear", &CircularCorridor::clearCircles, 
+            "Clear all circles from the corridor");
+
+    // Bind the TebConfig class
+    py::class_<TebConfig, std::shared_ptr<TebConfig>>(m, "TebConfig")
+        .def(py::init())
+        .def("configure", &TebConfig::loadParamsFromYaml, 
+            "Configure the teb_local_planner based on the yaml file", py::arg("yaml_filename"));
+    
+    // Bind the ViaPointContainer class
+    py::class_<viaPointContainerClass, std::shared_ptr<viaPointContainerClass>>(m, "ViaPointContainer")
+        .def(py::init())
+        .def("push_back", &viaPointContainerClass::push_back, 
+            "Add a via point to the container", py::arg("x"), py::arg("y"))
+        .def("clear", &viaPointContainerClass::clear, 
+            "Clear all via points from the container")
+        .def("getViaPoints", &viaPointContainerClass::getViaPoints, 
+            "Get the via points from the container");
+
+    // Bind the TebOptimalPlanner class
+    py::class_<TebOptimalPlanner, std::shared_ptr<TebOptimalPlanner>>(m, "TebOptimalPlanner")
+        .def(py::init())
+        .def("initialize", 
+            [](TebOptimalPlanner& self, const TebConfig& cfg, py::list obstacles, const viaPointContainerClass* via_points = nullptr) {
+                // Convert Python list to std::vector<std::shared_ptr<Obstacle>>
+                std::shared_ptr<ObstContainer> cxx_obstacles = std::make_shared<ObstContainer>();
+                for (auto item : obstacles) {
+                    cxx_obstacles->push_back(item.cast<std::shared_ptr<Obstacle>>());
+                }
+                self.initialize(cfg, cxx_obstacles, via_points ? via_points->getViaPoints() : NULL);
+            },
+            "Initialize the teb_local_planner",
+            py::arg("cfg"), py::arg("obstacles"), py::arg("via_points") = nullptr)
+        .def("plan", 
+            [](TebOptimalPlanner& self, const PoseSE2& start, const PoseSE2& goal, 
+            const std::optional<VelSE2>& start_vel = std::nullopt, bool free_goal_vel = false) {
+                return self.plan(start, goal, start_vel ? &(*start_vel) : nullptr, free_goal_vel);
+            },
+            "Plan a trajectory between a start and goal pose", 
+            py::arg("start"), py::arg("goal"), py::arg("start_vel") = py::none(), py::arg("free_goal_vel") = false)
+        .def("getFullTrajectory", &TebOptimalPlanner::py_getFullTrajectory, 
+            "Get the full trajectory of the teb_local_planner");
 }
 
 // Function to path plan
