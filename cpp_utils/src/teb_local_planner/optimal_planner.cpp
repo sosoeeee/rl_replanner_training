@@ -37,7 +37,7 @@
  *********************************************************************/
 
 #include "teb_local_planner/optimal_planner.h"
-#include "teb_local_planner/logger.h"
+#include "logger.h"
 
 #include <map>
 // g2o custom edges and vertices for the TEB planner

@@ -40,7 +40,7 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
-#include "teb_local_planner/logger.h" 
+#include "logger.h" 
 
 namespace teb_local_planner
 {

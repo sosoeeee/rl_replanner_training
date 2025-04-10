@@ -9,6 +9,7 @@
 
 #include "map_loader/costmap_2d.hpp"
 #include "map_loader/cost_values.hpp"
+#include "logger.h"
 
 using namespace nav2_costmap_2d;
 
@@ -49,6 +50,11 @@ public:
     } 
 
     // TODO: sample passby nodes
+    void resetAllProbabilities() {
+        for (auto& node : voronoi_nodes) {
+            node.resetProbability();
+        }
+    }
     std::vector<int> getPassbyNodes(int start_id, int end_id);
 
 private:

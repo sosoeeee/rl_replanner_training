@@ -55,7 +55,7 @@
 // this package
 #include <teb_local_planner/pose_se2.h>
 #include <teb_local_planner/robot_footprint_model.h>
-#include <teb_local_planner/logger.h>
+#include <logger.h>
 // #include "teb_local_planner/visualization.h"
 
 // #include <tf2/transform_datatypes.h>

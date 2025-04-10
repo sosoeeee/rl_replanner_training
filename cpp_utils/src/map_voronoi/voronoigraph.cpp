@@ -184,3 +184,19 @@ void VoronoiGraph::getVoronoiGraph(){
     }
     //TEST
 }
+
+std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
+{   
+    std::vector<int> passby_nodes;
+    std::vector<std::pair<int, float>> adjacent_nodes = voronoi_nodes[start_id].getAllAdjacent();
+    passby_nodes.push_back(start_id);
+    for (const auto& pair : adjacent_nodes) {
+        voronoi_nodes[pair.first].updateProbability(start_id);
+    }
+
+    resetAllProbabilities();
+    int next_id = voronoi_nodes[start_id].getAdjacent();
+    while (next_id != end_id) {
+
+    }
+}

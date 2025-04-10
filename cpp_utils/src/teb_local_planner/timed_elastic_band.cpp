@@ -37,7 +37,7 @@
  *********************************************************************/
 
 #include "teb_local_planner/timed_elastic_band.h"
-#include "teb_local_planner/logger.h"
+#include "logger.h"
 
 namespace teb_local_planner
 {

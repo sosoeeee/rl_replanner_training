@@ -6,6 +6,7 @@
 # include <random>
 # include <iostream>
 # include "voronoi.h"
+#include "logger.h"
 
 struct MapPoint{
     int x;

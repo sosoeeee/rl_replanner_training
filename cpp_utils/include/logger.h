@@ -9,9 +9,6 @@
 #include <sstream>
 #include <mutex>
 
-namespace teb_local_planner
-{
-
 enum LogLevel {
     DEBUG,
     INFO,
@@ -93,18 +90,16 @@ public:
     }
 };
 
-#define LOGGER_DEBUG(name, ...) teb_local_planner::Logger::debug(name, __VA_ARGS__)
-#define LOGGER_INFO(name, ...) teb_local_planner::Logger::info(name, __VA_ARGS__)
-#define LOGGER_WARN(name, ...) teb_local_planner::Logger::warn(name, __VA_ARGS__)
-#define LOGGER_ERROR(name, ...) teb_local_planner::Logger::error(name, __VA_ARGS__)
-#define LOGGER_FATAL(name, ...) teb_local_planner::Logger::fatal(name, __VA_ARGS__)
+#define LOGGER_DEBUG(name, ...) Logger::debug(name, __VA_ARGS__)
+#define LOGGER_INFO(name, ...) Logger::info(name, __VA_ARGS__)
+#define LOGGER_WARN(name, ...) Logger::warn(name, __VA_ARGS__)
+#define LOGGER_ERROR(name, ...) Logger::error(name, __VA_ARGS__)
+#define LOGGER_FATAL(name, ...) Logger::fatal(name, __VA_ARGS__)
 #define LOGGER_DEBUG_EXPRESSION(name, condition, ...) \
     do { \
         if (condition) { \
             LOGGER_DEBUG(name, __VA_ARGS__); \
         } \
     } while(0)
-
-} // namespace teb_local_planner
 
 #endif // LOGGER_H

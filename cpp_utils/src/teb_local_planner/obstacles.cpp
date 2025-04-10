@@ -37,7 +37,7 @@
  *********************************************************************/
 
 #include "teb_local_planner/obstacles.h"
-#include "teb_local_planner/logger.h"
+#include "logger.h"
 // #include "teb_local_planner/misc.h"
 
 namespace teb_local_planner

@@ -45,7 +45,7 @@
 #include <iterator>
 
 #include "teb_local_planner/obstacles.h"
-#include "teb_local_planner/logger.h"
+#include "logger.h"
 
 // G2O Types
 #include "teb_local_planner/g2o_types/vertex_pose.h"

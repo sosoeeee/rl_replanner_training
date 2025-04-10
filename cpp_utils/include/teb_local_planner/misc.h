@@ -41,7 +41,7 @@
 
 #include <Eigen/Core>
 
-#include "teb_local_planner/logger.h"
+#include "logger.h"
 
 #include <exception>
 #include <type_traits>
