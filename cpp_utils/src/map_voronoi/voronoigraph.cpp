@@ -8,12 +8,9 @@ void VoronoiGraph::visualizeVoronoi(const std::string& filename) {
     }
 }
 
-void VoronoiGraph::getVoronoiGraph(int sizeX, int sizeY, bool** map){
-    voronoi->initializeMap(sizeX,sizeY,map);
-    voronoi->update();
-    voronoi->alternativePrunedDiagram(); // prune the Voronoi
-    voronoi->updateAlternativePrunedDiagram();  // prune the Voronoi
-    voronoi->mergeVoronoi();
+void VoronoiGraph::getVoronoiGraph(){
+    int sizeX = voronoi->getSizeX();
+    int sizeY = voronoi->getSizeY();
     int id=0;
     for(int y = sizeY-1; y >=0; y--){
         for(int x = 0; x<sizeX; x++){
@@ -30,47 +27,69 @@ void VoronoiGraph::getVoronoiGraph(int sizeX, int sizeY, bool** map){
                   }
                 }
                 if(num>=3){
+
+                    // For What?
                     if(voronoi_nodes.size()!=0){
                         VoronoiNode last_node = voronoi_nodes.back();
-                        Point position=last_node.getPosition();
+                        MapPoint position=last_node.getPosition();
                         if(abs(position.x-x)<=1 && abs(position.y-y)<=1){
                             id--;
                         }
                     }
-                    VoronoiNode node(id, Point{x, y});  //same node 
+                    
+                    VoronoiNode node(id, MapPoint{x, y});  //same node 
                     voronoi_nodes.push_back(node);
                     id++;
                 }
             }
         }
     }
+
     //find path:
     int node_size = voronoi_nodes.size();
     for(int i=0;i<node_size;i++){
-        bool** map_flag=new bool*[sizeX];
-        for(int x=0;x<sizeX;x++){
-          map_flag[x]=new bool[sizeY];
+        
+        // Simplified memory allocation_flag=new bool*[sizeX];
+        // for(int x=0;x<sizeX;x++){
+        //   map_flag[x]=new bool[sizeY];
+        // }
+        // for(int x=0;x<sizeX;x++){
+        //   for(int y=0;y<sizeY;y++){
+        //     map_flag[x][y]=false;
+        //   }
+        // }
+        // bool** map_flag=new bool*[sizeX];
+        // for(int x=0;x<sizeX;x++){
+        //   map_flag[x]=new bool[sizeY];
+        // }
+        // for(int x=0;x<sizeX;x++){
+        //   for(int y=0;y<sizeY;y++){
+        //     map_flag[x][y]=false;
+        //   }
+        // }
+        bool** map_flag = new bool*[sizeX];
+        for (int x = 0; x < sizeX; x++) {
+            map_flag[x] = new bool[sizeY]();
         }
-        for(int x=0;x<sizeX;x++){
-          for(int y=0;y<sizeY;y++){
-            map_flag[x][y]=false;
-          }
-        }
+
         while(true){
             int j=i;
             VoronoiNode node = voronoi_nodes[i];
             int start_id = node.getId();
-            Point start = node.getPosition();
+            MapPoint start = node.getPosition();
             Path center_path;
+            
+            // for what?
             if(i!=0){
                 VoronoiNode last_node = voronoi_nodes[i-1];
-                Point last_position = last_node.getPosition();
+                MapPoint last_position = last_node.getPosition();
                 if(abs(last_position.x-start.x)<=1 && abs(last_position.y-start.y)<=1){
                     center_path.path_points.push_back(last_position);
                     j=i-1;
                 }
             }
-            Point end;
+
+            MapPoint end;
             end.x = start.x;
             end.y = start.y;
             center_path.path_points.push_back(start);
@@ -102,7 +121,7 @@ void VoronoiGraph::getVoronoiGraph(int sizeX, int sizeY, bool** map){
                 bool is_end = false;
                 for(int k=0;k<node_size;k++){
                     VoronoiNode node2 = voronoi_nodes[k];
-                    Point start2 = node2.getPosition();
+                    MapPoint start2 = node2.getPosition();
                     int target_id = node2.getId();
                     if(end.x==start2.x && end.y==start2.y){
                         if(start_id==target_id){
@@ -112,7 +131,7 @@ void VoronoiGraph::getVoronoiGraph(int sizeX, int sizeY, bool** map){
                         if(k!=0){
                             VoronoiNode node3 = voronoi_nodes[k-1];
                             int last_id = node3.getId();
-                            Point last_position = node3.getPosition();
+                            MapPoint last_position = node3.getPosition();
                             if(target_id==last_id){
                                 center_path.end_node_id = last_id;
                                 center_path.path_points.push_back(last_position);
@@ -150,6 +169,7 @@ void VoronoiGraph::getVoronoiGraph(int sizeX, int sizeY, bool** map){
             voronoi_nodes.erase(voronoi_nodes.begin()+i);
         }
     }
+
     //TEST
     int num=voronoi_nodes.size();
     for(int i=0;i<num;i++)

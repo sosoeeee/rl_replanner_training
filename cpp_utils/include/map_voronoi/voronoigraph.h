@@ -6,25 +6,52 @@
 #include <memory>
 #include "voronoi.h"
 #include "voronoinode.h"
+
 #include "map_loader/costmap_2d.hpp"
+#include "map_loader/cost_values.hpp"
 
 using namespace nav2_costmap_2d;
 
 class VoronoiGraph
 {
 public:
-    VoronoiGraph(){
+    VoronoiGraph(std::shared_ptr<Costmap2D> costmap)
+    {
+        // Initialize the Voronoi object with the costmap
+        voronoi->initializeMap(costmap->getSizeInCellsX(), costmap->getSizeInCellsY(), getBoolMap(costmap));
+        voronoi->update();
+        // voronoi->alternativePrunedDiagram(); // prune the Voronoi
+        voronoi->updateAlternativePrunedDiagram();  // prune the Voronoi
+        voronoi->mergeVoronoi();
+    };
 
-    }
-    ~VoronoiGraph(){
-
-    }
+    ~VoronoiGraph(){};
 
     void visualizeVoronoi(const std::string& filename);
-    void getVoronoiGraph(int sizeX, int sizeY, bool** map);
+    void getVoronoiGraph();
+
+    // TODO: get bool map from costmap according to the cost values
+    bool** getBoolMap(std::shared_ptr<Costmap2D> costmap);
+
+    float getDistance(int x, int y) { return voronoi->getDistance(x, y); }
+
+    // get all nodes by pointer
+    const std::vector<VoronoiNode>& getAllNodes() const {
+        return voronoi_nodes;
+    }
+
+    // get node by id
+    const VoronoiNode& getNodeById(int id) const {
+        if (id < 0 || id >= voronoi_nodes.size()) {
+            throw std::out_of_range("Node ID is out of range");
+        }
+        return voronoi_nodes[id];
+    } 
+
+    // TODO: sample passby nodes
+    std::vector<int> getPassbyNodes(int start_id, int end_id);
 
 private:
-    Costmap2D* costmap;  // Pointer to the costmap object
     std::shared_ptr<Voronoi> voronoi = std::make_shared<Voronoi>();
     std::vector<VoronoiNode> voronoi_nodes; // List of Voronoi nodes
 

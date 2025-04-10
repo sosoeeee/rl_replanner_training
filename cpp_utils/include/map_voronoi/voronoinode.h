@@ -7,27 +7,35 @@
 # include <iostream>
 # include "voronoi.h"
 
-struct Point{
+struct MapPoint{
     int x;
     int y;
 };
 
 struct Path{
     int end_node_id; // ID of the end node
-    std::vector<Point> path_points; // List of points in the path
+    std::vector<MapPoint> path_points; // List of points in the path
 };
 
 class VoronoiNode
 {
 public:
-    VoronoiNode(int id, Point position) : node_id(id), node_position(position) {}
+    VoronoiNode(int id, MapPoint position) : node_id(id), node_position(position), activated_adj(0)
+    {}
 
     ~VoronoiNode() {}
 
-    Point getPosition() const { return node_position; }
+    MapPoint getPosition() const { return node_position; }
     int getId() const { return node_id; }
     std::vector<std::pair<int, float>> getAllAdjacent() const { return adjacent; }
-    // Path getPath() const { return path; }
+    const std::vector<MapPoint>& getPathById(int id) const {
+        for (const auto& path : pathlist) {
+            if (path.end_node_id == id) {
+                return path.path_points;
+            }
+        }
+        throw std::out_of_range("Path not found");
+    }
 
     void addAdjacent(int id, float prob=1.0f);
 
@@ -42,7 +50,8 @@ public:
 
 private:
     int node_id; // ID of the node
-    Point node_position; // Position of the node in 2D space
+    MapPoint node_position; // Position of the node in 2D space
+    int activated_adj; // Number of activated adjacent nodes
     std::vector<std::pair<int, float>> adjacent; // List of adjacent nodes and their probilities
     std::vector<Path> pathlist; // Path to the node
 };
