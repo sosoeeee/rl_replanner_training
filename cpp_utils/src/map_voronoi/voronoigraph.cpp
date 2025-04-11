@@ -197,18 +197,61 @@ void VoronoiGraph::getVoronoiGraph(){
     //TEST
 }
 
+void VoronoiGraph::resetAllProbabilities()
+{
+    for (auto& node : voronoi_nodes) {
+        node.resetProbability();
+    }
+}
+
 std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
 {   
-    std::vector<int> passby_nodes;
-    std::vector<std::pair<int, float>> adjacent_nodes = voronoi_nodes[start_id].getAllAdjacent();
+    resetAllProbabilities();
+    bool activated;
+
+    std::vector<int> passby_nodes;  
+
+    // add start node
     passby_nodes.push_back(start_id);
+    std::vector<std::pair<int, float>> adjacent_nodes = voronoi_nodes[start_id].getAllAdjacent();
+    
+    // debug
+    LOGGER_INFO("VoronoiGraph", "Start node ID: %d. Its adjacent nodes are:", start_id);
     for (const auto& pair : adjacent_nodes) {
-        voronoi_nodes[pair.first].updateProbability(start_id);
+        LOGGER_INFO("VoronoiGraph", "Adjacent Node ID: %d, Probability: %f", pair.first, pair.second);
     }
 
-    resetAllProbabilities();
+    for (const auto& pair : adjacent_nodes) {
+        activated = voronoi_nodes[pair.first].updateProbability(start_id);
+        if (!activated && pair.first != end_id) {
+            activated = voronoi_nodes[start_id].updateProbability(pair.first);
+            if (!activated) LOGGER_ERROR("VoronoiGraph", "Node %d has no adjacent nodes. That should not happen.", start_id);
+        }
+    }
+
     int next_id = voronoi_nodes[start_id].getAdjacent();
     while (next_id != end_id) {
-        
+        passby_nodes.push_back(next_id);
+        adjacent_nodes = voronoi_nodes[next_id].getAllAdjacent();
+
+        // debug
+        LOGGER_INFO("VoronoiGraph", "Next node ID: %d. Its adjacent nodes are:", next_id);
+        for (const auto& pair : adjacent_nodes) {
+            LOGGER_INFO("VoronoiGraph", "Adjacent Node ID: %d, Probability: %f", pair.first, pair.second);
+        }
+
+        for (const auto& pair : adjacent_nodes) {
+            activated = voronoi_nodes[pair.first].updateProbability(next_id);
+            if (!activated && pair.first != end_id) {
+                voronoi_nodes[next_id].updateProbability(pair.first);
+                if (!activated) LOGGER_ERROR("VoronoiGraph", "Node %d has no adjacent nodes. That should not happen.", next_id);
+            }
+        }
+
+        next_id = voronoi_nodes[next_id].getAdjacent();
     }
+
+    passby_nodes.push_back(end_id);
+
+    return passby_nodes;
 }

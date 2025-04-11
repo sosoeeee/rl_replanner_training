@@ -9,6 +9,10 @@
 #include "teb_local_planner/teb_config.h"
 #include "teb_local_planner/optimal_planner.h"
 
+#include "traj_generator/traj_generator.h"
+
+#include "utils.h"
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <tuple>
@@ -123,6 +127,21 @@ PYBIND11_MODULE(cpp_utils, m) {
         .def("clear", &CircularCorridor::clearCircles, 
             "Clear all circles from the corridor");
 
+    // Bind the Trajectory generator class
+    py::class_<TrajGenerator, std::shared_ptr<TrajGenerator>>(m, "TrajGenerator")
+        .def(py::init())
+        .def("initialize", &TrajGenerator::initialize, 
+            "Initialize the trajectory generator based on the yaml file", py::arg("map_file"), py::arg("planner_file"), py::arg("path_resolution"), py::arg("time_resolution"))
+        .def("sampleTraj", &TrajGenerator::sampleTraj, 
+            "Sample a trajectory between two points", py::arg("start"), py::arg("end"), py::arg("time_resolution"))
+        .def("getInitPlan", &TrajGenerator::getInitPlan,
+            "Get the initial plan of the trajectory generator")
+        .def("getCircles", &TrajGenerator::getCircles,
+            "Get the circles of the trajectory generator") 
+        .def("getViaPoints", &TrajGenerator::getViaPoints,
+            "Get the via points of the trajectory generator");
+
+    // ============================ only expose when testing teb_local_planner ============================
     // Bind the TebConfig class
     py::class_<TebConfig, std::shared_ptr<TebConfig>>(m, "TebConfig")
         .def(py::init())
@@ -162,6 +181,7 @@ PYBIND11_MODULE(cpp_utils, m) {
             py::arg("start"), py::arg("goal"), py::arg("start_vel") = py::none(), py::arg("free_goal_vel") = false)
         .def("getFullTrajectory", &TebOptimalPlanner::py_getFullTrajectory, 
             "Get the full trajectory of the teb_local_planner");
+    // ==========================================================================================================
 }
 
 // Function to path plan

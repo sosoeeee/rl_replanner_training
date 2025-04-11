@@ -15,22 +15,30 @@ void VoronoiNode::addPath(Path path) {
     pathlist.push_back(path); // Add a path to the node
 }
 
-void VoronoiNode::updateProbability(int id) {
+bool VoronoiNode::updateProbability(int id) {
     for (auto& adj : adjacent) {
         if (adj.first == id) {
             float prob = adj.second;
             adj.second = 0.0f; // Set the probability of the specified adjacent node to 0
             // int adjacent_size = 1/prob;        // Get the size of the adjacent nodes (When the distribution is not uniform, the size of adjacent nodes is not equal to 1/prob)
             activated_adj--; // Decrement the count of activated adjacent nodes
+
+            if (activated_adj == 0) {
+                LOGGER_WARN("VoronoiNode", "All adjacent nodes are deactivated");
+                return false; // All adjacent nodes are deactivated
+            }
+
             for (auto& adj : adjacent) {
                 if (adj.second != 0.0f) {
                     adj.second += prob / (activated_adj - 1); // Distribute the probability of the removed node to the remaining nodes
                 }
             }
-            break;
+
+            return true; // Successfully updated the probability
         }
     }
-    LOGGER_WARN("VoronoiNode", "Node %d don't adjacent to %d", node_id, id);
+    LOGGER_ERROR("VoronoiNode", "Node %d is not adjacent to %d", node_id, id);
+    assert(false);
 }
 
 void VoronoiNode::resetProbability() {
@@ -48,6 +56,7 @@ int VoronoiNode::getAdjacent() {
         return -1; 
     }
 
+    // TODO: change to controllerable random number generator
     std::random_device rd;
     std::mt19937 gen(rd());
     std::vector<float> probabilities;

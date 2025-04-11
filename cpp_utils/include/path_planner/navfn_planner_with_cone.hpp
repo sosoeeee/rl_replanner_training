@@ -8,19 +8,13 @@
 
 #include "path_planner/navfn.hpp"
 #include "map_loader/costmap_2d.hpp"
+#include "utils.h"
 
 // // Publish the costmap loaded cone to debug
 // #define DEBUG
 
 namespace nav2_navfn_planner_with_cone
 {
-
-// point data structure in C++
-struct Point
-{
-  float x;
-  float y;
-};
 
 class NavfnPlannerWithCone 
 {
