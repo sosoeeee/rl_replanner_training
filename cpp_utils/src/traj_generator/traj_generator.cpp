@@ -8,7 +8,7 @@
 using namespace nav2_costmap_2d;
 using namespace teb_local_planner;
 
-void traj_generator::initialize(const std::string &map_file, const std::string &planner_file, double path_resolution, double time_resolution)
+void TrajGenerator::initialize(const std::string &map_file, const std::string &planner_file, double path_resolution, double time_resolution)
 {
     path_resolution_ = path_resolution;
     time_resolution_ = time_resolution;
@@ -35,7 +35,7 @@ void traj_generator::initialize(const std::string &map_file, const std::string &
     cfg_.checkParameters();
 }
 
-void traj_generator::getNearestNode(Point p, int &node_id)
+void TrajGenerator::getNearestNode(Point p, int &node_id)
 {
     // get the nearest voronoi node to the Point p
     // TODO: Optimize the searching efficiency by using kd-tree or other methods
@@ -53,7 +53,7 @@ void traj_generator::getNearestNode(Point p, int &node_id)
     }
 }
 
-void traj_generator::getInitPlan(std::vector<int> passby_nodes, const Point& start, const Point& end)
+void TrajGenerator::getInitPlan(std::vector<int> passby_nodes, const Point& start, const Point& end)
 {
     init_plan_.clear();
     
@@ -110,7 +110,7 @@ void traj_generator::getInitPlan(std::vector<int> passby_nodes, const Point& sta
     init_plan_.push_back(PoseSE2(end.x, end.y, 0.0));
 }
 
-void traj_generator::getCorridor()
+void TrajGenerator::updateCorridor()
 {
     // create circular corridor
     circles_.clear();
@@ -160,7 +160,7 @@ void traj_generator::getCorridor()
     circles_.push_back(cur_circle);
 }
 
-void traj_generator::getViaPoints()
+void TrajGenerator::updateViaPoints()
 {
     // sample via points from the corridor
     via_points_.clear();
@@ -194,7 +194,7 @@ void traj_generator::getViaPoints()
 }
 
 // get the trajectory from teb planner
-void traj_generator::getTrajectory()
+void TrajGenerator::updateTrajectory()
 {
     trajectory_.clear();
     obstacles_.clear();
@@ -262,7 +262,7 @@ void traj_generator::getTrajectory()
     }
 }
 
-std::vector<Point> traj_generator::sampleTraj(Point start, Point end, double time_resolution)
+std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end, double time_resolution)
 {
     // get the nearest voronoi node to the start Point and end Point
     int start_node_id, end_node_id;
@@ -276,13 +276,13 @@ std::vector<Point> traj_generator::sampleTraj(Point start, Point end, double tim
     getInitPlan(passby_nodes);
 
     // create circular corridor
-    getCorridor();
+    updateCorridor();
 
     // sample via points from the corridor
-    getViaPoints();
+    updateViaPoints();
 
     // plan trajectory
-    getTrajectory();
+    updateTrajectory();
 
     return trajectory_;
 }

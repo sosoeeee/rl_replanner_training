@@ -8,6 +8,7 @@ void VoronoiGraph::visualizeVoronoi(const std::string& filename) {
     }
 }
 
+// TODO: Use BFS to speed up the building process
 void VoronoiGraph::getVoronoiGraph(){
     int sizeX = voronoi->getSizeX();
     int sizeY = voronoi->getSizeY();

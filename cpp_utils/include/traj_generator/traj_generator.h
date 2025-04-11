@@ -20,22 +20,37 @@ struct Circle
     double radius;
 };
 
-class traj_generator
+class TrajGenerator
 {
 public:
-    traj_generator(){};
-    ~traj_generator(){};
+    TrajGenerator(){};
+    ~TrajGenerator(){};
     
     // initialize the static costmap and voronoi graph
     void initialize(const std::string &map_file, const std::string &planner_file, double path_resolution, double time_resolution);
     std::vector<Point> sampleTraj(Point start, Point end, double time_resolution);
 
+    // for visualization
+    std::vector<PoseSE2> getInitPlan() const {return init_plan_;}
+    std::vector<Circle> getCircles() const {return circles_;}
+    std::vector<Point> getViaPoints() const {
+        std::vector<Point> via_points;
+        for (const auto& via_point : via_points_) {
+            Point p = {
+                via_point.x(),
+                via_point.y()
+            };
+            via_points.push_back(p);
+        }
+        return via_points;
+    }
+
 private:
     void getInitPlan(std::vector<int> passby_nodes, const Point& start, const Point& end);
     void getNearestNode(Point p, int &node_id);
-    void getCorridor();
-    void getViaPoints();
-    void getTrajectory();
+    void updateCorridor();
+    void updateViaPoints();
+    void updateTrajectory();
 
     std::shared_ptr<Costmap2D> costmap_;
     VoronoiGraph voronoi_graph_;
