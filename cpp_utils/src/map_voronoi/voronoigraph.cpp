@@ -8,6 +8,19 @@ void VoronoiGraph::visualizeVoronoi(const std::string& filename) {
     }
 }
 
+bool** VoronoiGraph::getBoolMap(std::shared_ptr<Costmap2D> costmap){
+    int sizeX = costmap->getSizeInCellsX();
+    int sizeY = costmap->getSizeInCellsY();
+    bool **map = new bool*[sizeX];
+    for (int x = 0; x < sizeX; ++x) {
+        map[x] = new bool[sizeY];
+        for (int y = 0; y < sizeY; ++y) {
+            map[x][y] = (costmap->getCost(x, y) >= nav2_costmap_2d::MAX_NON_OBSTACLE);
+        }
+    }
+    return map;
+}
+
 // TODO: Use BFS to speed up the building process
 void VoronoiGraph::getVoronoiGraph(){
     int sizeX = voronoi->getSizeX();
@@ -170,7 +183,6 @@ void VoronoiGraph::getVoronoiGraph(){
             voronoi_nodes.erase(voronoi_nodes.begin()+i);
         }
     }
-
     //TEST
     int num=voronoi_nodes.size();
     for(int i=0;i<num;i++)
@@ -238,6 +250,7 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
         }
 
         next_id = voronoi_nodes[next_id].getAdjacent();
+        
     }
 
     passby_nodes.push_back(end_id);
