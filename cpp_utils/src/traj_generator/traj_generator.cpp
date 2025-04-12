@@ -205,7 +205,7 @@ void TrajGenerator::updateViaPoints()
         via_points_.push_back(Eigen::Vector2d(px, py));
     }   
 
-    LOGGER_INFO("teb_local_planner", "After sampling, number of via points: %d", via_points_.size());
+    // LOGGER_INFO("teb_local_planner", "After sampling, number of via points: %d", via_points_.size());
 }
 
 // get the trajectory from teb planner
@@ -244,14 +244,21 @@ void TrajGenerator::updateTrajectory()
 
     // Add initial Point
     trajectory_.push_back({raw_trajectory_[0].pose.x(), raw_trajectory_[0].pose.y()});
+
+    // LOGGER_INFO("teb_local_planner", "trajectory size: %zu", trajectory_.size());
+    // LOGGER_INFO("teb_local_planner", "Initial trajectory point: (%f, %f)", trajectory_.back().x, trajectory_.back().y);
     
     double cur_time = raw_trajectory_[0].time_from_start;
+    double total_time = raw_trajectory_.back().time_from_start;
     size_t idx = 0;
     const size_t traj_size = raw_trajectory_.size();
 
     // Resample trajectory at fixed time intervals
     while (idx < traj_size - 1) {
         cur_time += time_resolution_;
+        if (cur_time > total_time) {
+            break;
+        }
 
         // Find appropriate trajectory segment
         while (cur_time > raw_trajectory_[idx + 1].time_from_start) {
@@ -267,6 +274,13 @@ void TrajGenerator::updateTrajectory()
                 raw_trajectory_[idx].pose.y() + alpha * (raw_trajectory_[idx + 1].pose.y() - raw_trajectory_[idx].pose.y())
             };
             trajectory_.push_back(p);
+            
+            // LOGGER_INFO("teb_local_planner", "");
+            // LOGGER_INFO("teb_local_planner", "trajectory size: %zu", trajectory_.size());
+            // LOGGER_INFO("teb_local_planner", "Interpolated trajectory point: (%f, %f)", p.x, p.y);
+            // LOGGER_INFO("teb_local_planner", "Current time: %f", cur_time);
+            // LOGGER_INFO("teb_local_planner", "RAW Trajectory size: %zu, idx: %zu", raw_trajectory_.size(), idx);
+            // LOGGER_INFO("teb_local_planner", "Alpha: %f, from %f to %f", alpha, raw_trajectory_[idx].time_from_start, raw_trajectory_[idx + 1].time_from_start);
         }
     }
 
@@ -274,6 +288,9 @@ void TrajGenerator::updateTrajectory()
     if (std::abs(trajectory_.back().x - raw_trajectory_.back().pose.x()) > 1e-6 || std::abs(trajectory_.back().y - raw_trajectory_.back().pose.y()) > 1e-6) {
         trajectory_.push_back({raw_trajectory_.back().pose.x(), raw_trajectory_.back().pose.y()});
     }
+
+    // LOGGER_INFO("teb_local_planner", "Final trajectory point: (%f, %f)", trajectory_.back().x, trajectory_.back().y);
+    // LOGGER_INFO("teb_local_planner", "Total trajectory size: %zu", trajectory_.size());
 }
 
 std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
@@ -283,15 +300,17 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     getNearestNode(start, start_node_id);
     getNearestNode(end, end_node_id);
 
-    LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", start_node_id, end_node_id);
+    // // debug
+    // LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", start_node_id, end_node_id);
     
     // sample the passby voronoi nodes from start node to end node
     std::vector<int> passby_nodes = voronoi_graph_->getPassbyNodes(start_node_id, end_node_id);
 
-    LOGGER_INFO("teb_local_planner", "Passby nodes: ");
-    for (const auto& node_id : passby_nodes) {
-        LOGGER_INFO("teb_local_planner", "%d", node_id);
-    }
+    // // debug
+    // LOGGER_INFO("teb_local_planner", "Passby nodes: ");
+    // for (const auto& node_id : passby_nodes) {
+    //     LOGGER_INFO("teb_local_planner", "%d", node_id);
+    // }
 
     // get initial path from voronoi graph
     updateInitPlan(passby_nodes, start, end);

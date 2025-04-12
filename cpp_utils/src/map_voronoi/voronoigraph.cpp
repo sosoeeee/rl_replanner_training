@@ -184,17 +184,17 @@ void VoronoiGraph::getVoronoiGraph(){
         }
     }
     //TEST
-    int num=voronoi_nodes.size();
-    for(int i=0;i<num;i++)
-    {
-        std::cout<<voronoi_nodes[i].getId()<<std::endl;
-        std::cout<<"Position: ("<<voronoi_nodes[i].getPosition().x<<","<<voronoi_nodes[i].getPosition().y<<")"<<std::endl;
-        std::vector<std::pair<int, float>> adjacent = voronoi_nodes[i].getAllAdjacent();
-        for (const auto& pair : adjacent) {
-            std::cout << "Adjacent Node ID: " << pair.first << ", Probability: " << pair.second << std::endl;
-        }
-        std::cout << std::endl;
-    }
+    // int num=voronoi_nodes.size();
+    // for(int i=0;i<num;i++)
+    // {
+    //     std::cout<<voronoi_nodes[i].getId()<<std::endl;
+    //     std::cout<<"Position: ("<<voronoi_nodes[i].getPosition().x<<","<<voronoi_nodes[i].getPosition().y<<")"<<std::endl;
+    //     std::vector<std::pair<int, float>> adjacent = voronoi_nodes[i].getAllAdjacent();
+    //     for (const auto& pair : adjacent) {
+    //         std::cout << "Adjacent Node ID: " << pair.first << ", Probability: " << pair.second << std::endl;
+    //     }
+    //     std::cout << std::endl;
+    // }
     //TEST
 }
 
@@ -217,10 +217,10 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
     std::vector<std::pair<int, float>> adjacent_nodes = voronoi_nodes[start_id].getAllAdjacent();
     
     // debug
-    LOGGER_INFO("VoronoiGraph", "Start node ID: %d. Its adjacent nodes are:", start_id);
-    for (const auto& pair : adjacent_nodes) {
-        LOGGER_INFO("VoronoiGraph", "Adjacent Node ID: %d, Probability: %f", pair.first, pair.second);
-    }
+    // LOGGER_INFO("VoronoiGraph", "Start node ID: %d. Its adjacent nodes are:", start_id);
+    // for (const auto& pair : adjacent_nodes) {
+    //     LOGGER_INFO("VoronoiGraph", "Adjacent Node ID: %d, Probability: %f", pair.first, pair.second);
+    // }
 
     for (const auto& pair : adjacent_nodes) {
         activated = voronoi_nodes[pair.first].deactivate(start_id);
@@ -241,10 +241,10 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
         adjacent_nodes = voronoi_nodes[next_id].getAllAdjacent();
 
         // debug
-        LOGGER_INFO("VoronoiGraph", "Next node ID: %d. Its adjacent nodes are:", next_id);
-        for (const auto& pair : adjacent_nodes) {
-            LOGGER_INFO("VoronoiGraph", "Adjacent Node ID: %d, Probability: %f", pair.first, pair.second);
-        }
+        // LOGGER_INFO("VoronoiGraph", "Next node ID: %d. Its adjacent nodes are:", next_id);
+        // for (const auto& pair : adjacent_nodes) {
+        //     LOGGER_INFO("VoronoiGraph", "Adjacent Node ID: %d, Probability: %f", pair.first, pair.second);
+        // }
 
         // deactivate the adjacent nodes
         bool backtracking = false;
@@ -254,7 +254,7 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
                 activated = voronoi_nodes[next_id].deactivate(pair.first);
                 if (!activated) 
                 {
-                    LOGGER_ERROR("VoronoiGraph", "Node %d has no adjacent nodes. Start backtracking.", next_id);
+                    // LOGGER_WARN("VoronoiGraph", "Node %d has no adjacent nodes. Start backtracking.", next_id);
                     backtracking = true;
                 }
             }
@@ -275,11 +275,12 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
                     }
                 }
 
-                LOGGER_INFO("VoronoiGraph", "Backtracking to node ID: %d. Its adjacent nodes are:", next_id);
-                adjacent_nodes = voronoi_nodes[next_id].getAllAdjacent();
-                for (const auto& pair : adjacent_nodes) {
-                    LOGGER_INFO("VoronoiGraph", "Adjacent Node ID: %d, Probability: %f", pair.first, pair.second);
-                }
+                // debug
+                // LOGGER_INFO("VoronoiGraph", "Backtracking to node ID: %d. Its adjacent nodes are:", next_id);
+                // adjacent_nodes = voronoi_nodes[next_id].getAllAdjacent();
+                // for (const auto& pair : adjacent_nodes) {
+                //     LOGGER_INFO("VoronoiGraph", "Adjacent Node ID: %d, Probability: %f", pair.first, pair.second);
+                // }
 
             } while (voronoi_nodes[next_id].hasAdjacent() == false);
         }

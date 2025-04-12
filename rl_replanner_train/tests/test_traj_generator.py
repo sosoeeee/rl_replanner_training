@@ -57,12 +57,31 @@ while rclpy.ok():
     path_msg.header.frame_id = "map"
     path_msg.header.stamp = render_node.get_clock().now().to_msg()
 
+    last_point = None
+    idx = 0
     for point in traj:
+        if last_point is not None:
+            distance = np.linalg.norm(np.array([point.x, point.y]) - np.array([last_point.x, last_point.y]))
+            # print("Distance between points: ", distance)
+            if distance > 0.1:
+                print("Distance between points: ", distance)
+                print("point: ", round(point.x, 6), round(point.y, 6), "idx: ", idx + 1)
+                print("last_point: ", round(last_point.x, 6), round(last_point.y, 6), "idx: ", idx)
+        last_point = point
         pose = PoseStamped()
         pose.pose.position.x = point.x
         pose.pose.position.y = point.y
         pose.pose.position.z = 0.0
         path_msg.poses.append(pose)
+        idx += 1
+    
+    print("total number of points: ", idx)
+    # for point in traj:
+    #     pose = PoseStamped()
+    #     pose.pose.position.x = point.x
+    #     pose.pose.position.y = point.y
+    #     pose.pose.position.z = 0.0
+    #     path_msg.poses.append(pose)
 
     init_path_msg = Path()
     init_path_msg.header.frame_id = "map"

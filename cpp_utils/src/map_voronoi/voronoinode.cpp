@@ -17,7 +17,7 @@ void VoronoiNode::addPath(Path path) {
 
 bool VoronoiNode::deactivate(int id) {
     if (activated_adj == 0) {
-        LOGGER_WARN("VoronoiNode", "Node %d has no activated adjacent nodes", node_id);
+        // LOGGER_WARN("VoronoiNode", "Node %d has no activated adjacent nodes", node_id);
         return false; // All adjacent nodes are deactivated
     }
 
@@ -32,7 +32,7 @@ bool VoronoiNode::deactivate(int id) {
             activated_adj--; // Decrement the count of activated adjacent nodes
 
             if (activated_adj == 0) {
-                LOGGER_WARN("VoronoiNode", "Node %d has no activated adjacent nodes", node_id);
+                // LOGGER_WARN("VoronoiNode", "Node %d has no activated adjacent nodes", node_id);
                 return false; // All adjacent nodes are deactivated
             }
 
