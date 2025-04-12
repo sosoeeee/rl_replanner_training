@@ -47,6 +47,9 @@ public:
         return voronoi_nodes[id];
     } 
 
+    // find all available path from start node to end node:
+    std::vector<std::vector<int>> findAllPaths(int start_id, int end_id);
+
     void resetAllProbabilities();
     std::vector<int> getPassbyNodes(int start_id, int end_id);
 

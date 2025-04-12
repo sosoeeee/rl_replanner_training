@@ -22,7 +22,7 @@ find_package(GRAPHICSMAGICKCPP REQUIRED)
 # teb_local_planner
 find_package(SUITESPARSE REQUIRED)
 find_package(G2O REQUIRED)
-find_package(Boost REQUIRED)
+# find_package(Boost REQUIRED)
 
 # Find Eigen3
 find_package(Eigen3 REQUIRED)
@@ -72,13 +72,13 @@ add_library(${map_voronoi_name} SHARED
 )
 #add_exe
 # 设置可执行文件的名称
-set(voronoi_executable_name voronoi_my)
+set(test_executable_name my_test)
 
 # 添加可执行文件
-add_executable(${voronoi_executable_name} src/${map_voronoi_name}/my.cpp)
+add_executable(${test_executable_name} src/${map_voronoi_name}/mytest.cpp)
 
 # 链接库
-target_link_libraries(${voronoi_executable_name} PRIVATE ${map_voronoi_name})
+target_link_libraries(${test_executable_name} PRIVATE ${map_voronoi_name} ${map_library_name} ${path_library_name})
 # target_include_directories(${map_voronoi_name} PUBLIC ./include)
 set(teb_local_planner_name teb_local_planner)
 
