@@ -28,11 +28,13 @@ public:
     
     // initialize the static costmap and voronoi graph
     void initialize(const std::string &map_file, const std::string &planner_file, double path_resolution, double time_resolution);
-    std::vector<Point> sampleTraj(Point start, Point end, double time_resolution);
+    std::vector<Point> sampleTraj(Point start, Point end);
 
     // for visualization
     std::vector<PoseSE2> getInitPlan() const {return init_plan_;}
     std::vector<Circle> getCircles() const {return circles_;}
+    std::vector<TrajectoryPointMsg> getRawTraj() const {return raw_trajectory_;}
+    std::shared_ptr<Costmap2D> getCostmap() const {return costmap_;}
     std::vector<Point> getViaPoints() const {
         std::vector<Point> via_points;
         for (const auto& via_point : via_points_) {
@@ -46,14 +48,14 @@ public:
     }
 
 private:
-    void getInitPlan(std::vector<int> passby_nodes, const Point& start, const Point& end);
+    void updateInitPlan(std::vector<int> passby_nodes, const Point& start, const Point& end);
     void getNearestNode(Point p, int &node_id);
     void updateCorridor();
     void updateViaPoints();
     void updateTrajectory();
 
     std::shared_ptr<Costmap2D> costmap_;
-    VoronoiGraph voronoi_graph_;
+    std::unique_ptr<VoronoiGraph> voronoi_graph_;
     double path_resolution_; // resolution of the init path
     double time_resolution_; // resolution of the time
 
@@ -63,11 +65,12 @@ private:
     
     // trajectory planning
     std::vector<PoseSE2> init_plan_; // trajectory points
+    std::vector<TrajectoryPointMsg> raw_trajectory_;
     std::vector<Point> trajectory_; // trajectory points in 2D space sampled in time resolution
 
     // teb planner
     TebConfig cfg_;
-    ObstContainer obstacles_;
+    std::shared_ptr<ObstContainer> obstacles_;
 };
 
 # endif

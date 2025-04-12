@@ -7,6 +7,8 @@ pybind11_add_module(cpp_utils main.cpp)
 target_link_libraries(cpp_utils PRIVATE map_loader)  
 target_link_libraries(cpp_utils PRIVATE path_planner)
 target_link_libraries(cpp_utils PRIVATE teb_local_planner)
+target_link_libraries(cpp_utils PRIVATE map_voronoi)
+target_link_libraries(cpp_utils PRIVATE traj_generator)
 
 # Set the RPATH for the shared library (otherwise: libmap_loader.so: cannot open shared object file: No such file or directory)
 set_target_properties(cpp_utils PROPERTIES

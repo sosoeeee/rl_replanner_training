@@ -223,14 +223,19 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
     }
 
     for (const auto& pair : adjacent_nodes) {
-        activated = voronoi_nodes[pair.first].updateProbability(start_id);
+        activated = voronoi_nodes[pair.first].deactivate(start_id);
         if (!activated && pair.first != end_id) {
-            activated = voronoi_nodes[start_id].updateProbability(pair.first);
-            if (!activated) LOGGER_ERROR("VoronoiGraph", "Node %d has no adjacent nodes. That should not happen.", start_id);
+            activated = voronoi_nodes[start_id].deactivate(pair.first);
+            if (!activated) 
+            {
+                LOGGER_ERROR("VoronoiGraph", "Node %d has no adjacent nodes. That should not happen.", start_id);
+                assert(false);                
+            }
         }
     }
 
     int next_id = voronoi_nodes[start_id].getAdjacent();
+    int backtrack_id = -1;
     while (next_id != end_id) {
         passby_nodes.push_back(next_id);
         adjacent_nodes = voronoi_nodes[next_id].getAllAdjacent();
@@ -241,16 +246,45 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
             LOGGER_INFO("VoronoiGraph", "Adjacent Node ID: %d, Probability: %f", pair.first, pair.second);
         }
 
+        // deactivate the adjacent nodes
+        bool backtracking = false;
         for (const auto& pair : adjacent_nodes) {
-            activated = voronoi_nodes[pair.first].updateProbability(next_id);
+            activated = voronoi_nodes[pair.first].deactivate(next_id);
             if (!activated && pair.first != end_id) {
-                voronoi_nodes[next_id].updateProbability(pair.first);
-                if (!activated) LOGGER_ERROR("VoronoiGraph", "Node %d has no adjacent nodes. That should not happen.", next_id);
+                activated = voronoi_nodes[next_id].deactivate(pair.first);
+                if (!activated) 
+                {
+                    LOGGER_ERROR("VoronoiGraph", "Node %d has no adjacent nodes. Start backtracking.", next_id);
+                    backtracking = true;
+                }
             }
         }
 
+        //backtrack
+        if (backtracking)
+        {
+            do {
+                backtrack_id = next_id;
+                passby_nodes.pop_back();
+                next_id = passby_nodes.back();
+
+                adjacent_nodes = voronoi_nodes[backtrack_id].getAllAdjacent();
+                for (const auto& pair : adjacent_nodes) {
+                    if (pair.first != next_id) {
+                    activated = voronoi_nodes[pair.first].activate(backtrack_id);
+                    }
+                }
+
+                LOGGER_INFO("VoronoiGraph", "Backtracking to node ID: %d. Its adjacent nodes are:", next_id);
+                adjacent_nodes = voronoi_nodes[next_id].getAllAdjacent();
+                for (const auto& pair : adjacent_nodes) {
+                    LOGGER_INFO("VoronoiGraph", "Adjacent Node ID: %d, Probability: %f", pair.first, pair.second);
+                }
+
+            } while (voronoi_nodes[next_id].hasAdjacent() == false);
+        }
+
         next_id = voronoi_nodes[next_id].getAdjacent();
-        
     }
 
     passby_nodes.push_back(end_id);

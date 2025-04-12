@@ -44,7 +44,9 @@ public:
 
     // Set the node that has been visited as 0, then update the probability of the left adjacent nodes
     // return true if node still has adjacent nodes, else return false
-    bool updateProbability(int id);
+    bool deactivate(int id);
+    bool activate(int id);
+    bool hasAdjacent() const { return activated_adj > 0; } // Check if the node has adjacent nodes
 
     void resetProbability();
 
