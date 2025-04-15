@@ -52,6 +52,14 @@ public:
 
     int getAdjacent();  // Get a random adjacent node based on the probability
 
+    std::vector<int> getNeighbors() const {
+        std::vector<int> neighbors;
+        for (const auto& adj : adjacent) {
+            neighbors.push_back(adj.first);
+        }
+        return neighbors;
+    }
+
 private:
     int node_id; // ID of the node
     MapPoint node_position; // Position of the node in 2D space

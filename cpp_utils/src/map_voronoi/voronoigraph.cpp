@@ -22,6 +22,9 @@ bool** VoronoiGraph::getBoolMap(std::shared_ptr<Costmap2D> costmap){
 }
 
 // TODO: Use BFS to speed up the building process
+
+// we merge the same node during the process of finding the path 
+// if the node is near the last node, then we see it as the same node
 void VoronoiGraph::getVoronoiGraph(){
     int sizeX = voronoi->getSizeX();
     int sizeY = voronoi->getSizeY();
@@ -42,7 +45,7 @@ void VoronoiGraph::getVoronoiGraph(){
                 }
                 if(num>=3){
 
-                    // For What?
+                    // if the node is near the last node , then we see it as the same node
                     if(voronoi_nodes.size()!=0){
                         VoronoiNode last_node = voronoi_nodes.back();
                         MapPoint position=last_node.getPosition();
@@ -63,24 +66,6 @@ void VoronoiGraph::getVoronoiGraph(){
     int node_size = voronoi_nodes.size();
     for(int i=0;i<node_size;i++){
         
-        // Simplified memory allocation_flag=new bool*[sizeX];
-        // for(int x=0;x<sizeX;x++){
-        //   map_flag[x]=new bool[sizeY];
-        // }
-        // for(int x=0;x<sizeX;x++){
-        //   for(int y=0;y<sizeY;y++){
-        //     map_flag[x][y]=false;
-        //   }
-        // }
-        // bool** map_flag=new bool*[sizeX];
-        // for(int x=0;x<sizeX;x++){
-        //   map_flag[x]=new bool[sizeY];
-        // }
-        // for(int x=0;x<sizeX;x++){
-        //   for(int y=0;y<sizeY;y++){
-        //     map_flag[x][y]=false;
-        //   }
-        // }
         bool** map_flag = new bool*[sizeX];
         for (int x = 0; x < sizeX; x++) {
             map_flag[x] = new bool[sizeY]();
@@ -93,7 +78,7 @@ void VoronoiGraph::getVoronoiGraph(){
             MapPoint start = node.getPosition();
             Path center_path;
             
-            // for what?
+            // if the node is near the last node , then we see it as the same node
             if(i!=0){
                 VoronoiNode last_node = voronoi_nodes[i-1];
                 MapPoint last_position = last_node.getPosition();
@@ -291,4 +276,41 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
     passby_nodes.push_back(end_id);
 
     return passby_nodes;
+}
+
+std::vector<std::vector<int>> VoronoiGraph::findAllPaths(int start_id, int end_id) {
+    std::vector<std::vector<int>> all_paths;
+    std::vector<int> path;
+    std::vector<bool> visited(voronoi_nodes.size(), false);
+    
+    std::function<void(int)> dfs = [&](int current_id) {
+        visited[current_id] = true;
+        path.push_back(current_id);
+        
+        if (current_id == end_id) {
+            all_paths.push_back(path);
+        } else {
+            for (const auto& neighbor : voronoi_nodes[current_id].getNeighbors()) {
+                if (!visited[neighbor]) {
+                    dfs(neighbor);
+                }
+            }
+        }
+        
+        path.pop_back();
+        visited[current_id] = false;
+    };
+    
+    dfs(start_id);
+
+    // TEST: print all paths
+    std::cout << all_paths.size() << std::endl;
+    // for (const auto& path : all_paths) {
+    //     for (const auto& node_id : path) {
+    //         std::cout << node_id << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+    // TEST: end
+    return all_paths;
 }
