@@ -23,12 +23,16 @@ struct Circle
 class TrajGenerator
 {
 public:
-    TrajGenerator(){};
+    TrajGenerator(){
+        last_start_point_ = nullptr; 
+        last_end_point_ = nullptr;
+    };
     ~TrajGenerator(){};
     
     // initialize the static costmap and voronoi graph
     void initialize(const std::string &map_file, const std::string &planner_file, double path_resolution, double time_resolution);
     std::vector<Point> sampleTraj(Point start, Point end);
+    std::vector<Point> sampleDistinctHomotopyTrajs(Point start, Point end);
 
     // for visualization
     std::vector<PoseSE2> getInitPlan() const {return init_plan_;}
@@ -59,11 +63,16 @@ private:
     double path_resolution_; // resolution of the init path
     double time_resolution_; // resolution of the time
 
+    std::unique_ptr<Point> last_start_point_; // last start point
+    std::unique_ptr<Point> last_end_point_;   // last end point
+    std::vector<std::vector<int>> all_passby_nodes_; // all passby nodes
+    int sample_count_ = 0; // sample count
+
+    /* ========================= trajectory planning ========================= */ 
     // constraints
     std::vector<Circle> circles_;  // circles consitute the corridor
     ViaPointContainer via_points_; // via points
     
-    // trajectory planning
     std::vector<PoseSE2> init_plan_; // trajectory points
     std::vector<TrajectoryPointMsg> raw_trajectory_;
     std::vector<Point> trajectory_; // trajectory points in 2D space sampled in time resolution

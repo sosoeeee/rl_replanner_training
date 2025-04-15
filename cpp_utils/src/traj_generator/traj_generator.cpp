@@ -214,20 +214,26 @@ void TrajGenerator::updateTrajectory()
     trajectory_.clear();
     obstacles_->clear();
 
+    /* ============== the viapoints constrain has been able to constrain the path into its origin homotopy class ============== */
     // Setup circular corridor
-    std::shared_ptr<CircularCorridor> corridor = std::make_shared<CircularCorridor>();
-    corridor->clearCircles();  // Ensure corridor is empty
-    for (const auto& circle : circles_) {
-        corridor->addCircle(circle.x, circle.y, circle.radius);
-    }
-    obstacles_->push_back(corridor);
+    // std::shared_ptr<CircularCorridor> corridor = std::make_shared<CircularCorridor>();
+    // corridor->clearCircles();  // Ensure corridor is empty
+    // for (const auto& circle : circles_) {
+    //     corridor->addCircle(circle.x, circle.y, circle.radius);
+    // }
+    // obstacles_->push_back(corridor);
+    /* ========================================== release this constrain to speed up ========================================== */
 
     // Initialize and run planner
+    // auto start_time = std::chrono::high_resolution_clock::now();
     TebOptimalPlanner planner(cfg_, obstacles_, &via_points_);
     if (!planner.plan(init_plan_)) {
         LOGGER_ERROR("teb_local_planner", "Failed to plan trajectory.");
         return;
     }
+    // auto end_time = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> elapsed_time = end_time - start_time;
+    // LOGGER_INFO("teb_local_planner", "Planning time: %f seconds", elapsed_time.count());
 
     // Get the planned trajectory
     planner.getFullTrajectory(raw_trajectory_);
@@ -329,6 +335,77 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
 
     // plan trajectory
     updateTrajectory();
+
+    return trajectory_;
+}
+
+std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajs(Point start, Point end)
+{   
+    bool resample = false;
+    if (!last_start_point_ || !last_end_point_)
+    {
+        last_start_point_ = std::make_unique<Point>(start);
+        last_end_point_ = std::make_unique<Point>(end);
+        resample = true;
+    }
+    else if (std::abs(last_start_point_->x - start.x) > 1e-6 || std::abs(last_start_point_->y - start.y) > 1e-6 ||
+             std::abs(last_end_point_->x - end.x) > 1e-6 || std::abs(last_end_point_->y - end.y) > 1e-6)
+    {
+        last_start_point_ = std::make_unique<Point>(start);
+        last_end_point_ = std::make_unique<Point>(end);
+        resample = true;
+        LOGGER_INFO("teb_local_planner", "Start point or end point changed, resampling trajectories from distinct homotopies.");
+    }
+
+    if (resample)
+    {
+        all_passby_nodes_.clear();
+        // get the nearest voronoi node to the start Point and end Point
+        int start_node_id, end_node_id;
+        getNearestNode(start, start_node_id);
+        getNearestNode(end, end_node_id);
+
+        std::vector<std::vector<Point>> trajectories;
+        all_passby_nodes_ = voronoi_graph_->findAllPaths(start_node_id, end_node_id);
+    }
+
+    if (sample_count_ >= all_passby_nodes_.size())
+    {
+        LOGGER_INFO("teb_local_planner", "All distinct homotopy trajectories have been sampled.");
+        sample_count_ = 0;
+        return {};
+    }
+
+    std::vector<int> passby_nodes = all_passby_nodes_[sample_count_];
+    sample_count_++;
+
+    // get initial path from voronoi graph
+    // auto start_time = std::chrono::high_resolution_clock::now();
+
+    updateInitPlan(passby_nodes, start, end);
+    // auto init_plan_time = std::chrono::high_resolution_clock::now();
+    // auto init_plan_duration = std::chrono::duration_cast<std::chrono::milliseconds>(init_plan_time - start_time);
+    // LOGGER_INFO("teb_local_planner", "Init plan took %ld ms", init_plan_duration.count());
+
+    // create circular corridor
+    updateCorridor();
+    // auto corridor_time = std::chrono::high_resolution_clock::now();
+    // auto corridor_duration = std::chrono::duration_cast<std::chrono::milliseconds>(corridor_time - init_plan_time);
+    // LOGGER_INFO("teb_local_planner", "Corridor creation took %ld ms", corridor_duration.count());
+
+    // sample via points from the corridor
+    updateViaPoints();
+    // auto via_points_time = std::chrono::high_resolution_clock::now();
+    // auto via_points_duration = std::chrono::duration_cast<std::chrono::milliseconds>(via_points_time - corridor_time);
+    // LOGGER_INFO("teb_local_planner", "Via points sampling took %ld ms", via_points_duration.count());
+
+    // plan trajectory
+    updateTrajectory();
+    // auto end_time = std::chrono::high_resolution_clock::now();
+    // auto traj_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - via_points_time);
+    // auto total_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    // LOGGER_INFO("teb_local_planner", "Trajectory optimization took %ld ms", traj_duration.count());
+    // LOGGER_INFO("teb_local_planner", "Total planning took %ld ms", total_duration.count());
 
     return trajectory_;
 }

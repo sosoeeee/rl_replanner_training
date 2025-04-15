@@ -140,6 +140,8 @@ PYBIND11_MODULE(cpp_utils, m) {
             "Initialize the trajectory generator based on the yaml file", py::arg("map_file"), py::arg("planner_file"), py::arg("path_resolution"), py::arg("time_resolution"))
         .def("sampleTraj", &TrajGenerator::sampleTraj, 
             "Sample a trajectory between two points", py::arg("start"), py::arg("end"))
+        .def("sampleDistinctHomotopyTrajs", &TrajGenerator::sampleDistinctHomotopyTrajs, 
+            "Sample a trajectory between two points", py::arg("start"), py::arg("end"))
         .def("getInitPlan", &TrajGenerator::getInitPlan,
             "Get the initial plan of the trajectory generator")
         .def("getCircles", &TrajGenerator::getCircles,

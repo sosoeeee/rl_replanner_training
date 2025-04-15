@@ -311,6 +311,14 @@ std::vector<std::vector<int>> VoronoiGraph::findAllPaths(int start_id, int end_i
     //     }
     //     std::cout << std::endl;
     // }
+    // Log each path
+    // for (const auto& path : all_paths) {
+    //     std::string path_str = "Path: ";
+    //     for (const auto& node_id : path) {
+    //         path_str += std::to_string(node_id) + " ";
+    //     }
+    //     LOGGER_INFO("VoronoiGraph", "%s", path_str.c_str());
+    // }
     // TEST: end
     return all_paths;
 }
