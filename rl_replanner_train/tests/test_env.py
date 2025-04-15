@@ -6,7 +6,7 @@ import os
 workspace_path = os.path.join(os.path.dirname(__file__) + "/../..")
 sys.path.append(workspace_path)
 
-from rl_replanner_train.train_env import SimulationWorld
+from rl_replanner_train.train_env import TrainEnv
 
 print("Test gym environment")
 print("=====================================")
@@ -25,7 +25,7 @@ obser_width=5                # unit: meter
 human_history_length=20
 robot_prediction_length=100
 speed_buffer_length=4
-env = SimulationWorld(
+env = TrainEnv(
     reward_weight=reward_weight,
     map_setting_file='/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml',
     planner_setting_file='/home/rosdev/ros2_ws/cpp_utils/include/path_planner/planner_setting.yaml',
