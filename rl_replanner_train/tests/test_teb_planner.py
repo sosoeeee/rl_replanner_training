@@ -6,9 +6,9 @@ from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 from visualization_msgs.msg import Marker, MarkerArray
 
-import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('TkAgg')
+# import matplotlib.pyplot as plt
+# import matplotlib
+# matplotlib.use('TkAgg')
 
 rclpy.init()
 

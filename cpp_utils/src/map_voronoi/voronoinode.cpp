@@ -15,22 +15,54 @@ void VoronoiNode::addPath(Path path) {
     pathlist.push_back(path); // Add a path to the node
 }
 
-bool VoronoiNode::updateProbability(int id) {
+bool VoronoiNode::deactivate(int id) {
+    if (activated_adj == 0) {
+        // LOGGER_WARN("VoronoiNode", "Node %d has no activated adjacent nodes", node_id);
+        return false; // All adjacent nodes are deactivated
+    }
+
     for (auto& adj : adjacent) {
         if (adj.first == id) {
+            // Check if the adjacent node is already deactivated
+            if(adj.second == 0.0f) return true;
+
             float prob = adj.second;
             adj.second = 0.0f; // Set the probability of the specified adjacent node to 0
             // int adjacent_size = 1/prob;        // Get the size of the adjacent nodes (When the distribution is not uniform, the size of adjacent nodes is not equal to 1/prob)
             activated_adj--; // Decrement the count of activated adjacent nodes
 
             if (activated_adj == 0) {
-                LOGGER_WARN("VoronoiNode", "All adjacent nodes are deactivated");
+                // LOGGER_WARN("VoronoiNode", "Node %d has no activated adjacent nodes", node_id);
                 return false; // All adjacent nodes are deactivated
             }
 
             for (auto& adj : adjacent) {
                 if (adj.second != 0.0f) {
-                    adj.second += prob / (activated_adj - 1); // Distribute the probability of the removed node to the remaining nodes
+                    adj.second += prob / activated_adj; // Distribute the probability of the removed node to the remaining nodes
+                }
+            }
+
+            return true; // Successfully updated the probability
+        }
+    }
+    LOGGER_ERROR("VoronoiNode", "Node %d is not adjacent to %d", node_id, id);
+    assert(false);
+}
+
+// TODO: Currently under Assumption --- all adjacent nodes have the same probability
+bool VoronoiNode::activate(int id) {
+    for (auto& adj : adjacent) {
+        if (adj.first == id) {
+            // Check if the adjacent node is already activated
+            if(adj.second != 0.0f) return true;
+
+            activated_adj++; // Increment the count of activated adjacent nodes
+            float prob = 1.0f / activated_adj; // Calculate the probability to be added
+            adj.second = prob; // Set the probability of the specified adjacent node to its original value
+
+            for (auto& adj : adjacent) {
+                if (adj.second != 0.0f) {
+                    adj.second == prob; // Distribute the probability of the added node to the remaining nodes
                 }
             }
 

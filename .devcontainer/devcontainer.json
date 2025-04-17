@@ -45,7 +45,7 @@
         "--volume", "${localEnv:XAUTHORITY}:/root/.Xauthority:ro",
         "--env", "QT_X11_NO_MITSHM=1",
         "--name", "rl_replanner_training",
-        // "--runtime=nvidia",
-        // "--gpus", "all"
+        "--runtime=nvidia",
+        "--gpus", "all"
     ]
   }

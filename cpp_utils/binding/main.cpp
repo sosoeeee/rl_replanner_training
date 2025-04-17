@@ -81,6 +81,12 @@ PYBIND11_MODULE(cpp_utils, m) {
         .def_readwrite("x", &Point::x)
         .def_readwrite("y", &Point::y);
 
+    py::class_<Circle>(m, "Circle")
+        .def(py::init<float, float, float>())
+        .def_readwrite("x", &Circle::x)
+        .def_readwrite("y", &Circle::y)
+        .def_readwrite("radius", &Circle::radius);
+
     py::class_<NavfnPlannerWithCone, std::shared_ptr<NavfnPlannerWithCone>>(m, "PathPlanner")
         .def(py::init())
         .def_property("inflated_distance", &NavfnPlannerWithCone::getInflatedDistance, nullptr)
@@ -133,13 +139,19 @@ PYBIND11_MODULE(cpp_utils, m) {
         .def("initialize", &TrajGenerator::initialize, 
             "Initialize the trajectory generator based on the yaml file", py::arg("map_file"), py::arg("planner_file"), py::arg("path_resolution"), py::arg("time_resolution"))
         .def("sampleTraj", &TrajGenerator::sampleTraj, 
-            "Sample a trajectory between two points", py::arg("start"), py::arg("end"), py::arg("time_resolution"))
+            "Sample a trajectory between two points", py::arg("start"), py::arg("end"))
+        .def("sampleDistinctHomotopyTrajs", &TrajGenerator::sampleDistinctHomotopyTrajs, 
+            "Sample a trajectory between two points", py::arg("start"), py::arg("end"))
         .def("getInitPlan", &TrajGenerator::getInitPlan,
             "Get the initial plan of the trajectory generator")
         .def("getCircles", &TrajGenerator::getCircles,
             "Get the circles of the trajectory generator") 
         .def("getViaPoints", &TrajGenerator::getViaPoints,
-            "Get the via points of the trajectory generator");
+            "Get the via points of the trajectory generator")
+        .def("getRawTraj", &TrajGenerator::getRawTraj,
+            "Get the trajectory given by teb planner")
+        .def("getCostmap", &TrajGenerator::getCostmap,
+            "Get the referred static map");
 
     // ============================ only expose when testing teb_local_planner ============================
     // Bind the TebConfig class

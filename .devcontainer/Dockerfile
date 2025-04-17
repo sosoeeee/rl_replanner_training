@@ -14,6 +14,8 @@ RUN apt update -q \
     ros-humble-rviz2 \ 
     ros-dev-tools \
     # graphicsmagick \
+    libsuitesparse-dev \
+    libboost-all-dev \
     libgraphicsmagick++-dev \
     libeigen3-dev \
     && apt clean \

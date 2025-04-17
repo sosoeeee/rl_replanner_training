@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <sstream>
 #include <mutex>
+#include <cstring>  
 
 enum LogLevel {
     DEBUG,
