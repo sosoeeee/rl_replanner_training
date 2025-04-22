@@ -99,6 +99,7 @@ class EvalEnv(gym.Env):
         # human path
         self.replay_traj_files = glob.glob(replay_traj_path + '/*.txt')
         self.use_generator = use_generator
+        self.traj_index = 0  # 用于跟踪当前使用的轨迹索引
         self.current_human_traj = None
         self.time_resolution = 0.1            # collect rate is 10Hz
         self.path_resolution = 0.05 / 2
@@ -135,6 +136,7 @@ class EvalEnv(gym.Env):
         self.cone_center = None
         self.pred_goal = None
         self.robot_direction = None
+        self.gamma = 1.0
 
         ################################################################################################################################
         # render setting
@@ -164,9 +166,14 @@ class EvalEnv(gym.Env):
         self.time = 0
         self.current_action = (DO_NOTHING, [0, 0])
 
-        # load human trajectory
-        traj_file = np.random.choice(self.replay_traj_files)
-        self.current_human_traj = np.loadtxt(traj_file)
+        # Load trajectory
+        if self.traj_index < len(self.replay_traj_files):
+            traj_file = self.replay_traj_files[self.traj_index]
+            self.current_human_traj = np.loadtxt(traj_file)
+            self.traj_index += 1
+        else:
+            raise ValueError("All trajectories have been evaluated.")
+
         self.global_goal = [self.current_human_traj[-1][0], self.current_human_traj[-1][1]]
 
         # TODO: generate a human trajectory. Its start and end point are the same as the trajectory loaded from the file
@@ -202,13 +209,13 @@ class EvalEnv(gym.Env):
             self.f_idx += 1
             if self.f_idx >= len(self.current_human_traj):
                 # assume that human intention is standing still
-                self.future_human_path_buffer.append([self.current_human_traj[-1][0], self.current_human_traj[-1][1]]) 
-
-            x = self.current_human_traj[self.f_idx][0]
-            y = self.current_human_traj[self.f_idx][1]
-            distance = ((x - self.future_human_path_buffer[-1][0]) ** 2 + (y - self.future_human_path_buffer[-1][1]) ** 2) ** 0.5
-            if distance >= self.path_resolution:
-                self.future_human_path_buffer.append([x, y])
+                self.future_human_path_buffer.append([self.current_human_traj[-1][0], self.current_human_traj[-1][1]])
+            else:
+                x = self.current_human_traj[self.f_idx][0]
+                y = self.current_human_traj[self.f_idx][1]
+                distance = ((x - self.future_human_path_buffer[-1][0]) ** 2 + (y - self.future_human_path_buffer[-1][1]) ** 2) ** 0.5
+                if distance >= self.path_resolution:
+                    self.future_human_path_buffer.append([x, y])
 
 
         self.time += self.time_resolution * idx

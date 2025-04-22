@@ -17,6 +17,7 @@ cd ~/ros2_ws/ || exit
 
 # build g2o with branch "20230806_git"
 # install prerequisites
+sudo apt update -q
 sudo apt install libeigen3-dev libspdlog-dev libsuitesparse-dev qtdeclarative5-dev qt5-qmake libqglviewer-dev-qt5
 cd ./extern/g2o || exit  
 mkdir -p build 

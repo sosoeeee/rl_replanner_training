@@ -33,6 +33,7 @@ class TrainEnv(gym.Env):
             reward_weight, 
             map_setting_file,
             planner_setting_file,
+            planner_file,
             render_mode=None, 
             obser_width=5, 
             map_resolution=0.05, 
@@ -104,7 +105,13 @@ class TrainEnv(gym.Env):
 
         # TODO: initialize the human traj generator
         if self.use_generator:
-            pass
+            self.traj_generator = cpp_utils.TrajGenerator()
+            self.traj_generator.initialize(
+                map_file=map_setting_file,
+                planner_file=planner_file,
+                path_resolution=self.path_resolution,
+                time_resolution=self.time_resolution,
+            )
 
         # robot path
         self.current_robot_path = None
@@ -168,8 +175,22 @@ class TrainEnv(gym.Env):
 
         # TODO: generate a human trajectory. Its start and end point are the same as the trajectory loaded from the file
         if self.use_generator:
-            pass
-
+            start_point = cpp_utils.Point(self.current_human_traj[0][0], self.current_human_traj[0][1])
+            end_point = cpp_utils.Point(self.global_goal[0], self.global_goal[1])
+            generated_traj = self.traj_generator.sampleTraj(start=start_point, end=end_point)
+            if generated_traj:
+                traj_data = []
+                for i in range(len(generated_traj) - 1):
+                    x, y = generated_traj[i].x, generated_traj[i].y
+                    next_x, next_y = generated_traj[i + 1].x, generated_traj[i + 1].y
+                    dx = (next_x - x) / self.time_resolution
+                    dy = (next_y - y) / self.time_resolution
+                    theta = 0  
+                    dtheta = 0  
+                    t = i * self.time_resolution
+                    traj_data.append([x, y, theta, dx, dy, dtheta, t])
+                self.current_human_traj = np.array(traj_data)
+                
         self.human_path_buffer = []
         self.future_human_path_buffer = []
 
