@@ -13,12 +13,13 @@ cmake ..
 sudo make install
 
 # cd to the root directory
-cd ~/ros2_ws/ || exit
+cd ../../../ || exit
 
 # build g2o with branch "20230806_git"
 # install prerequisites
 sudo apt update -q
-sudo apt install libeigen3-dev libspdlog-dev libsuitesparse-dev qtdeclarative5-dev qt5-qmake libqglviewer-dev-qt5
+sudo apt install -y libeigen3-dev libspdlog-dev libsuitesparse-dev qtdeclarative5-dev qt5-qmake libqglviewer-dev-qt5
+pwd
 cd ./extern/g2o || exit  
 mkdir -p build 
 cd build || exit  
@@ -26,15 +27,19 @@ cmake ..
 sudo make install # run it twice to install the library and the headers. Otherwise, the lib will not be found!
 
 # cd to the root directory
-cd ~/ros2_ws/ || exit
+cd ../../../ || exit
 
 # build c++ library
-cd ./cpp_utils || exit  
+cd ./cpp_utils || exit 
+sudo rm -rf build/ 
 mkdir -p build 
 cd build || exit  
 cmake .. 
 make 
 sudo make install
+
+# cd to the root directory
+cd ../../ || exit
 
 # temporary pkg for debugging
 # pip install matplotlib 

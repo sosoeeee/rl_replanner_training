@@ -26,7 +26,7 @@ LOCAL_GOAL = 1
 # simulation world for evaluation
 # TODO: To increase the efficiency of the evaluation, generate the human trajectory in advance and save it to a file.
 # TODO: change the terminal condition. Robot need interact with all possible human trajectories of different homotopies, once for each trajectory.
-# TODO: change the return calculation. When evlauating, the gamma should be set to 1.0.
+# TODO: When evlauating, the gamma is set to 1.0. (See Stable-Baselines3: evaluate_policy() function for more details)
 class EvalEnv(gym.Env):
     metadata = {"render_modes": ["ros", "none"],
                 "render_real_time_factor": 1.0}
