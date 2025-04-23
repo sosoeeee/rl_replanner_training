@@ -58,12 +58,12 @@ while rclpy.ok():
     print("Time taken to sample trajectory: %.2f ms" % ((end_time - start_time) * 1000))
 
     # 计算差分速度
-    path_data = []
-    for i in range(len(traj) - 1):
+    path_data = [[traj[0].x, traj[0].y, 0, 0, 0, 0, 0]]
+    for i in range(1, len(traj)):
         x, y = traj[i].x, traj[i].y
-        next_x, next_y = traj[i + 1].x, traj[i + 1].y
-        dx = (next_x - x) / 0.1
-        dy = (next_y - y) / 0.1
+        last_x, last_y = traj[i - 1].x, traj[i - 1].y
+        dx = -(last_x - x) / 0.1
+        dy = -(last_y - y) / 0.1
         theta = 0
         dtheta = 0
         t = i * 0.1

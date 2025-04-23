@@ -32,8 +32,8 @@ class TrainEnv(gym.Env):
             self, 
             reward_weight, 
             map_setting_file,
-            planner_setting_file,
-            planner_file,
+            path_planner_setting_file,
+            traj_planner_setting_file,
             render_mode=None, 
             obser_width=5, 
             map_resolution=0.05, 
@@ -108,7 +108,7 @@ class TrainEnv(gym.Env):
             self.traj_generator = cpp_utils.TrajGenerator()
             self.traj_generator.initialize(
                 map_file=map_setting_file,
-                planner_file=planner_file,
+                planner_file=traj_planner_setting_file,
                 path_resolution=self.path_resolution,
                 time_resolution=self.time_resolution,
             )
@@ -132,7 +132,7 @@ class TrainEnv(gym.Env):
         
         # load planner
         self.path_planner = cpp_utils.PathPlanner()
-        self.path_planner.configure(self.global_costmap, planner_setting_file)
+        self.path_planner.configure(self.global_costmap, path_planner_setting_file)
 
         # temporary variables for action
         self.cur_position = None
@@ -171,6 +171,7 @@ class TrainEnv(gym.Env):
         # load human trajectory
         traj_file = np.random.choice(self.replay_traj_files)
         self.current_human_traj = np.loadtxt(traj_file)
+
         self.global_goal = [self.current_human_traj[-1][0], self.current_human_traj[-1][1]]
 
         # TODO: generate a human trajectory. Its start and end point are the same as the trajectory loaded from the file
@@ -179,18 +180,28 @@ class TrainEnv(gym.Env):
             end_point = cpp_utils.Point(self.global_goal[0], self.global_goal[1])
             generated_traj = self.traj_generator.sampleTraj(start=start_point, end=end_point)
             if generated_traj:
-                traj_data = []
-                for i in range(len(generated_traj) - 1):
+                traj_data = [[generated_traj[0].x, generated_traj[0].y, 0, 0, 0, 0, 0]]
+                for i in range(1, len(generated_traj)):
                     x, y = generated_traj[i].x, generated_traj[i].y
-                    next_x, next_y = generated_traj[i + 1].x, generated_traj[i + 1].y
-                    dx = (next_x - x) / self.time_resolution
-                    dy = (next_y - y) / self.time_resolution
+                    last_x, last_y = generated_traj[i - 1].x, generated_traj[i - 1].y
+                    dx = (x - last_x) / self.time_resolution
+                    dy = (y - last_y) / self.time_resolution
                     theta = 0  
                     dtheta = 0  
                     t = i * self.time_resolution
                     traj_data.append([x, y, theta, dx, dy, dtheta, t])
                 self.current_human_traj = np.array(traj_data)
-                
+            else:
+                raise ValueError("[SimulationWorld] Failed to generate human trajectory.")
+            
+        # debug calculate the total length of the trajectory
+        # total_length = 0
+        # for i in range(1, len(self.current_human_traj)):
+        #     total_length += ((self.current_human_traj[i][0] - self.current_human_traj[i - 1][0]) ** 2 + (self.current_human_traj[i][1] - self.current_human_traj[i - 1][1]) ** 2) ** 0.5
+        # print("total length of the trajectory: ", total_length)
+        # print("total time of the trajectory: ", self.current_human_traj[-1][6])
+        # print("average speed of the trajectory: ", total_length / self.current_human_traj[-1][6])
+        
         self.human_path_buffer = []
         self.future_human_path_buffer = []
 
@@ -221,12 +232,12 @@ class TrainEnv(gym.Env):
             if self.f_idx >= len(self.current_human_traj):
                 # assume that human intention is standing still
                 self.future_human_path_buffer.append([self.current_human_traj[-1][0], self.current_human_traj[-1][1]]) 
-
-            x = self.current_human_traj[self.f_idx][0]
-            y = self.current_human_traj[self.f_idx][1]
-            distance = ((x - self.future_human_path_buffer[-1][0]) ** 2 + (y - self.future_human_path_buffer[-1][1]) ** 2) ** 0.5
-            if distance >= self.path_resolution:
-                self.future_human_path_buffer.append([x, y])
+            else:
+                x = self.current_human_traj[self.f_idx][0]
+                y = self.current_human_traj[self.f_idx][1]
+                distance = ((x - self.future_human_path_buffer[-1][0]) ** 2 + (y - self.future_human_path_buffer[-1][1]) ** 2) ** 0.5
+                if distance >= self.path_resolution:
+                    self.future_human_path_buffer.append([x, y])
 
 
         self.time += self.time_resolution * idx
@@ -396,7 +407,8 @@ class TrainEnv(gym.Env):
         return self.future_human_path_buffer[:furture_len]
 
     def _get_robot_path(self):
-        k = 30 # TODO: The parameter k should be set according to the human average velocity
+        # TIRCK: Window search
+        k = 50 # TODO: The parameter k should be set according to the human average velocity
         cur_robot_path_length = len(self.current_robot_path)
         start_idx = max(0, self.robot_closest_idx - k)
         end_idx = min(cur_robot_path_length, self.robot_closest_idx + k)
@@ -411,6 +423,20 @@ class TrainEnv(gym.Env):
             if d_ < min_d:
                 min_d = d_
                 idx_ = i
+        
+        # No TRICK:
+        # min_d = np.inf
+        # idx_ = 0
+        # cur_robot_pose = self.human_path_buffer[-1]
+        # cur_robot_path_length = len(self.current_robot_path)
+
+        # # find the nearest point on the robot path
+        # for i in range(len(self.current_robot_path)):
+        #     robot_pose = self.current_robot_path[i]
+        #     d_ = ((robot_pose[0] - cur_robot_pose[0]) ** 2 + (robot_pose[1] - cur_robot_pose[1]) ** 2) ** 0.5
+        #     if d_ < min_d:
+        #         min_d = d_
+        #         idx_ = i
 
         idx_ += 1
         self.robot_closest_idx = min(idx_, cur_robot_path_length - 1)

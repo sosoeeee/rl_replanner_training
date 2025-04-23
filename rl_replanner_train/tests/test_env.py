@@ -28,16 +28,16 @@ speed_buffer_length=4
 env = TrainEnv(
     reward_weight=reward_weight,
     map_setting_file='/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml',
-    planner_setting_file='/home/rosdev/ros2_ws/cpp_utils/include/path_planner/planner_setting.yaml',
-    planner_file="/home/rosdev/ros2_ws/cpp_utils/include/teb_local_planner/teb_params.yaml",
-    render_mode='ros',
-    render_real_time_factor=4,
+    path_planner_setting_file='/home/rosdev/ros2_ws/cpp_utils/include/path_planner/planner_setting.yaml',
+    traj_planner_setting_file="/home/rosdev/ros2_ws/cpp_utils/include/teb_local_planner/teb_params.yaml",
+    # render_mode='ros',
+    # render_real_time_factor=2,
     obser_width=obser_width,
     replay_traj_path='/home/rosdev/ros2_ws/rl_replanner_train/data',
     human_history_length=human_history_length,
     robot_prediction_length=robot_prediction_length,
     speed_buffer_length=speed_buffer_length,
-    use_generator=True
+    use_generator=True,  # Set to True if you want to use the generator
 )
 
 obs, info = env.reset()
@@ -50,12 +50,21 @@ step = 0
 total_reward = 0
 while True:
     action = env.action_space.sample()
+
+    # print('Action:', action)
+    action = {
+        'id': 0,
+        'params0': [],
+        'params1': [0.0, 0.0],
+    }
+    # print('Action:', action)
+
     obs, reward, terminated, truncated, info = env.step(action)
     total_reward += reward
     # print('Step:', step)
     # print('Action:', action)
-    print('Observation:', obs)
-    print('Reward:', reward)
+    # print('Observation:', obs)
+    # print('Reward:', reward)W
     # print('Done:', terminated)
     # print('Info:', info)
 

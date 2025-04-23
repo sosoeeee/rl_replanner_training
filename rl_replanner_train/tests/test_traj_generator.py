@@ -9,9 +9,9 @@ from nav_msgs.msg import Path
 from visualization_msgs.msg import Marker, MarkerArray
 from nav_msgs.msg import OccupancyGrid
 
-# import matplotlib.pyplot as plt
-# import matplotlib
-# matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
 
 rclpy.init()
 
@@ -98,11 +98,19 @@ while rclpy.ok():
     raw_traj_msg.header.frame_id = "map"
     raw_traj_msg.header.stamp = render_node.get_clock().now().to_msg()
 
+    x_vels = []
+    y_vels = []
+    omage_vels = []
+    time_stamps = []
     for point in rawTraj:
         pose = PoseStamped()
         pose.pose.position.x = point.pose.x
         pose.pose.position.y = point.pose.y
         pose.pose.position.z = 0.0
+        x_vels.append(point.velocity.vx)
+        y_vels.append(point.velocity.vy)
+        omage_vels.append(point.velocity.omega)
+        time_stamps.append(point.time_from_start)
         raw_traj_msg.poses.append(pose)
 
     # First, delete all previous markers
@@ -178,7 +186,19 @@ while rclpy.ok():
 
     rclpy.spin_once(render_node, timeout_sec=0.1)
 
+    # plot the trajectory
+    plt.figure(1)
+    plt.clf()
+    plt.plot(time_stamps, x_vels, label="x velocity")
+    plt.plot(time_stamps, y_vels, label="y velocity")
+    plt.plot(time_stamps, omage_vels, label="omega velocity")
+    plt.xlabel("time [s]")
+    plt.ylabel("velocity [m/s]")
+    plt.legend()
+    plt.grid()
+    plt.pause(0.2)
+    
     # sleep for 1 second
-    time.sleep(1.0)
+    # time.sleep(1.0)
 
 # rclpy.shutdown()

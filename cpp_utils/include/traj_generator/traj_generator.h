@@ -71,6 +71,7 @@ private:
     /* ========================= trajectory planning ========================= */ 
     // constraints
     std::vector<Circle> circles_;  // circles consitute the corridor
+    double robot_radius_;
     ViaPointContainer via_points_; // via points
     
     std::vector<PoseSE2> init_plan_; // trajectory points

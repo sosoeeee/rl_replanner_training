@@ -28,6 +28,15 @@ void TrajGenerator::initialize(const std::string &map_file, const std::string &p
     auto static_layer = StaticLayer(data, map_file);
     static_layer.onInitialize();
     static_layer.updateCosts(costmap_.get());
+
+    // get robot radius
+    YAML::Node doc = YAML::LoadFile(expand_user_home_dir_if_needed(map_file, get_home_dir()));
+
+    YAML::Node inflation_layer_node = doc["inflation_layer"];
+    if (!inflation_layer_node) {
+        throw std::runtime_error("Failed to find 'inflation_layer' node in YAML file");
+    }
+    robot_radius_ = yaml_get_value<double>(inflation_layer_node, "robot_radius");
     
     // initialize the voronoi graph
     voronoi_graph_ = std::make_unique<VoronoiGraph>(costmap_);
@@ -138,7 +147,7 @@ void TrajGenerator::updateCorridor()
     costmap_->worldToMap(start_pose.x(), start_pose.y(), mx, my);
     map_x = static_cast<int>(mx);
     map_y = static_cast<int>(my);
-    cur_circle.radius = static_cast<double>(voronoi_graph_->getDistance(map_x, map_y)) * resolution;
+    cur_circle.radius = static_cast<double>(voronoi_graph_->getDistance(map_x, map_y)) * resolution - robot_radius_;
     circles_.push_back(cur_circle);
 
     // TODO: Bubble planner optimization --- batch sample
@@ -155,7 +164,7 @@ void TrajGenerator::updateCorridor()
         costmap_->worldToMap(pose.x(), pose.y(), mx, my);
         map_x = static_cast<int>(mx);
         map_y = static_cast<int>(my);
-        cur_circle.radius = static_cast<double>(voronoi_graph_->getDistance(map_x, map_y)) * resolution;
+        cur_circle.radius = static_cast<double>(voronoi_graph_->getDistance(map_x, map_y)) * resolution - robot_radius_;
 
         circles_.push_back(cur_circle);
     }
@@ -167,7 +176,7 @@ void TrajGenerator::updateCorridor()
     costmap_->worldToMap(end_pose.x(), end_pose.y(), mx, my);
     map_x = static_cast<int>(mx);
     map_y = static_cast<int>(my);
-    cur_circle.radius = static_cast<double>(voronoi_graph_->getDistance(map_x, map_y)) * resolution;
+    cur_circle.radius = static_cast<double>(voronoi_graph_->getDistance(map_x, map_y)) * resolution - robot_radius_;
     circles_.push_back(cur_circle);
 }
 
