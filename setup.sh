@@ -3,7 +3,6 @@
 # install python packages
 pip install gymnasium==0.29.1
 pip install billiard
-pip install -e .
 
 # build pybind11 with branch "stable"
 cd ./extern/pybind11 || exit 
@@ -40,6 +39,8 @@ sudo make install
 
 # cd to the root directory
 cd ../../ || exit
+
+pip install -e .
 
 # temporary pkg for debugging
 # pip install matplotlib 

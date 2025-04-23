@@ -29,13 +29,13 @@ speed_buffer_length = 4
 # 初始化 EvalEnv
 env = EvalEnv(
     reward_weight=reward_weight,
-    map_setting_file='/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml',
-    path_planner_setting_file='/home/rosdev/ros2_ws/cpp_utils/include/path_planner/planner_setting.yaml',
-    traj_planner_setting_file="/home/rosdev/ros2_ws/cpp_utils/include/teb_local_planner/teb_params.yaml",
+    map_setting_file='./rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml',
+    path_planner_setting_file='./cpp_utils/include/path_planner/planner_setting.yaml',
+    traj_planner_setting_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     # render_mode='ros',
     # render_real_time_factor=2,
     obser_width=obser_width,
-    replay_traj_path='/home/rosdev/ros2_ws/rl_replanner_train/data/eval_paths',
+    replay_traj_path='./rl_replanner_train/data/',
     human_history_length=human_history_length,
     robot_prediction_length=robot_prediction_length,
     speed_buffer_length=speed_buffer_length,

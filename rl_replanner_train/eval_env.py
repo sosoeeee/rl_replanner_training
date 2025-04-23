@@ -27,6 +27,9 @@ LOCAL_GOAL = 1
 # TODO: To increase the efficiency of the evaluation, generate the human trajectory in advance and save it to a file.
 # TODO: change the terminal condition. Robot need interact with all possible human trajectories of different homotopies, once for each trajectory.
 # TODO: When evlauating, the gamma is set to 1.0. (See Stable-Baselines3: evaluate_policy() function for more details)
+
+# TODO: Considerating the evaluation speed, robot don't need to interact with all possible human trajectories of different homotopies. 
+# Instead, a random trajectory is selected from the replay buffer and the robot interacts with it. 
 class EvalEnv(gym.Env):
     metadata = {"render_modes": ["ros", "none"],
                 "render_real_time_factor": 1.0}
@@ -98,14 +101,18 @@ class EvalEnv(gym.Env):
         # self.speed_buffer_length = int(self.history_length / 5)          # TODO: time length is self.history_length * self.time_resolution (change the test simulation env also)
 
         # human path
-        self.replay_traj_files = glob.glob(replay_traj_path + '/*.txt')
         self.use_generator = use_generator
-        self.traj_index = 0  # 用于跟踪当前使用的轨迹索引
+        if self.use_generator:
+            self.replay_traj_files = glob.glob(replay_traj_path + '/eval_paths/*.txt')
+        else:
+            self.replay_traj_files = glob.glob(replay_traj_path + '/*.txt')
+
         self.current_human_traj = None
         self.time_resolution = 0.1            # collect rate is 10Hz
         self.path_resolution = 0.05 / 2
         self.human_path_buffer = []
         self.future_human_path_buffer = []
+        self.traj_index = 0  # the index of the current trajectory
 
         # robot path
         self.current_robot_path = None
@@ -215,10 +222,9 @@ class EvalEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         # Reset the trajectory index
-        self.traj_index = 0
+        self.traj_index = np.random.randint(0, len(self.replay_traj_files))
         traj_file = self.replay_traj_files[self.traj_index]
         self.current_human_traj = np.loadtxt(traj_file)
-        self.traj_terminated = False
 
         self.reset_internal(seed=seed, options=options)
 
@@ -227,26 +233,6 @@ class EvalEnv(gym.Env):
         return self.structure_obs, info
 
     def step(self, raw_action: Dict[str, Union[int, np.ndarray]]):
-
-        # if self.traj_terminated, subsitute the next step into a reset one.
-        if self.traj_terminated:
-            # debug
-            # if self.render_mode == "ros":
-            print("========================== one trajectory is finished ==========================")
-
-            self.traj_index += 1
-
-            if self.traj_index >= len(self.replay_traj_files):
-                terminated = True
-            else:
-                traj_file = self.replay_traj_files[self.traj_index]
-                self.current_human_traj = np.loadtxt(traj_file)
-                self.traj_terminated = False
-                terminated = False
-                self.reset_internal(seed=None, options=None)
-
-            return self.structure_obs, 0, terminated, False, {}
-
         self.current_action = self.action_converter.convert(raw_action)
 
         # self.current_action = (1, np.array([0.08, 0.02]))
@@ -255,7 +241,7 @@ class EvalEnv(gym.Env):
         if self.render_mode == "ros":
             print("current action: ", self.current_action)
 
-        self.traj_terminated = False # when evluating, one episode is terminated unitl all evaluated trajectories are finished
+        terminated = False
         # apply action
         # direction vector is average velocity calculated from past trajectory
         self._get_robot_direction()
@@ -274,28 +260,27 @@ class EvalEnv(gym.Env):
                 # use point on robot path as the start point
                 # self._plan_robot_path([self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]], self.pred_goal)
             else:
-                self.traj_terminated = True
+                terminated = True
         elif self.current_action[0] == DO_NOTHING:
             pass
         
         if len(self.current_robot_path) == 0:
-            print("[During step] Failed to find a path from start to goal.")
-            self.traj_terminated = True
+            terminated = True
 
-        if self.traj_terminated:
+        if terminated:
             end_reward = -1
         elif self._get_human_path():
-            self.traj_terminated = True
+            terminated = True
             end_reward = 1
         else:
             self.time += self.decision_interval
             end_reward = 0
 
         # get observation
-        self._get_obs(is_terminal=self.traj_terminated)
+        self._get_obs(is_terminal=terminated)
 
         # calculate reward
-        self.calculate_reward(is_terminal=self.traj_terminated)
+        self.calculate_reward(is_terminal=terminated)
         self.reward += end_reward * self.reward_weight['state']
 
         # get info
@@ -305,7 +290,7 @@ class EvalEnv(gym.Env):
         self.render()
 
         # the evlaution env is not terminated until all trajectories are finished
-        return self.structure_obs, self.reward, False, False, info
+        return self.structure_obs, self.reward, terminated, False, info
 
     def close(self):
         print("Closing " + self.__class__.__name__ + " environment.")
