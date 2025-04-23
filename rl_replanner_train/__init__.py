@@ -4,5 +4,10 @@ from rl_replanner_train.eval_env import EvalEnv
 
 gym.register(
     id='rl-replanner-train',
-    entry_point='rl_replanner_train:SimulationWorld',
+    entry_point='rl_replanner_train:TrainEnv',
+)
+
+gym.register(
+    id='rl-replanner-eval',
+    entry_point='rl_replanner_train:EvalEnv',
 )
