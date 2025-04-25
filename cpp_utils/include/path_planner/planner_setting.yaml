@@ -1,4 +1,4 @@
 tolerance: 0.5
 use_astar: false
 allow_unknown: true
-inflated_distance: 0.3
+inflated_distance: 0.1       # 1.5 ~ 2.0 times of map resolution

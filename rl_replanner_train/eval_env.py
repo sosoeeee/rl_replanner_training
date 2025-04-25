@@ -225,6 +225,10 @@ class EvalEnv(gym.Env):
         self.traj_index = np.random.randint(0, len(self.replay_traj_files))
         traj_file = self.replay_traj_files[self.traj_index]
         self.current_human_traj = np.loadtxt(traj_file)
+
+        if self.render_mode == "ros":
+            print("\n\n ======================== Resetting trajectory: {} ======================== \n\n".format(self.traj_index + 1))
+
         self.current_human_traj_length = len(self.current_human_traj)
 
         self.reset_internal(seed=seed, options=options)
