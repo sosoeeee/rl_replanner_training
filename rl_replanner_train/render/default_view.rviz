@@ -264,6 +264,19 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /robot_marker
       Value: true
+    - Class: rviz_default_plugins/Marker
+      Enabled: true
+      Name: Marker
+      Namespaces:
+        cone: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /cone_marker
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -319,11 +332,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 134.60226440429688
+      Scale: 118.44998931884766
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz_default_plugins)
-      X: -0.5006440877914429
-      Y: 0.10817183554172516
+      X: -0.11190932989120483
+      Y: 0.04288526996970177
     Saved: ~
 Window Geometry:
   Displays:

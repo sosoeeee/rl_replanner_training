@@ -225,6 +225,7 @@ class EvalEnv(gym.Env):
         self.traj_index = np.random.randint(0, len(self.replay_traj_files))
         traj_file = self.replay_traj_files[self.traj_index]
         self.current_human_traj = np.loadtxt(traj_file)
+        self.current_human_traj_length = len(self.current_human_traj)
 
         self.reset_internal(seed=seed, options=options)
 
@@ -289,8 +290,12 @@ class EvalEnv(gym.Env):
         # TODO: add render function
         self.render()
 
+        # normalize the reward with the trajectory length
+        reward_without_end = self.reward - end_reward * self.reward_weight['state']
+        normalized_reward = reward_without_end / (self.current_human_traj_length / (self.decision_interval // self.time_resolution)) + end_reward * self.reward_weight['state']
+
         # the evlaution env is not terminated until all trajectories are finished
-        return self.structure_obs, self.reward, terminated, False, info
+        return self.structure_obs, normalized_reward, terminated, False, info
 
     def close(self):
         print("Closing " + self.__class__.__name__ + " environment.")

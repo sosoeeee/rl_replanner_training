@@ -8,7 +8,7 @@ import rclpy
 
 # ros2 message
 from nav_msgs.msg import OccupancyGrid, Path
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Point
 from visualization_msgs.msg import Marker
 
 ########################################################################################################
@@ -73,6 +73,27 @@ class rosRender():
         self.marker.color.g = 1.0
         self.marker.color.b = 0.0
 
+        self.cone_marker_pub = self.node.create_publisher(Marker, 'cone_marker', 10)
+        self.cone_marker = Marker()
+        self.cone_marker.header.frame_id = self.global_frame_
+        self.cone_marker.header.stamp = self.node.get_clock().now().to_msg()
+        self.cone_marker.ns = "cone"
+        self.cone_marker.id = 0
+        self.cone_marker.type = Marker.LINE_LIST # Use LINE_LIST to draw a triangle
+        self.cone_marker.action = Marker.ADD
+        self.cone_marker.pose.position.z = 0.0
+        self.cone_marker.pose.orientation.x = 0.0
+        self.cone_marker.pose.orientation.y = 0.0
+        self.cone_marker.pose.orientation.z = 0.0
+        self.cone_marker.pose.orientation.w = 1.0
+        self.cone_marker.scale.x = 0.03  # Thickness of the lines
+        self.cone_marker.scale.y = 0.03  # Thickness of the lines
+        self.cone_marker.scale.z = 0.0 
+        self.cone_marker.color.a = 0.8  # Alpha (transparency)
+        self.cone_marker.color.r = 0.0
+        self.cone_marker.color.g = 1.0
+        self.cone_marker.color.b = 1.0
+
         self.partial_map_pub = self.node.create_publisher(OccupancyGrid, 'obs_partial_map', 10)
         self.partial_map = PyCostmap2D(self.node)
         self.human_local_path_pub = self.node.create_publisher(Path, 'obs_human_path', 10)
@@ -100,6 +121,26 @@ class rosRender():
     def pub_global_map_with_cone(self, cur_pose: list[float], cone_center: list[float], cone_radius: float, inflated_distance: float):
         map_with_cone = self.global_map.load_cone_to_map(cur_pose[0], cur_pose[1], cone_center, cone_radius, inflated_distance)
         self.global_map_pub.publish(map_with_cone.getOccupancyGrid())
+
+        height = math.sqrt((cone_center[0] - cur_pose[0]) ** 2 + (cone_center[1] - cur_pose[1]) ** 2)
+        height_dirc = [(cone_center[0] - cur_pose[0]) / height, (cone_center[1] - cur_pose[1]) / height]
+
+        p_ = Point()
+        p_.x = cur_pose[0]
+        p_.y = cur_pose[1]
+        vertices = [p_]
+        for i in range(2):
+            p_ = Point()
+            p_.x = cone_center[0] + cone_radius * height_dirc[1] * math.cos(i * math.pi)
+            p_.y = cone_center[1] - cone_radius * height_dirc[0] * math.cos(i * math.pi)
+            vertices.append(p_)
+        
+        self.cone_marker.points.clear()
+        for i in range(3):
+            self.cone_marker.points.append(vertices[i])
+            self.cone_marker.points.append(vertices[(i + 1) % 3])
+
+        self.cone_marker_pub.publish(self.cone_marker)
 
     def pub_partial_map(self, map: cpp_utils.Costmap2D_cpp):
         self.partial_map.loadCostmapFromCostmapCpp(map)
