@@ -17,6 +17,7 @@ find_package(GRAPHICSMAGICKCPP REQUIRED)
 # teb_local_planner
 find_package(SUITESPARSE REQUIRED)
 find_package(G2O REQUIRED)
+find_package(fmt REQUIRED)
 # find_package(Boost REQUIRED)
 
 # Find Eigen3
@@ -65,6 +66,21 @@ add_library(${teb_local_planner_name} SHARED
    src/${teb_local_planner_name}/optimal_planner.cpp
    src/${teb_local_planner_name}/obstacles.cpp
    src/${teb_local_planner_name}/teb_config.cpp
+)
+
+add_executable(test_teb src/${teb_local_planner_name}/test_teb.cpp)
+
+target_link_libraries(test_teb
+   ${teb_local_planner_name} 
+   ${TEB_EXTERNAL_LIBS}
+   fmt::fmt  # Add fmt library
+)
+
+# Update test_teb target properties to include runtime path
+set_target_properties(test_teb PROPERTIES
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:/usr/local/lib"
 )
 
 set(map_voronoi_name map_voronoi)

@@ -7,6 +7,7 @@ pip install -e .
 
 # build pybind11 with branch "stable"
 cd ./extern/pybind11 || exit 
+sudo rm -rf build
 mkdir -p build 
 cd build || exit  
 cmake .. 
@@ -20,6 +21,7 @@ cd ~/ros2_ws/ || exit
 sudo apt update -q
 sudo apt install libeigen3-dev libspdlog-dev libsuitesparse-dev qtdeclarative5-dev qt5-qmake libqglviewer-dev-qt5
 cd ./extern/g2o || exit  
+sudo rm -rf build
 mkdir -p build 
 cd build || exit  
 cmake .. 
