@@ -6,6 +6,7 @@ pip install billiard
 
 # build pybind11 with branch "stable"
 cd ./extern/pybind11 || exit 
+sudo rm -rf build/ 
 mkdir -p build 
 cd build || exit  
 cmake .. 
@@ -20,6 +21,7 @@ sudo apt update -q
 sudo apt install -y libeigen3-dev libspdlog-dev libsuitesparse-dev qtdeclarative5-dev qt5-qmake libqglviewer-dev-qt5
 pwd
 cd ./extern/g2o || exit  
+sudo rm -rf build/ 
 mkdir -p build 
 cd build || exit  
 cmake .. 
