@@ -65,9 +65,9 @@ int main( int argc, char** argv )
   // load ros parameters from node handle
   // config.loadParamsFromYaml("/home/rosdev/ros2_ws/cpp_utils/include/teb_local_planner/teb_params.yaml");
  
-  // obst_vector.push_back( std::make_shared<PointObstacle>(-3.0,1.0) );
-  // obst_vector.push_back( std::make_shared<PointObstacle>(6.0,2.0) );
-  // obst_vector.push_back( std::make_shared<PointObstacle>(0.0,0.1) );
+  obst_vector.push_back( std::make_shared<PointObstacle>(-3.0,1.0) );
+  obst_vector.push_back( std::make_shared<PointObstacle>(6.0,2.0) );
+  obst_vector.push_back( std::make_shared<PointObstacle>(0.0,0.1) );
 
   auto obstacles_ptr = std::make_shared<ObstContainer>(obst_vector);
   TebOptimalPlanner planner(config, obstacles_ptr, &via_points);

@@ -244,6 +244,7 @@ public:
 
     // odom_topic = "odom";
     // map_frame = "odom";
+    robot_model = std::make_shared<PointRobotFootprint>();
 
     // Trajectory
 
