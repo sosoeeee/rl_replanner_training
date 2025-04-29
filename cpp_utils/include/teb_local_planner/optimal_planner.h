@@ -43,41 +43,29 @@
 
 
 // teb stuff
-#include "teb_local_planner/teb_config.h"
-#include "teb_local_planner/misc.h"
-#include "teb_local_planner/timed_elastic_band.h"
-#include "teb_local_planner/planner_interface.h"
-#include "teb_local_planner/robot_footprint_model.h"
+#include <teb_local_planner/teb_config.h>
+#include <teb_local_planner/misc.h>
+#include <teb_local_planner/timed_elastic_band.h>
+#include <teb_local_planner/planner_interface.h>
+#include <teb_local_planner/robot_footprint_model.h>
 
 // g2o lib stuff
-#include "g2o/core/sparse_optimizer.h"
-#include "g2o/core/block_solver.h"
-#include "g2o/core/factory.h"
-#include "g2o/core/optimization_algorithm_gauss_newton.h"
-#include "g2o/core/optimization_algorithm_levenberg.h"
-#include "g2o/solvers/csparse/linear_solver_csparse.h"
-#include "g2o/solvers/cholmod/linear_solver_cholmod.h"
+#include <g2o/core/sparse_optimizer.h>
+#include <g2o/core/block_solver.h>
+#include <g2o/core/factory.h>
+#include <g2o/core/optimization_algorithm_gauss_newton.h>
+#include <g2o/core/optimization_algorithm_levenberg.h>
+#include <g2o/solvers/csparse/linear_solver_csparse.h>
+#include <g2o/solvers/cholmod/linear_solver_cholmod.h>
 
-// g2o custom edges and vertices for the TEB planner
-#include "teb_local_planner/g2o_types/edge_velocity.h"
-#include "teb_local_planner/g2o_types/edge_acceleration.h"
-#include "teb_local_planner/g2o_types/edge_kinematics.h"
-#include "teb_local_planner/g2o_types/edge_time_optimal.h"
-#include "teb_local_planner/g2o_types/edge_shortest_path.h"
-#include "teb_local_planner/g2o_types/edge_obstacle.h"
-#include "teb_local_planner/g2o_types/edge_dynamic_obstacle.h"
-#include "teb_local_planner/g2o_types/edge_via_point.h"
-#include "teb_local_planner/g2o_types/edge_prefer_rotdir.h"
-
-// #include <tf2/transform_datatypes.h>
-
+// messages
 #include <limits.h>
 
 namespace teb_local_planner
 {
 
 //! Typedef for the block solver utilized for optimization
-typedef g2o::BlockSolverX TEBBlockSolver;
+typedef g2o::BlockSolver< g2o::BlockSolverTraits<-1, -1> >  TEBBlockSolver;
 
 //! Typedef for the linear solver utilized for optimization
 typedef g2o::LinearSolverCSparse<TEBBlockSolver::PoseMatrixType> TEBLinearSolver;
@@ -133,7 +121,8 @@ public:
    * @param obstacles Container storing all relevant obstacles (see Obstacle)
    * @param via_points Container storing via-points (optional)
    */
-  TebOptimalPlanner(const TebConfig& cfg, std::shared_ptr<ObstContainer> obstacles = NULL, const ViaPointContainer* via_points = NULL);
+  TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL,
+                    const ViaPointContainer* via_points = NULL);
   
   /**
    * @brief Destruct the optimal planner.
@@ -144,10 +133,10 @@ public:
     * @brief Initializes the optimal planner
     * @param cfg Const reference to the TebConfig class for internal parameters
     * @param obstacles Container storing all relevant obstacles (see Obstacle)
-    * @param robot_model Shared pointer to the robot shape model used for optimization (optional)
     * @param via_points Container storing via-points (optional)
     */
-  void initialize(const TebConfig& cfg, std::shared_ptr<ObstContainer> obstacles = NULL, const ViaPointContainer* via_points = NULL);
+  void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL,
+                  const ViaPointContainer* via_points = NULL);
 
   /** @name Plan a trajectory  */
   //@{
@@ -187,8 +176,7 @@ public:
    *		      otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
    */
-  // tf2 doesn't have tf::Pose
-//  virtual bool plan(const tf::Pose& start, const tf::Pose& goal, const VelSE2* start_vel = NULL, bool free_goal_vel=false);
+  // virtual bool plan(const tf::Pose& start, const tf::Pose& goal, const VelSE2* start_vel = NULL, bool free_goal_vel=false);
   
   /**
    * @brief Plan a trajectory between a given start and goal pose
@@ -290,7 +278,7 @@ public:
    * @param obst_vector pointer to an obstacle container (can also be a nullptr)
    * @remarks This method overrids the obstacle container optinally assigned in the constructor.
    */
-  void setObstVector(std::shared_ptr<ObstContainer> obst_vector) {obstacles_ = obst_vector;}
+  void setObstVector(ObstContainer* obst_vector) {obstacles_ = obst_vector;}
   
   /**
    * @brief Access the internal obstacle container.
@@ -318,6 +306,7 @@ public:
   const ViaPointContainer& getViaPoints() const {return *via_points_;}
 
   //@}
+	  
   
   /** @name Utility methods and more */
   //@{
@@ -479,8 +468,8 @@ public:
    * @todo The acceleration profile is not added at the moment.
    * @param[out] trajectory the resulting trajectory
    */
-  void getFullTrajectory(std::vector<TrajectoryPointMsg>& trajectory) const;
-
+  virtual void getFullTrajectory(std::vector<TrajectoryPointMsg>& trajectory) const override;
+  
   std::vector<TrajectoryPointMsg> py_getFullTrajectory() const
   {
     std::vector<TrajectoryPointMsg> trajectory;
@@ -661,7 +650,7 @@ protected:
 
   // external objects (store weak pointers)
   const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
-  std::shared_ptr<ObstContainer> obstacles_; //!< Store obstacles that are relevant for planning
+  ObstContainer* obstacles_; //!< Store obstacles that are relevant for planning
   const ViaPointContainer* via_points_; //!< Store via points for planning
   std::vector<ObstContainer> obstacles_per_vertex_; //!< Store the obstacles associated with the n-1 initial vertices
   
@@ -670,7 +659,6 @@ protected:
   
   // internal objects (memory management owned)
   TimedElasticBand teb_; //!< Actual trajectory object
-  RobotFootprintModelPtr robot_model_; //!< Robot model
   std::shared_ptr<g2o::SparseOptimizer> optimizer_; //!< g2o optimizer for trajectory optimization
   std::pair<bool, VelSE2> vel_start_; //!< Store the initial velocity at the start pose
   std::pair<bool, VelSE2> vel_goal_; //!< Store the final velocity at the goal pose

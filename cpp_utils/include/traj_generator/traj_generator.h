@@ -81,6 +81,7 @@ private:
     // teb planner
     TebConfig cfg_;
     std::shared_ptr<ObstContainer> obstacles_;
+    // std::unique_ptr<TebOptimalPlanner> planner_;
 };
 
 # endif

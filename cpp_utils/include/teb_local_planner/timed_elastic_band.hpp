@@ -36,12 +36,13 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include "teb_local_planner/timed_elastic_band.h"
-
-#include <iterator>
+#include <teb_local_planner/timed_elastic_band.h>
 
 namespace teb_local_planner
 {
+
+  
+
 template<typename BidirIter, typename Fun>
 bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path_end, Fun fun_position, double max_vel_x, double max_vel_theta,
                                      boost::optional<double> max_acc_x, boost::optional<double> max_acc_theta,
@@ -92,7 +93,7 @@ bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path
             //double dir_to_goal = atan2(point_to_goal[1],point_to_goal[0]); // direction to goal
             // Alternative: Direction from last path
             Eigen::Vector2d curr_point = fun_position(*path_start);
-            Eigen::Vector2d diff_last = curr_point - Pose(idx).position(); // we do not use std::prev(*path_start) for those cases,
+            Eigen::Vector2d diff_last = curr_point - Pose(idx).position(); // we do not use boost::prior(*path_start) for those cases,
                                                                         // where fun_position() does not return a reference or is expensive.
             double diff_norm = diff_last.norm();
             
@@ -117,7 +118,7 @@ bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path
             /*
             // TODO: the following code does not seem to hot-start the optimizer. Instead it recudes convergence time.
 
-            Eigen::Vector2d diff_next = fun_position(*std::next(path_start))-curr_point; // TODO maybe store the std::next for the following iteration
+            Eigen::Vector2d diff_next = fun_position(*boost::next(path_start))-curr_point; // TODO maybe store the boost::next for the following iteration
             double ang_diff = std::abs( g2o::normalize_theta( atan2(diff_next[1],diff_next[0])
                                                             -atan2(diff_last[1],diff_last[0]) ) );
             
@@ -159,7 +160,6 @@ bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path
       if ( sizePoses() < min_samples-1 )
       {
         LOGGER_DEBUG("teb_local_planner", "initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
-        
         while (sizePoses() < min_samples-1) // subtract goal point that will be added later
         {
           // Each inserted point bisects the remaining distance. Thus the timestep is also bisected.
@@ -175,8 +175,8 @@ bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path
     }
     else // size!=0
     {
-      LOGGER_DEBUG("teb_local_planner", "Cannot init TEB between given configuration and goal, because TEB vectors are not empty or TEB is already initialized (call this function before adding states yourself)!");
-      LOGGER_DEBUG("teb_local_planner", "Number of TEB configurations: %d, Number of TEB timediffs: %d", sizePoses(), sizeTimeDiffs());
+      LOGGER_WARN("PlannerInterface", "Cannot init TEB between given configuration and goal, because TEB vectors are not empty or TEB is already initialized (call this function before adding states yourself)!");
+      LOGGER_WARN("PlannerInterface", "Number of TEB configurations: %d, Number of TEB timediffs: %d", sizePoses(), sizeTimeDiffs());
       return false;
     }
     return true;

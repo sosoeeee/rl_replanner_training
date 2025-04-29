@@ -40,8 +40,8 @@
 #ifndef ROBOT_FOOTPRINT_MODEL_H
 #define ROBOT_FOOTPRINT_MODEL_H
 
-#include "teb_local_planner/pose_se2.h"
-#include "teb_local_planner/obstacles.h"
+#include <teb_local_planner/pose_se2.h>
+#include <teb_local_planner/obstacles.h>
 
 namespace teb_local_planner
 {
@@ -89,7 +89,7 @@ public:
     * @return Euclidean distance to the robot
     */
   virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const = 0;
-  
+
   /**
    * @brief Compute the inscribed radius of the footprint model
    * @return inscribed radius
@@ -126,6 +126,12 @@ public:
     * @brief Default constructor of the abstract obstacle class
     */
   PointRobotFootprint() {}
+
+  /**
+    * @brief Default constructor of the abstract obstacle class
+    * @param min_obstacle_dist Minimum obstacle distance
+    */
+  PointRobotFootprint(const double min_obstacle_dist) : min_obstacle_dist_(min_obstacle_dist) {}
   
   /**
    * @brief Virtual destructor.
@@ -161,6 +167,8 @@ public:
    */
   virtual double getInscribedRadius() {return 0.0;}
 
+private:
+  const double min_obstacle_dist_ = 0.0;
 };
 
 
@@ -285,7 +293,7 @@ public:
     double dist_rear = obstacle->getMinimumSpatioTemporalDistance(current_pose.position() - rear_offset_*dir, t) - rear_radius_;
     return std::min(dist_front, dist_rear);
   }
-
+  
   /**
    * @brief Compute the inscribed radius of the footprint model
    * @return inscribed radius
@@ -317,6 +325,26 @@ class LineRobotFootprint : public BaseRobotFootprintModel
 public:
   
   /**
+    * @brief Default constructor of the abstract obstacle class
+    * @param line_start start coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
+    * @param line_end end coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
+    */
+  LineRobotFootprint(const PoseSE2& line_start, const PoseSE2& line_end)
+  {
+    setLine(line_start, line_end);
+  }
+  
+  /**
+  * @brief Default constructor of the abstract obstacle class (Eigen Version)
+  * @param line_start start coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
+  * @param line_end end coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
+  */
+  LineRobotFootprint(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, const double min_obstacle_dist) : min_obstacle_dist_(min_obstacle_dist)
+  {
+    setLine(line_start, line_end);
+  }
+
+  /**
   * @brief Default constructor of the abstract obstacle class (Eigen Version)
   * @param line_start start coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
   * @param line_end end coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
@@ -331,6 +359,18 @@ public:
    */
   virtual ~LineRobotFootprint() { }
 
+  /**
+   * @brief Set vertices of the contour/footprint
+   * @param vertices footprint vertices (only x and y) around the robot center (0,0) (do not repeat the first and last vertex at the end)
+   */
+  void setLine(const PoseSE2& line_start, const PoseSE2& line_end)
+  {
+    line_start_.x() = line_start.x(); 
+    line_start_.y() = line_start.y(); 
+    line_end_.x() = line_end.x();
+    line_end_.y() = line_end.y();
+  }
+  
   /**
    * @brief Set vertices of the contour/footprint (Eigen version)
    * @param vertices footprint vertices (only x and y) around the robot center (0,0) (do not repeat the first and last vertex at the end)
@@ -399,6 +439,7 @@ private:
 
   Eigen::Vector2d line_start_;
   Eigen::Vector2d line_end_;
+  const double min_obstacle_dist_ = 0.0;
   
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

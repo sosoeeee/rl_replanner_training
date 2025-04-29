@@ -18,10 +18,9 @@ cd ../../../ || exit
 # build g2o with branch "20230806_git"
 # install prerequisites
 sudo apt update -q
-sudo apt install -y libeigen3-dev libspdlog-dev libsuitesparse-dev qtdeclarative5-dev qt5-qmake libqglviewer-dev-qt5
-pwd
+sudo apt install libeigen3-dev libspdlog-dev libsuitesparse-dev
 cd ./extern/g2o || exit  
-sudo rm -rf build/ 
+sudo rm -rf build
 mkdir -p build 
 cd build || exit  
 cmake .. 

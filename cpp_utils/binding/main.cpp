@@ -180,7 +180,7 @@ PYBIND11_MODULE(cpp_utils, m) {
                 for (auto item : obstacles) {
                     cxx_obstacles->push_back(item.cast<std::shared_ptr<Obstacle>>());
                 }
-                self.initialize(cfg, cxx_obstacles, via_points ? via_points->getViaPoints() : NULL);
+                self.initialize(cfg, cxx_obstacles.get(), via_points ? via_points->getViaPoints() : NULL);
             },
             "Initialize the teb_local_planner",
             py::arg("cfg"), py::arg("obstacles"), py::arg("via_points") = nullptr)

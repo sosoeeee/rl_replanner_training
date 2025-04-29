@@ -43,13 +43,13 @@
 #ifndef EDGE_OBSTACLE_H_
 #define EDGE_OBSTACLE_H_
 
-#include "teb_local_planner/obstacles.h"
-#include "teb_local_planner/robot_footprint_model.h"
-#include "teb_local_planner/g2o_types/vertex_pose.h"
-#include "teb_local_planner/g2o_types/base_teb_edges.h"
-#include "teb_local_planner/g2o_types/penalties.h"
-#include "teb_local_planner/teb_config.h"
-#include "teb_local_planner/misc.h"
+#include <teb_local_planner/obstacles.h>
+#include <teb_local_planner/robot_footprint_model.h>
+#include <teb_local_planner/g2o_types/vertex_pose.h>
+#include <teb_local_planner/g2o_types/base_teb_edges.h>
+#include <teb_local_planner/g2o_types/penalties.h>
+#include <teb_local_planner/teb_config.h>
+
 
 
 namespace teb_local_planner
@@ -84,10 +84,10 @@ public:
    */    
   void computeError()
   {
-    TEB_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeObstacle()");
+    TEB_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setObstacle() on EdgeObstacle()");
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
 
-    double dist = robot_model_->calculateDistance(bandpt->pose(), _measurement);
+    double dist = cfg_->robot_model->calculateDistance(bandpt->pose(), _measurement);
 
     // Original obstacle cost.
     _error[0] = penaltyBoundFromBelow(dist, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
@@ -160,34 +160,17 @@ public:
   }
     
   /**
-   * @brief Set pointer to the robot model 
-   * @param robot_model Robot model required for distance calculation
-   */ 
-  void setRobotModel(const BaseRobotFootprintModel* robot_model)
-  {
-    robot_model_ = robot_model;
-  }
-    
-  /**
    * @brief Set all parameters at once
    * @param cfg TebConfig class
-   * @param robot_model Robot model required for distance calculation
    * @param obstacle 2D position vector containing the position of the obstacle
    */ 
-  void setParameters(const TebConfig& cfg, const BaseRobotFootprintModel* robot_model, const Obstacle* obstacle)
+  void setParameters(const TebConfig& cfg, const Obstacle* obstacle)
   {
     cfg_ = &cfg;
-    robot_model_ = robot_model;
     _measurement = obstacle;
   }
   
-protected:
-
-  const BaseRobotFootprintModel* robot_model_; //!< Store pointer to robot_model
-  
-public: 	
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
 };
   
 
@@ -223,10 +206,10 @@ public:
    */    
   void computeError()
   {
-    TEB_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeInflatedObstacle()");
+    TEB_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setObstacle() on EdgeInflatedObstacle()");
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
 
-    double dist = robot_model_->calculateDistance(bandpt->pose(), _measurement);
+    double dist = cfg_->robot_model->calculateDistance(bandpt->pose(), _measurement);
 
     // Original "straight line" obstacle cost. The max possible value
     // before weighting is min_obstacle_dist
@@ -257,36 +240,19 @@ public:
   {
     _measurement = obstacle;
   }
-    
-  /**
-   * @brief Set pointer to the robot model 
-   * @param robot_model Robot model required for distance calculation
-   */ 
-  void setRobotModel(const BaseRobotFootprintModel* robot_model)
-  {
-    robot_model_ = robot_model;
-  }
-    
+
   /**
    * @brief Set all parameters at once
    * @param cfg TebConfig class
-   * @param robot_model Robot model required for distance calculation
    * @param obstacle 2D position vector containing the position of the obstacle
    */ 
-  void setParameters(const TebConfig& cfg, const BaseRobotFootprintModel* robot_model, const Obstacle* obstacle)
+  void setParameters(const TebConfig& cfg, const Obstacle* obstacle)
   {
     cfg_ = &cfg;
-    robot_model_ = robot_model;
     _measurement = obstacle;
   }
   
-protected:
-
-  const BaseRobotFootprintModel* robot_model_; //!< Store pointer to robot_model
-  
-public:         
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
 };
     
 

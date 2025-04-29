@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10.0)
 project(cpp_utils VERSION 0.1.0 LANGUAGES C CXX)
 
 # #set(CMAKE_BUILD_TYPE Debug)
-# SET(CMAKE_BUILD_TYPE Release)
+SET(CMAKE_BUILD_TYPE Release)
 
 # # COMPILER FLAGS
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
@@ -17,6 +17,7 @@ find_package(GRAPHICSMAGICKCPP REQUIRED)
 # teb_local_planner
 find_package(SUITESPARSE REQUIRED)
 find_package(G2O REQUIRED)
+# find_package(fmt REQUIRED)
 # find_package(Boost REQUIRED)
 
 # Find Eigen3
@@ -28,8 +29,8 @@ else()
   message(FATAL_ERROR "Eigen3 not found. Please install Eigen3.")
 endif()
 
-set(TEB_EXTERNAL_INCLUDE_DIRS ${Eigen_INCLUDE_DIRS} ${SUITESPARSE_INCLUDE_DIRS} ${G2O_INCLUDE_DIR})
-set(TEB_EXTERNAL_LIBS ${Boost_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES})
+set(TEB_EXTERNAL_INCLUDE_DIRS ${Eigen_INCLUDE_DIRS} ${SUITESPARSE_INCLUDE_DIRS} ${G2O_INCLUDE_DIR} ${yaml_cpp_vendor_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+set(TEB_EXTERNAL_LIBS ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES} ${yaml_cpp_vendor_LIBRARIES})
 
 # add_executable / add_library
 set(map_library_name map_loader)
@@ -67,6 +68,13 @@ add_library(${teb_local_planner_name} SHARED
    src/${teb_local_planner_name}/teb_config.cpp
 )
 
+add_executable(test_optim_node src/${teb_local_planner_name}/test_optim_node.cpp)
+
+target_link_libraries(test_optim_node
+   teb_local_planner
+   ${TEB_EXTERNAL_LIBS}
+)
+
 set(map_voronoi_name map_voronoi)
 
 add_library(${map_voronoi_name} SHARED
@@ -99,9 +107,7 @@ target_include_directories(${teb_local_planner_name} PUBLIC ./include)
 target_include_directories(${teb_local_planner_name} SYSTEM PUBLIC
   ${TEB_EXTERNAL_INCLUDE_DIRS})
 target_include_directories(${teb_local_planner_name} SYSTEM PRIVATE
-  ${yaml_cpp_vendor_INCLUDE_DIRS})
-target_include_directories(${teb_local_planner_name} SYSTEM PRIVATE
-  ${Boost_INCLUDE_DIRS})
+  )
 
 target_include_directories(${map_voronoi_name} PUBLIC ./include)
 
@@ -115,7 +121,7 @@ target_link_libraries(${map_library_name}
 
 target_link_libraries(${path_library_name} ${yaml_cpp_vendor_LIBRARIES})
 
-target_link_libraries(${teb_local_planner_name} ${TEB_EXTERNAL_LIBS} ${yaml_cpp_vendor_LIBRARIES})
+target_link_libraries(${teb_local_planner_name} ${TEB_EXTERNAL_LIBS})
 
 target_link_libraries(${map_voronoi_name} PRIVATE map_loader)
 

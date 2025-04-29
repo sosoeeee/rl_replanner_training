@@ -44,12 +44,11 @@
 #ifndef EDGE_ACCELERATION_H_
 #define EDGE_ACCELERATION_H_
 
-#include "teb_local_planner/g2o_types/vertex_pose.h"
-#include "teb_local_planner/g2o_types/vertex_timediff.h"
-#include "teb_local_planner/g2o_types/penalties.h"
-#include "teb_local_planner/teb_config.h"
-#include "teb_local_planner/g2o_types/base_teb_edges.h"
-#include "teb_local_planner/misc.h"
+#include <teb_local_planner/g2o_types/vertex_pose.h>
+#include <teb_local_planner/g2o_types/vertex_timediff.h>
+#include <teb_local_planner/g2o_types/penalties.h>
+#include <teb_local_planner/teb_config.h>
+#include <teb_local_planner/g2o_types/base_teb_edges.h>
 
 namespace teb_local_planner
 {
@@ -141,6 +140,7 @@ public:
       
     _error[1] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
 
+    
     TEB_ASSERT_MSG(std::isfinite(_error[0]), "EdgeAcceleration::computeError() translational: _error[0]=%f\n",_error[0]);
     TEB_ASSERT_MSG(std::isfinite(_error[1]), "EdgeAcceleration::computeError() rotational: _error[1]=%f\n",_error[1]);
   }

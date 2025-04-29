@@ -191,12 +191,12 @@ while rclpy.ok():
     plt.clf()
     plt.plot(time_stamps, x_vels, label="x velocity")
     plt.plot(time_stamps, y_vels, label="y velocity")
-    plt.plot(time_stamps, omage_vels, label="omega velocity")
+    # plt.plot(time_stamps, omage_vels, label="omega velocity")
     plt.xlabel("time [s]")
     plt.ylabel("velocity [m/s]")
     plt.legend()
     plt.grid()
-    plt.pause(0.2)
+    plt.pause(1.0)
     
     # sleep for 1 second
     # time.sleep(1.0)

@@ -39,18 +39,19 @@
 #ifndef TEB_CONFIG_H_
 #define TEB_CONFIG_H_
 
-#include <memory>
 #include <Eigen/Core>
 #include <Eigen/StdVector>
-#include "teb_local_planner/robot_footprint_model.h"
 
+#include <teb_local_planner/robot_footprint_model.h>
 #include "yaml-cpp/yaml.h"
 
 // Definitions
 #define USE_ANALYTIC_JACOBI // if available for a specific edge, use analytic jacobi
 
+
 namespace teb_local_planner
 {
+
 /**
  * @class TebConfig
  * @brief Config class for the teb_local_planner and its components.
@@ -58,8 +59,7 @@ namespace teb_local_planner
 class TebConfig
 {
 public:
-  using UniquePtr = std::unique_ptr<TebConfig>;
-  
+
   RobotFootprintModelPtr robot_model;
   std::string model_name;
   double radius;
@@ -89,18 +89,16 @@ public:
     bool publish_feedback; //!< Publish planner feedback containing the full trajectory and a list of active obstacles (should be enabled only for evaluation or debugging purposes)
     double min_resolution_collision_check_angular; //! Min angular resolution used during the costmap collision check. If not respected, intermediate samples are added. [rad]
     int control_look_ahead_poses; //! Index of the pose used to extract the velocity command
+    int prevent_look_ahead_poses_near_goal; //! Prevents control_look_ahead_poses to look within this many poses of the goal in order to prevent overshoot & oscillation when xy_goal_tolerance is very small
   } trajectory; //!< Trajectory related parameters
 
   //! Robot related parameters
   struct Robot
   {
-    double base_max_vel_x; //!< Maximum translational velocity of the robot before speed limit is applied
-    double base_max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards before speed limit is applied
-    double base_max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!) before speed limit is applied
-    double base_max_vel_theta; //!< Maximum angular velocity of the robot before speed limit is applied
     double max_vel_x; //!< Maximum translational velocity of the robot
     double max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards
     double max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!)
+    double max_vel_trans; //!< Maximum translational velocity of the robot for omni robots, which is different from max_vel_x
     double max_vel_theta; //!< Maximum angular velocity of the robot
     double acc_lim_x; //!< Maximum translational acceleration of the robot
     double acc_lim_y; //!< Maximum strafing acceleration of the robot
@@ -116,8 +114,12 @@ public:
   //! Goal tolerance related parameters
   struct GoalTolerance
   {
+    double yaw_goal_tolerance; //!< Allowed final orientation error
     double xy_goal_tolerance; //!< Allowed final euclidean distance to the goal position
     bool free_goal_vel; //!< Allow the robot's velocity to be nonzero (usally max_vel) for planning purposes
+    double trans_stopped_vel; //!< Below what maximum velocity we consider the robot to be stopped in translation
+    double theta_stopped_vel; //!< Below what maximum rotation velocity we consider the robot to be stopped in rotation
+    bool complete_global_plan; // true prevents the robot from ending the path early when it cross the end goal
   } goal_tolerance; //!< Goal tolerance related parameters
 
   //! Obstacle related parameters
@@ -244,10 +246,11 @@ public:
 
     // odom_topic = "odom";
     // map_frame = "odom";
+    robot_model = std::make_shared<PointRobotFootprint>();
 
     // Trajectory
 
-    trajectory.teb_autosize = true;
+    trajectory.teb_autosize = 1.0;
     trajectory.dt_ref = 0.3;
     trajectory.dt_hysteresis = 0.1;
     trajectory.min_samples = 3;
@@ -266,17 +269,15 @@ public:
     trajectory.publish_feedback = false;
     trajectory.min_resolution_collision_check_angular = M_PI;
     trajectory.control_look_ahead_poses = 1;
-    
+    trajectory.prevent_look_ahead_poses_near_goal = 0;
+
     // Robot
 
     robot.max_vel_x = 0.4;
     robot.max_vel_x_backwards = 0.2;
     robot.max_vel_y = 0.0;
+    robot.max_vel_trans = 0.0;
     robot.max_vel_theta = 0.3;
-    robot.base_max_vel_x = robot.max_vel_x;
-    robot.base_max_vel_x_backwards = robot.base_max_vel_x_backwards;
-    robot.base_max_vel_y = robot.base_max_vel_y;
-    robot.base_max_vel_theta = robot.base_max_vel_theta;
     robot.acc_lim_x = 0.5;
     robot.acc_lim_y = 0.5;
     robot.acc_lim_theta = 0.5;
@@ -289,7 +290,11 @@ public:
     // GoalTolerance
 
     goal_tolerance.xy_goal_tolerance = 0.2;
+    goal_tolerance.yaw_goal_tolerance = 0.2;
     goal_tolerance.free_goal_vel = false;
+    goal_tolerance.trans_stopped_vel = 0.1;
+    goal_tolerance.theta_stopped_vel = 0.1;
+    goal_tolerance.complete_global_plan = true;
 
     // Obstacles
 
@@ -379,10 +384,10 @@ public:
     recovery.oscillation_omega_eps = 0.1;
     recovery.oscillation_recovery_min_duration = 10;
     recovery.oscillation_filter_duration = 10;
-    recovery.divergence_detection_enable = false;
-    recovery.divergence_detection_max_chi_squared = 10;
+
+
   }
-  
+
   /**
    * @brief Check parameters and print warnings in case of discrepancies
    *
@@ -390,7 +395,7 @@ public:
    * about some improper uses.
    */
   void checkParameters() const;
-  
+
   /**
    * @brief Load parameters directly from a yaml file without ROS dependencies
    * @param yaml_filename Path to the yaml file
@@ -408,7 +413,10 @@ private:
    */
   template <typename T>
   T getYamlValue(const YAML::Node& node, const std::string& key, const T& default_value) const;
+
 };
+
+
 } // namespace teb_local_planner
 
 #endif

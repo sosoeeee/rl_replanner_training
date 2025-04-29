@@ -39,27 +39,12 @@
 #ifndef PLANNER_INTERFACE_H_
 #define PLANNER_INTERFACE_H_
 
-#include<memory>
-
-// ros
-// #include <dwb_critics/obstacle_footprint.hpp>
-// #include <rclcpp/node.hpp>
-// #include <nav2_costmap_2d/costmap_2d.hpp>
-// #include <nav2_util/lifecycle_node.hpp>
-
-// messages
-// #include <geometry_msgs/msg/pose_array.hpp>
-// #include <geometry_msgs/msg/pose_stamped.hpp>
-// #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <memory>
 
 // this package
 #include <teb_local_planner/pose_se2.h>
 #include <teb_local_planner/robot_footprint_model.h>
-#include <logger.h>
-// #include "teb_local_planner/visualization.h"
-
-// #include <tf2/transform_datatypes.h>
-
+#include "logger.h"
 
 namespace teb_local_planner
 {
@@ -114,8 +99,7 @@ public:
    *        otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
    */
-  // tf2 doesn't have tf2::Pose
-  //virtual bool plan(const tf::Pose& start, const tf::Pose& goal, const VelSE2* start_vel = NULL, bool free_goal_vel=false) = 0;
+  // virtual bool plan(const tf::Pose& start, const tf::Pose& goal, const VelSE2* start_vel = NULL, bool free_goal_vel=false) = 0;
   
   /**
    * @brief Plan a trajectory between a given start and goal pose.
@@ -158,7 +142,19 @@ public:
    * @param dir This parameter might be RotType::left (prefer left), RotType::right (prefer right) or RotType::none (prefer none)
    */
   virtual void setPreferredTurningDir(RotType dir) {LOGGER_WARN("PlannerInterface", "setPreferredTurningDir() not implemented for this planner.");}
-   
+    
+  /**
+   * @brief Visualize planner specific stuff.
+   * Overwrite this method to provide an interface to perform all planner related visualizations at once.
+   */ 
+  virtual void visualize()
+  {
+  }
+  
+  virtual void updateRobotModel(RobotFootprintModelPtr robot_model)
+  {
+  }
+
   /**
    * Compute and return the cost of the current optimization graph (supports multiple trajectories)
    * @param[out] cost current cost value for each trajectory
@@ -169,12 +165,18 @@ public:
   virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, bool alternative_time_cost=false)
   {
   }
-  
+
   /**
    * @brief Returns true if the planner has diverged.
    */
   virtual bool hasDiverged() const = 0;
 
+  /**
+   * @brief Get the complete trajectory
+   * @param[out] trajectory the resulting trajectory
+   */
+  virtual void getFullTrajectory(std::vector<TrajectoryPointMsg>& trajectory) const = 0;
+                
 };
 
 //! Abbrev. for shared instances of PlannerInterface or it's subclasses 
