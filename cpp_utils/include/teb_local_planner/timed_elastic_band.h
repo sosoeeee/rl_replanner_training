@@ -40,17 +40,15 @@
 #define TIMED_ELASTIC_BAND_H_
 #include <boost/optional.hpp>
 
-#include <cassert>
 #include <complex>
 #include <iterator>
 
-#include "teb_local_planner/obstacles.h"
-#include "logger.h"
+#include <teb_local_planner/obstacles.h>
 
 // G2O Types
-#include "teb_local_planner/g2o_types/vertex_pose.h"
-#include "teb_local_planner/g2o_types/vertex_timediff.h"
-
+#include <teb_local_planner/g2o_types/vertex_pose.h>
+#include <teb_local_planner/g2o_types/vertex_timediff.h>
+#include "logger.h"
 
 namespace teb_local_planner
 {
@@ -129,7 +127,7 @@ public:
    */
   double& TimeDiff(int index)
   {
-    assert(index<sizeTimeDiffs());
+    assert(index<sizeTimeDiffs()); 
     return timediff_vec_.at(index)->dt();
   }
   
@@ -140,7 +138,7 @@ public:
    */
   const double& TimeDiff(int index) const
   {
-    assert(index<sizeTimeDiffs());
+    assert(index<sizeTimeDiffs()); 
     return timediff_vec_.at(index)->dt();
   }
   
@@ -165,7 +163,7 @@ public:
     assert(index<sizePoses());
     return pose_vec_.at(index)->pose();
   }
-
+  
   /**
    * @brief Access the last PoseSE2 in the pose sequence
    */
@@ -204,7 +202,7 @@ public:
    */  
   VertexTimeDiff* TimeDiffVertex(int index) 
   {
-    assert(index<sizeTimeDiffs());
+    assert(index<sizeTimeDiffs()); 
     return timediff_vec_.at(index);
   }
   
@@ -421,7 +419,7 @@ public:
    * @return true if everything was fine, false otherwise
    */
   bool initTrajectoryToGoal(const std::vector<PoseSE2>& plan, double max_vel_x, double max_vel_theta, bool estimate_orient=false, int min_samples = 3, bool guess_backwards_motion = false);
-  
+
   //@}
   
   /** @name Update and modify the trajectory */
@@ -624,7 +622,7 @@ public:
 
 
 // include template implementations / definitions
-#include "teb_local_planner/timed_elastic_band.hpp"
+#include <teb_local_planner/timed_elastic_band.hpp>
 
 
 #endif /* TIMED_ELASTIC_BAND_H_ */

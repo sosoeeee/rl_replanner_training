@@ -146,7 +146,7 @@ inline const T& get_const_reference(const T* ptr) {return *ptr;}
  * @return  If \c T is a pointer, return const *T (leading to const T&), otherwise const T& with out pointer-to-ref conversion
  */
 template<typename T>
-inline const T& get_const_reference(const T& val, typename std::enable_if_t<!std::is_pointer<T>::value, T>* dummy = nullptr) {return val;}
+inline const T& get_const_reference(const T& val, typename std::enable_if<!std::is_pointer<T>::value>::type* = nullptr) {return val;}
 
 // inline builtin_interfaces::msg::Duration durationFromSec(double t_sec)
 // {
@@ -181,8 +181,9 @@ struct TebAssertionFailureException : public std::runtime_error
         throw TebAssertionFailureException(msg); \
     }
 
-template<typename T, typename ...ARGS, typename std::enable_if_t<std::is_arithmetic<T>::value>* = nullptr>
-void teb_assert_msg_impl(const T expression, ARGS ...args) {
+template<typename T, typename ...ARGS>
+typename std::enable_if<std::is_arithmetic<T>::value>::type
+teb_assert_msg_impl(const T expression, ARGS ...args) {
     if(expression == 0) {
         char arg_string[1024];
         std::sprintf(arg_string, args..., "");
@@ -191,8 +192,9 @@ void teb_assert_msg_impl(const T expression, ARGS ...args) {
     }
 }
 
-template<typename T, typename ...ARGS, typename std::enable_if_t<std::is_pointer<T>::value>* = nullptr>
-void teb_assert_msg_impl(const T expression, ARGS ...args) {
+template<typename T, typename ...ARGS>
+typename std::enable_if<std::is_pointer<T>::value>::type
+teb_assert_msg_impl(const T expression, ARGS ...args) {
     if(expression == nullptr) {
         char arg_string[1024];
         std::sprintf(arg_string, args..., "");

@@ -36,9 +36,9 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include "teb_local_planner/obstacles.h"
+#include <teb_local_planner/obstacles.h>
+// #include <teb_local_planner/misc.h>
 #include "logger.h"
-// #include "teb_local_planner/misc.h"
 
 namespace teb_local_planner
 {
@@ -58,8 +58,7 @@ void PolygonObstacle::calcCentroid()
   if (vertices_.empty())
   {
     centroid_.setConstant(NAN);
-    LOGGER_WARN("teb_local_planner",
-                "PolygonObstacle::calcCentroid(): number of vertices is empty. the resulting centroid is a vector of NANs.");
+    LOGGER_WARN("PlannerInterface", "PolygonObstacle::calcCentroid(): number of vertices is empty. the resulting centroid is a vector of NANs.");
     return;
   }
   
@@ -170,8 +169,7 @@ Eigen::Vector2d PolygonObstacle::getClosestPoint(const Eigen::Vector2d& position
     }
   }
 
-  LOGGER_WARN("teb_local_planner",
-              "PolygonObstacle::getClosestPoint() cannot find any closest point. Polygon ill-defined?");
+  LOGGER_ERROR("teb_local_planner", "PolygonObstacle::getClosestPoint() cannot find any closest point. Polygon ill-defined?");
   return Eigen::Vector2d::Zero(); // todo: maybe boost::optional?
 }
 

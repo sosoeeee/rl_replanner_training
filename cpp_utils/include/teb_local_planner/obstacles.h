@@ -45,13 +45,10 @@
 #include <Eigen/Geometry>
 
 #include <complex>
+
 #include <memory>
 
-// #include <geometry_msgs/msg/polygon.hpp>
-// #include <geometry_msgs/msg/twist_with_covariance.hpp>
-// #include <geometry_msgs/msg/quaternion_stamped.hpp>
-
-#include "teb_local_planner/distance_calculations.h"
+#include <teb_local_planner/distance_calculations.h>
 
 
 namespace teb_local_planner
@@ -209,7 +206,7 @@ public:
   const Eigen::Vector2d& getCentroidVelocity() const {return centroid_velocity_;}
 
   //@}
-	
+
 protected:
 	   
   bool dynamic_; //!< Store flag if obstacle is dynamic (resp. a moving obstacle)

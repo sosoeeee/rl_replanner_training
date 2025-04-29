@@ -234,15 +234,15 @@ void TrajGenerator::updateTrajectory()
     /* ========================================== release this constrain to speed up ========================================== */
 
     // Initialize and run planner
-    // auto start_time = std::chrono::high_resolution_clock::now();
-    TebOptimalPlanner planner(cfg_, obstacles_, &via_points_);
+    auto start_time = std::chrono::high_resolution_clock::now();
+    TebOptimalPlanner planner(cfg_, obstacles_.get(), &via_points_);
     if (!planner.plan(init_plan_)) {
         LOGGER_ERROR("teb_local_planner", "Failed to plan trajectory.");
         return;
     }
-    // auto end_time = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double> elapsed_time = end_time - start_time;
-    // LOGGER_INFO("teb_local_planner", "Planning time: %f seconds", elapsed_time.count());
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time = end_time - start_time;
+    LOGGER_INFO("teb_local_planner", "Planning time: %f ms", elapsed_time.count() * 1000);
 
     // Get the planned trajectory
     planner.getFullTrajectory(raw_trajectory_);

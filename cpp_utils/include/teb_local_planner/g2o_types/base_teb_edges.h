@@ -44,7 +44,7 @@
 #ifndef _BASE_TEB_EDGES_H_
 #define _BASE_TEB_EDGES_H_
 
-#include "teb_local_planner/teb_config.h"
+#include <teb_local_planner/teb_config.h>
 
 #include <g2o/core/base_binary_edge.h>
 #include <g2o/core/base_unary_edge.h>
@@ -116,7 +116,7 @@ protected:
   using g2o::BaseUnaryEdge<D, E, VertexXi>::_error;
   using g2o::BaseUnaryEdge<D, E, VertexXi>::_vertices;
   
-  const TebConfig* cfg_{nullptr}; //!< Store TebConfig class for parameters
+  const TebConfig* cfg_; //!< Store TebConfig class for parameters
   
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW   
@@ -184,7 +184,7 @@ protected:
   using g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::_error;
   using g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::_vertices;
     
-  const TebConfig* cfg_{nullptr}; //!< Store TebConfig class for parameters
+  const TebConfig* cfg_; //!< Store TebConfig class for parameters
   
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW   
@@ -262,7 +262,7 @@ protected:
   using g2o::BaseMultiEdge<D, E>::_error;
   using g2o::BaseMultiEdge<D, E>::_vertices;
   
-  const TebConfig* cfg_{nullptr}; //!< Store TebConfig class for parameters
+  const TebConfig* cfg_; //!< Store TebConfig class for parameters
   
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW   

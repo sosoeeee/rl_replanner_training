@@ -37,13 +37,17 @@
  *********************************************************************/
 
 #include <teb_local_planner/optimal_planner.h>
+#include <logger.h>
+
 #include <signal.h>
 #include <memory>
+
 
 using namespace teb_local_planner; // it is ok here to import everything for testing purposes
 
 // ============= Global Variables ================
 // Ok global variables are bad, but here we only have a simple testing node.
+PlannerInterfacePtr planner;
 std::vector<ObstaclePtr> obst_vector;
 ViaPointContainer via_points;
 TebConfig config;
@@ -59,28 +63,35 @@ void signalHandler(int signum) {
 // =============== Main function =================
 int main( int argc, char** argv )
 {
-  // Register signal handler
-  signal(SIGINT, signalHandler);
-  
   // load ros parameters from node handle
-  // config.loadParamsFromYaml("/home/rosdev/ros2_ws/cpp_utils/include/teb_local_planner/teb_params.yaml");
- 
-  obst_vector.push_back( std::make_shared<PointObstacle>(-3.0,1.0) );
-  obst_vector.push_back( std::make_shared<PointObstacle>(6.0,2.0) );
-  obst_vector.push_back( std::make_shared<PointObstacle>(0.0,0.1) );
+  // config.loadRosParamFromNodeHandle(n);
 
-  auto obstacles_ptr = std::make_shared<ObstContainer>(obst_vector);
-  TebOptimalPlanner planner(config, obstacles_ptr, &via_points);
+  obst_vector.push_back(std::make_shared<PointObstacle>(-3.0,1.0) );
+  obst_vector.push_back(std::make_shared<PointObstacle>(6.0,2.0) );
+  obst_vector.push_back(std::make_shared<PointObstacle>(0.0,0.1) );
+  
+  // Setup robot shape model
+  // config.robot_model = TebLocalPlannerROS::getRobotFootprintFromParamServer(n, config);
+  
+  // Setup planner (homotopy class planning or just the local teb planner)
+  // if (config.hcp.enable_homotopy_class_planning)
+  //   planner = PlannerInterfacePtr(new HomotopyClassPlanner(config, &obst_vector, visual, &via_points));
+  // else
+  //   planner = PlannerInterfacePtr(new TebOptimalPlanner(config, &obst_vector, visual, &via_points));
+
+  planner = PlannerInterfacePtr(new TebOptimalPlanner(config, &obst_vector, &via_points));
+  
+  LOGGER_INFO("teb_local_planner", "TebLocalPlannerROS initialized.");
 
   while (!g_shutdown_flag)
   {
     auto start_time = std::chrono::high_resolution_clock::now();
     try
     {
-      if (planner.plan(PoseSE2(-4,0,0), PoseSE2(4,0,0))) // check if planning was successful
+      if (planner->plan(PoseSE2(-4,0,0), PoseSE2(4,0,0))) // check if planning was successful
       {
         std::vector<TrajectoryPointMsg> trajectory;
-        planner.getFullTrajectory(trajectory);
+        planner->getFullTrajectory(trajectory);
         // print the length of the trajectory
         LOGGER_INFO("teb_local_planner", "Trajectory length: %zu", trajectory.size());
       }
@@ -93,6 +104,6 @@ int main( int argc, char** argv )
       LOGGER_ERROR("teb_local_planner", "Exception: %s", e.what());
     }
   }
-  
+
   return 0;
 }

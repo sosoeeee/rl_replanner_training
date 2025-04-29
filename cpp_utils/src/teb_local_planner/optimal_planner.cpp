@@ -37,7 +37,6 @@
  *********************************************************************/
 
 #include "teb_local_planner/optimal_planner.h"
-#include "logger.h"
 
 #include <map>
 // g2o custom edges and vertices for the TEB planner
@@ -54,19 +53,21 @@
 
 #include <memory>
 #include <limits>
+#include "logger.h"
+
 
 namespace teb_local_planner
 {
 
 // ============== Implementation ===================
 
-TebOptimalPlanner::TebOptimalPlanner() : cfg_(nullptr), obstacles_(NULL), via_points_(NULL), cost_(HUGE_VAL), prefer_rotdir_(RotType::none),
+TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), via_points_(NULL), cost_(HUGE_VAL), prefer_rotdir_(RotType::none),
                                          initialized_(false), optimized_(false)
 {    
 }
   
-TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, std::shared_ptr<ObstContainer> obstacles, const ViaPointContainer* via_points)
-{    
+TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles, const ViaPointContainer* via_points)
+{
   initialize(cfg, obstacles, via_points);
 }
 
@@ -80,18 +81,17 @@ TebOptimalPlanner::~TebOptimalPlanner()
   //g2o::HyperGraphActionLibrary::destroy();
 }
 
-void TebOptimalPlanner::initialize(const TebConfig& cfg, std::shared_ptr<ObstContainer> obstacles, const ViaPointContainer* via_points)
+void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, const ViaPointContainer* via_points)
 {    
   // init optimizer (set solver and block ordering settings)
   optimizer_ = initOptimizer();
   
   cfg_ = &cfg;
-  robot_model_ = cfg_->robot_model;
   obstacles_ = obstacles;
   via_points_ = via_points;
   cost_ = HUGE_VAL;
   prefer_rotdir_ = RotType::none;
-
+  
   vel_start_.first = true;
   vel_start_.second.vx = 0;
   vel_start_.second.vy = 0;
@@ -102,22 +102,6 @@ void TebOptimalPlanner::initialize(const TebConfig& cfg, std::shared_ptr<ObstCon
   vel_goal_.second.vy = 0;
   vel_goal_.second.omega = 0;
   initialized_ = true;
-
-  // // debug print obstacle container
-  // // print the address of the obstacles
-  // LOGGER_INFO("teb_local_planner", "Obstacle container address: %p", obstacles_);  
-  // if (obstacles_)
-  // {
-  //   LOGGER_INFO("teb_local_planner", "Obstacle container size: %zu", obstacles_->size());
-  //   for (const auto& obst : *obstacles_)
-  //   {
-  //     LOGGER_INFO("teb_local_planner", "Obstacle: %f", obst->getCentroid().x());
-  //   }
-  // }
-  // else
-  // {
-  //   LOGGER_INFO("teb_local_planner", "No obstacles set.");
-  // }
 }
 
 /*
@@ -126,27 +110,59 @@ void TebOptimalPlanner::initialize(const TebConfig& cfg, std::shared_ptr<ObstCon
 void TebOptimalPlanner::registerG2OTypes()
 {
   g2o::Factory* factory = g2o::Factory::instance();
-  factory->registerType("VERTEX_POSE", std::make_shared<g2o::HyperGraphElementCreator<VertexPose>>());
-  factory->registerType("VERTEX_TIMEDIFF", std::make_shared<g2o::HyperGraphElementCreator<VertexTimeDiff>>());
-  factory->registerType("EDGE_TIME_OPTIMAL", std::make_shared<g2o::HyperGraphElementCreator<EdgeTimeOptimal>>());
-  factory->registerType("EDGE_SHORTEST_PATH", std::make_shared<g2o::HyperGraphElementCreator<EdgeShortestPath>>());
-  factory->registerType("EDGE_VELOCITY", std::make_shared<g2o::HyperGraphElementCreator<EdgeVelocity>>());
-  factory->registerType("EDGE_VELOCITY_HOLONOMIC", std::make_shared<g2o::HyperGraphElementCreator<EdgeVelocityHolonomic>>());
-  factory->registerType("EDGE_ACCELERATION", std::make_shared<g2o::HyperGraphElementCreator<EdgeAcceleration>>());
-  factory->registerType("EDGE_ACCELERATION_START", std::make_shared<g2o::HyperGraphElementCreator<EdgeAccelerationStart>>());
-  factory->registerType("EDGE_ACCELERATION_GOAL", std::make_shared<g2o::HyperGraphElementCreator<EdgeAccelerationGoal>>());
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC", std::make_shared<g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic>>());
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC_START", std::make_shared<g2o::HyperGraphElementCreator<EdgeAccelerationHolonomicStart>>());
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC_GOAL", std::make_shared<g2o::HyperGraphElementCreator<EdgeAccelerationHolonomicGoal>>());
-  factory->registerType("EDGE_KINEMATICS_DIFF_DRIVE", std::make_shared<g2o::HyperGraphElementCreator<EdgeKinematicsDiffDrive>>());
-  factory->registerType("EDGE_KINEMATICS_CARLIKE", std::make_shared<g2o::HyperGraphElementCreator<EdgeKinematicsCarlike>>());
-  factory->registerType("EDGE_OBSTACLE", std::make_shared<g2o::HyperGraphElementCreator<EdgeObstacle>>());
-  factory->registerType("EDGE_INFLATED_OBSTACLE", std::make_shared<g2o::HyperGraphElementCreator<EdgeInflatedObstacle>>());
-  factory->registerType("EDGE_DYNAMIC_OBSTACLE", std::make_shared<g2o::HyperGraphElementCreator<EdgeDynamicObstacle>>());
-  factory->registerType("EDGE_VIA_POINT", std::make_shared<g2o::HyperGraphElementCreator<EdgeViaPoint>>());
-  factory->registerType("EDGE_PREFER_ROTDIR", std::make_shared<g2o::HyperGraphElementCreator<EdgePreferRotDir>>());
+  factory->registerType("VERTEX_POSE", new g2o::HyperGraphElementCreator<VertexPose>);
+  factory->registerType("VERTEX_TIMEDIFF", new g2o::HyperGraphElementCreator<VertexTimeDiff>);
+
+  factory->registerType("EDGE_TIME_OPTIMAL", new g2o::HyperGraphElementCreator<EdgeTimeOptimal>);
+  factory->registerType("EDGE_SHORTEST_PATH", new g2o::HyperGraphElementCreator<EdgeShortestPath>);
+  factory->registerType("EDGE_VELOCITY", new g2o::HyperGraphElementCreator<EdgeVelocity>);
+  factory->registerType("EDGE_VELOCITY_HOLONOMIC", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic>);
+  factory->registerType("EDGE_ACCELERATION", new g2o::HyperGraphElementCreator<EdgeAcceleration>);
+  factory->registerType("EDGE_ACCELERATION_START", new g2o::HyperGraphElementCreator<EdgeAccelerationStart>);
+  factory->registerType("EDGE_ACCELERATION_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationGoal>);
+  factory->registerType("EDGE_ACCELERATION_HOLONOMIC", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic>);
+  factory->registerType("EDGE_ACCELERATION_HOLONOMIC_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomicStart>);
+  factory->registerType("EDGE_ACCELERATION_HOLONOMIC_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomicGoal>);
+  factory->registerType("EDGE_KINEMATICS_DIFF_DRIVE", new g2o::HyperGraphElementCreator<EdgeKinematicsDiffDrive>);
+  factory->registerType("EDGE_KINEMATICS_CARLIKE", new g2o::HyperGraphElementCreator<EdgeKinematicsCarlike>);
+  factory->registerType("EDGE_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeObstacle>);
+  factory->registerType("EDGE_INFLATED_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeInflatedObstacle>);
+  factory->registerType("EDGE_DYNAMIC_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeDynamicObstacle>);
+  factory->registerType("EDGE_VIA_POINT", new g2o::HyperGraphElementCreator<EdgeViaPoint>);
+  factory->registerType("EDGE_PREFER_ROTDIR", new g2o::HyperGraphElementCreator<EdgePreferRotDir>);
   return;
 }
+
+// /*
+//  * initialize g2o optimizer. Set solver settings here.
+//  * Return: pointer to new SparseOptimizer Object.
+//  */
+// std::shared_ptr<g2o::SparseOptimizer> TebOptimalPlanner::initOptimizer()
+// {
+//   // Call register_g2o_types once, even for multiple TebOptimalPlanner instances (thread-safe)
+//   static std::once_flag flag;
+//   std::call_once(flag, []() {
+//       TebOptimalPlanner::registerG2OTypes();
+//   });
+
+//   // allocating the optimizer
+//   std::shared_ptr<g2o::SparseOptimizer> optimizer = std::make_shared<g2o::SparseOptimizer>();
+//   auto linearSolver = std::make_unique<TEBLinearSolver>(); // see typedef in optimization.h
+//   linearSolver->setBlockOrdering(true);
+//   auto blockSolver = std::make_unique<TEBBlockSolver>(std::move(linearSolver));
+//   g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(std::move(blockSolver));
+
+
+//   LOGGER_INFO("teb_local_planner", "Using solver");
+
+//   optimizer->setAlgorithm(solver);
+  
+//   LOGGER_INFO("teb_local_planner", "Using MultiThreading");
+
+//   optimizer->initMultiThreading(); // required for >Eigen 3.1
+  
+//   return optimizer;
+// }
 
 /*
  * initialize g2o optimizer. Set solver settings here.
@@ -154,9 +170,17 @@ void TebOptimalPlanner::registerG2OTypes()
  */
 std::shared_ptr<g2o::SparseOptimizer> TebOptimalPlanner::initOptimizer()
 {
-  // Call register_g2o_types once, even for multiple TebOptimalPlanner instances (thread-safe)
-  static std::once_flag flag;
-  std::call_once(flag, [this](){this->registerG2OTypes();});
+  // // Call register_g2o_types once, even for multiple TebOptimalPlanner instances (thread-safe)
+  // static std::once_flag flag;
+  // // std::call_once(flag, [this](){this->registerG2OTypes();});
+  // std::call_once(flag, [](){ LOGGER_INFO("teb_local_planner", "g2o optimizer: Registering custom types..."); });
+
+  static bool g2o_types_registered = []() {
+    // LOGGER_INFO("teb_local_planner", "g2o optimizer: Registering custom types...");
+    // If you still need to call registerG2OTypes(), uncomment the next line
+    TebOptimalPlanner::registerG2OTypes();
+    return true;
+  }();
 
   // allocating the optimizer
   std::shared_ptr<g2o::SparseOptimizer> optimizer = std::make_shared<g2o::SparseOptimizer>();
@@ -192,23 +216,43 @@ bool TebOptimalPlanner::optimizeTEB(int iterations_innerloop, int iterations_out
   
   for(int i=0; i<iterations_outerloop; ++i)
   {
+    // auto start_time = std::chrono::high_resolution_clock::now();
+    // auto end_time = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> elapsed_time;
+
     if (cfg_->trajectory.teb_autosize)
     {
       //teb_.autoResize(cfg_->trajectory.dt_ref, cfg_->trajectory.dt_hysteresis, cfg_->trajectory.min_samples, cfg_->trajectory.max_samples);
+      // start_time = std::chrono::high_resolution_clock::now();
       teb_.autoResize(cfg_->trajectory.dt_ref, cfg_->trajectory.dt_hysteresis, cfg_->trajectory.min_samples, cfg_->trajectory.max_samples, fast_mode);
-
+      // end_time = std::chrono::high_resolution_clock::now();
+      // elapsed_time = end_time - start_time;
+      // LOGGER_INFO("teb_local_planner", "TebOptimalPlanner::optimizeTEB: autoResize took %.6f seconds.", elapsed_time.count());
     }
 
+    // start_time = std::chrono::high_resolution_clock::now();
     success = buildGraph(weight_multiplier);
+    // end_time = std::chrono::high_resolution_clock::now();
+    // elapsed_time = end_time - start_time;
+    // LOGGER_INFO("teb_local_planner", "TebOptimalPlanner::optimizeTEB: buildGraph took %.6f seconds.", elapsed_time.count());
+
     if (!success) 
     {
         clearGraph();
+        LOGGER_ERROR("teb_local_planner", "TebOptimalPlanner::optimizeTEB: buildGraph failed.");
         return false;
     }
+
+    // start_time = std::chrono::high_resolution_clock::now();
     success = optimizeGraph(iterations_innerloop, false);
+    // end_time = std::chrono::high_resolution_clock::now();
+    // elapsed_time = end_time - start_time;
+    // LOGGER_INFO("teb_local_planner", "TebOptimalPlanner::optimizeTEB: optimizeGraph took %.6f seconds.", elapsed_time.count());
+
     if (!success) 
     {
         clearGraph();
+        LOGGER_ERROR("teb_local_planner", "TebOptimalPlanner::optimizeTEB: optimizeGraph failed.");
         return false;
     }
     optimized_ = true;
@@ -274,12 +318,12 @@ bool TebOptimalPlanner::plan(const std::vector<PoseSE2>& initial_plan, const Vel
 }
 
 
-//bool TebOptimalPlanner::plan(const tf::Pose& start, const tf::Pose& goal, const VelSE2* start_vel, bool free_goal_vel)
-//{
-//  PoseSE2 start_(start);
-//  PoseSE2 goal_(goal);
-//  return plan(start_, goal_, start_vel);
-//}
+// bool TebOptimalPlanner::plan(const tf::Pose& start, const tf::Pose& goal, const VelSE2* start_vel, bool free_goal_vel)
+// {
+//   PoseSE2 start_(start);
+//   PoseSE2 goal_(goal);
+//   return plan(start_, goal_, start_vel);
+// }
 
 bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const VelSE2* start_vel, bool free_goal_vel)
 {	
@@ -310,7 +354,7 @@ bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const Ve
     vel_goal_.first = true; // we just reactivate and use the previously set velocity (should be zero if nothing was modified)
       
   // now optimize
-  return optimizeTEB(cfg_->optim.no_inner_iterations, cfg_->optim.no_outer_iterations, true);
+  return optimizeTEB(cfg_->optim.no_inner_iterations, cfg_->optim.no_outer_iterations);
 }
 
 
@@ -318,7 +362,7 @@ bool TebOptimalPlanner::buildGraph(double weight_multiplier)
 {
   if (!optimizer_->edges().empty() || !optimizer_->vertices().empty())
   {
-    LOGGER_WARN("teb_local_planner", "Cannot build graph, because it is not empty. Call graphClear()!");
+    LOGGER_WARN("PlannerInterface", "Cannot build graph, because it is not empty. Call graphClear()!");
     return false;
   }
 
@@ -363,14 +407,14 @@ bool TebOptimalPlanner::optimizeGraph(int no_iterations,bool clear_after)
 {
   if (cfg_->robot.max_vel_x<0.01)
   {
-    LOGGER_WARN("teb_local_planner", "optimizeGraph(): Robot Max Velocity is smaller than 0.01m/s. Optimizing aborted...");
+    LOGGER_WARN("PlannerInterface", "optimizeGraph(): Robot Max Velocity is smaller than 0.01m/s. Optimizing aborted...");
     if (clear_after) clearGraph();
     return false;	
   }
   
   if (!teb_.isInit() || teb_.sizePoses() < cfg_->trajectory.min_samples)
   {
-    LOGGER_WARN("teb_local_planner", "optimizeGraph(): TEB is empty or has too less elements. Skipping optimization.");
+    LOGGER_WARN("PlannerInterface", "optimizeGraph(): TEB is empty or has too less elements. Skipping optimization.");
     if (clear_after) clearGraph();
     return false;	
   }
@@ -386,8 +430,8 @@ bool TebOptimalPlanner::optimizeGraph(int no_iterations,bool clear_after)
 
   if(!iter)
   {
-    LOGGER_ERROR("teb_local_planner", "optimizeGraph(): Optimization failed! iter=%i", iter);
-	  return false;
+	LOGGER_ERROR("teb_local_planner", "optimizeGraph(): Optimization failed! iter=%i", iter);
+	return false;
   }
 
   if (clear_after) clearGraph();	
@@ -416,7 +460,7 @@ void TebOptimalPlanner::clearGraph()
 void TebOptimalPlanner::AddTEBVertices()
 {
   // add vertices to graph
-  LOGGER_DEBUG_EXPRESSION("teb_local_planner", cfg_->optim.optimization_verbose, "Adding TEB vertices ...");
+  // ROS_DEBUG_COND(cfg_->optim.optimization_verbose, "Adding TEB vertices ...");
   unsigned int id_counter = 0; // used for vertices ids
   obstacles_per_vertex_.resize(teb_.sizePoses());
   auto iter_obstacle = obstacles_per_vertex_.begin();
@@ -459,7 +503,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
       EdgeInflatedObstacle* dist_bandpt_obst = new EdgeInflatedObstacle;
       dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
       dist_bandpt_obst->setInformation(information_inflated);
-      dist_bandpt_obst->setParameters(*cfg_, cfg_->robot_model.get(), obstacle);
+      dist_bandpt_obst->setParameters(*cfg_, obstacle);
       optimizer_->addEdge(dist_bandpt_obst);
     }
     else
@@ -467,7 +511,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
       EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
       dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
       dist_bandpt_obst->setInformation(information);
-      dist_bandpt_obst->setParameters(*cfg_, cfg_->robot_model.get(), obstacle);
+      dist_bandpt_obst->setParameters(*cfg_, obstacle);
       optimizer_->addEdge(dist_bandpt_obst);
     };
   };
@@ -482,7 +526,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
       ObstaclePtr right_obstacle;
       
       const Eigen::Vector2d pose_orient = teb_.Pose(i).orientationUnitVec();
-
+      
       // iterate obstacles
       for (const ObstaclePtr& obst : *obstacles_)
       {
@@ -492,7 +536,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
 
           // calculate distance to robot model
           double dist = cfg_->robot_model->calculateDistance(teb_.Pose(i), obst.get());
-
+          
           // force considering obstacle if really close to the current pose
         if (dist < cfg_->obstacles.min_obstacle_dist*cfg_->obstacles.obstacle_association_force_inclusion_factor)
           {
@@ -504,7 +548,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
             continue;
           
           // determine side (left or right) and assign obstacle if closer than the previous one
-          if (cross2d(pose_orient, obst->getCentroid()) > 0) // left
+          if (cross2d(pose_orient, obst->getCentroid() - teb_.Pose(i).position()) > 0) // left
           {
               if (dist < left_min_dist)
               {
@@ -579,7 +623,7 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
         EdgeInflatedObstacle* dist_bandpt_obst = new EdgeInflatedObstacle;
         dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
         dist_bandpt_obst->setInformation(information_inflated);
-        dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obst->get());
+        dist_bandpt_obst->setParameters(*cfg_, obst->get());
         optimizer_->addEdge(dist_bandpt_obst);
     }
     else
@@ -587,7 +631,7 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
         EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
         dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
         dist_bandpt_obst->setInformation(information);
-        dist_bandpt_obst->setParameters(*cfg_, cfg_->robot_model.get(), obst->get());
+        dist_bandpt_obst->setParameters(*cfg_, obst->get());
         optimizer_->addEdge(dist_bandpt_obst);
     }
 
@@ -600,7 +644,7 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
                 EdgeInflatedObstacle* dist_bandpt_obst_n_r = new EdgeInflatedObstacle;
                 dist_bandpt_obst_n_r->setVertex(0,teb_.PoseVertex(index+neighbourIdx));
                 dist_bandpt_obst_n_r->setInformation(information_inflated);
-                dist_bandpt_obst_n_r->setParameters(*cfg_, cfg_->robot_model.get(), obst->get());
+                dist_bandpt_obst_n_r->setParameters(*cfg_, obst->get());
                 optimizer_->addEdge(dist_bandpt_obst_n_r);
             }
             else
@@ -608,7 +652,7 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
                 EdgeObstacle* dist_bandpt_obst_n_r = new EdgeObstacle;
                 dist_bandpt_obst_n_r->setVertex(0,teb_.PoseVertex(index+neighbourIdx));
                 dist_bandpt_obst_n_r->setInformation(information);
-                dist_bandpt_obst_n_r->setParameters(*cfg_, robot_model_.get(), obst->get());
+                dist_bandpt_obst_n_r->setParameters(*cfg_, obst->get());
                 optimizer_->addEdge(dist_bandpt_obst_n_r);
             }
       }
@@ -619,7 +663,7 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
                 EdgeInflatedObstacle* dist_bandpt_obst_n_l = new EdgeInflatedObstacle;
                 dist_bandpt_obst_n_l->setVertex(0,teb_.PoseVertex(index-neighbourIdx));
                 dist_bandpt_obst_n_l->setInformation(information_inflated);
-                dist_bandpt_obst_n_l->setParameters(*cfg_, cfg_->robot_model.get(), obst->get());
+                dist_bandpt_obst_n_l->setParameters(*cfg_, obst->get());
                 optimizer_->addEdge(dist_bandpt_obst_n_l);
             }
             else
@@ -627,7 +671,7 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
                 EdgeObstacle* dist_bandpt_obst_n_l = new EdgeObstacle;
                 dist_bandpt_obst_n_l->setVertex(0,teb_.PoseVertex(index-neighbourIdx));
                 dist_bandpt_obst_n_l->setInformation(information);
-                dist_bandpt_obst_n_l->setParameters(*cfg_, cfg_->robot_model.get(), obst->get());
+                dist_bandpt_obst_n_l->setParameters(*cfg_, obst->get());
                 optimizer_->addEdge(dist_bandpt_obst_n_l);
             }
       }
@@ -659,7 +703,7 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles(double weight_multiplier)
       EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(time);
       dynobst_edge->setVertex(0,teb_.PoseVertex(i));
       dynobst_edge->setInformation(information);
-      dynobst_edge->setParameters(*cfg_, cfg_->robot_model.get(), obst->get());
+      dynobst_edge->setParameters(*cfg_, obst->get());
       optimizer_->addEdge(dynobst_edge);
       time += teb_.TimeDiff(i); // we do not need to check the time diff bounds, since we iterate to "< sizePoses()-1".
     }
@@ -966,7 +1010,7 @@ void TebOptimalPlanner::AddEdgesPreferRotDir()
 
   if (prefer_rotdir_ != RotType::right && prefer_rotdir_ != RotType::left)
   {
-    LOGGER_WARN("teb_local_planner", "TebOptimalPlanner::AddEdgesPreferRotDir(): unsupported RotType selected. Skipping edge creation.");
+    LOGGER_WARN("PlannerInterface", "TebOptimalPlanner::AddEdgesPreferRotDir(): unsupported RotType selected. Skipping edge creation.");
     return;
   }
 
@@ -1008,7 +1052,7 @@ void TebOptimalPlanner::AddEdgesVelocityObstacleRatio()
       edge->setVertex(1,teb_.PoseVertex(index + 1));
       edge->setVertex(2,teb_.TimeDiffVertex(index));
       edge->setInformation(information);
-      edge->setParameters(*cfg_, cfg_->robot_model.get(), obstacle.get());
+      edge->setParameters(*cfg_, obstacle.get());
       optimizer_->addEdge(edge);
     }
   }
@@ -1136,7 +1180,7 @@ bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega
     omega = 0;
     return false;
   }
-  look_ahead_poses = std::max(1, std::min(look_ahead_poses, teb_.sizePoses() - 1));
+  look_ahead_poses = std::max(1, std::min(look_ahead_poses, teb_.sizePoses() - 1 - cfg_->trajectory.prevent_look_ahead_poses_near_goal));
   double dt = 0.0;
   for(int counter = 0; counter < look_ahead_poses; ++counter)
   {
@@ -1227,6 +1271,7 @@ void TebOptimalPlanner::getFullTrajectory(std::vector<TrajectoryPointMsg>& traje
   goal.velocity.omega = vel_goal_.second.omega;
   goal.time_from_start = curr_time;
 }
+
 
 
 } // namespace teb_local_planner

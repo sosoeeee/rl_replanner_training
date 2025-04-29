@@ -42,13 +42,7 @@
 #include <g2o/stuff/misc.h>
 
 #include <Eigen/Core>
-#include "teb_local_planner/misc.h"
-// #include <geometry_msgs/msg/pose.hpp>
-// #include <geometry_msgs/msg/pose2_d.hpp>
-
-// #include <tf2/convert.h>
-// #include <tf2/utils.h>
-// #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <teb_local_planner/misc.h>
 
 namespace teb_local_planner
 {
@@ -96,7 +90,6 @@ public:
       _position.coeffRef(1) = y;
       _theta = theta;
   }
-  
   
   /**
     * @brief Copy constructor
@@ -370,7 +363,6 @@ private:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW  
 };
-
 
 // vel_se2 data structure in C++
 struct VelSE2

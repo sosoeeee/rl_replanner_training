@@ -46,13 +46,10 @@
 
 #include <float.h>
 
-//#include <base_local_planner/BaseLocalPlannerConfig.h>
-
-#include "teb_local_planner/g2o_types/vertex_timediff.h"
-#include "teb_local_planner/g2o_types/base_teb_edges.h"
-#include "teb_local_planner/g2o_types/penalties.h"
-#include "teb_local_planner/teb_config.h"
-#include "teb_local_planner/misc.h"
+#include <teb_local_planner/g2o_types/vertex_timediff.h>
+#include <teb_local_planner/g2o_types/base_teb_edges.h>
+#include <teb_local_planner/g2o_types/penalties.h>
+#include <teb_local_planner/teb_config.h>
 
 #include <Eigen/Core>
 
