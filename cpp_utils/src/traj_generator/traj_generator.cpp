@@ -48,6 +48,9 @@ void TrajGenerator::initialize(const std::string &map_file, const std::string &p
 
     // obstacle container
     obstacles_ = std::make_shared<ObstContainer>();
+
+    // initialize the teb planner
+    // planner_ = std::make_unique<TebOptimalPlanner>(cfg_, obstacles_.get(), &via_points_);
 }
 
 void TrajGenerator::getNearestNode(Point p, int &node_id)
@@ -232,11 +235,22 @@ void TrajGenerator::updateTrajectory()
     // }
     // obstacles_->push_back(corridor);
     /* ========================================== release this constrain to speed up ========================================== */
-
+    
+    // planner_->setObstVector(obstacles_.get());
+    // planner_->setViaPoints(&via_points_);
     // Initialize and run planner
     auto start_time = std::chrono::high_resolution_clock::now();
     TebOptimalPlanner planner(cfg_, obstacles_.get(), &via_points_);
-    if (!planner.plan(init_plan_)) {
+
+    // use via_points_ to create init plan
+    std::vector<PoseSE2> init_plan_via_points;
+    init_plan_via_points.push_back(init_plan_.front());
+    for (const auto& via_point : via_points_) {
+        init_plan_via_points.push_back(PoseSE2(via_point.x(), via_point.y(), 0.0));
+    }
+    init_plan_via_points.push_back(init_plan_.back());
+
+    if (!planner.plan(init_plan_via_points)) {
         LOGGER_ERROR("teb_local_planner", "Failed to plan trajectory.");
         return;
     }

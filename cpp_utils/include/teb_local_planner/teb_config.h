@@ -250,7 +250,7 @@ public:
 
     // Trajectory
 
-    trajectory.teb_autosize = true;
+    trajectory.teb_autosize = 1.0;
     trajectory.dt_ref = 0.3;
     trajectory.dt_hysteresis = 0.1;
     trajectory.min_samples = 3;

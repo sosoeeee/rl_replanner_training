@@ -9,9 +9,9 @@ from nav_msgs.msg import Path
 from visualization_msgs.msg import Marker, MarkerArray
 from nav_msgs.msg import OccupancyGrid
 
-# import matplotlib.pyplot as plt
-# import matplotlib
-# matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
 
 rclpy.init()
 
@@ -187,16 +187,16 @@ while rclpy.ok():
     rclpy.spin_once(render_node, timeout_sec=0.1)
 
     # plot the trajectory
-    # plt.figure(1)
-    # plt.clf()
-    # plt.plot(time_stamps, x_vels, label="x velocity")
-    # plt.plot(time_stamps, y_vels, label="y velocity")
+    plt.figure(1)
+    plt.clf()
+    plt.plot(time_stamps, x_vels, label="x velocity")
+    plt.plot(time_stamps, y_vels, label="y velocity")
     # plt.plot(time_stamps, omage_vels, label="omega velocity")
-    # plt.xlabel("time [s]")
-    # plt.ylabel("velocity [m/s]")
-    # plt.legend()
-    # plt.grid()
-    # plt.pause(0.2)
+    plt.xlabel("time [s]")
+    plt.ylabel("velocity [m/s]")
+    plt.legend()
+    plt.grid()
+    plt.pause(1.0)
     
     # sleep for 1 second
     # time.sleep(1.0)
