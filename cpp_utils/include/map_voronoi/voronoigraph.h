@@ -21,7 +21,6 @@ public:
         // Initialize the Voronoi object with the costmap
         voronoi->initializeMap(costmap->getSizeInCellsX(), costmap->getSizeInCellsY(), getBoolMap(costmap));
         voronoi->update();
-        // voronoi->alternativePrunedDiagram(); // prune the Voronoi
         voronoi->updateAlternativePrunedDiagram();  // prune the Voronoi
         voronoi->mergeVoronoi();
     };

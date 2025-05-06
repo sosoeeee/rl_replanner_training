@@ -107,7 +107,7 @@ void Voronoi::initializeMap(int _sizeX, int _sizeY, bool** _gridMap) {
             c.queueing = fwProcessed;
             data_[x][y] = c;
           } else {
-            setObstacle(x,y);           //不同之处在于：将(x,y)加入addList_
+            setObstacle(x,y);           //对于障碍物边界点，调用setObstacle()函数
           }
         }
       }
@@ -115,7 +115,7 @@ void Voronoi::initializeMap(int _sizeX, int _sizeY, bool** _gridMap) {
   }
 }
 
-//只更新data_
+//只更新对应的最近障碍物数据，其他DataCell数据不变
 void Voronoi::setObstacle(int x, int y) {
   dataCell c = data_[x][y];
   if(isOccupied(x,y,c)) {               //如果data_中的(x,y)被占用
@@ -196,7 +196,8 @@ void Voronoi::update(bool updateRealDist) {
       data_[x][y] = c;
     }
     else if (c.obstX != invalidObstData && isOccupied(c.obstX, c.obstY, data_[c.obstX][c.obstY])) {
-      //c是被占据的
+      //c对应的最近障碍物存在且被占用
+
       // LOWER
       c.queueing = fwProcessed;           //fwProcessed表示8个邻居元素lower处理完毕？
       c.voronoi = occupied;
@@ -214,7 +215,7 @@ void Voronoi::update(bool updateRealDist) {
             int disty = ny-c.obstY;
             int newSqDistance = distx*distx + disty*disty;
             bool overwrite =  (newSqDistance < nc.sqdist);    //nc到c的最近障碍物 比 nc到其最近障碍物 更近
-            if(!overwrite && newSqDistance==nc.sqdist) {
+            if(!overwrite && newSqDistance==nc.sqdist) {      //当newSqDistance==nc.sqdist时
               //如果nc没有最近障碍物，或者 nc的最近障碍物消失了
               if (nc.obstX == invalidObstData || isOccupied(nc.obstX, nc.obstY, data_[nc.obstX][nc.obstY]) == false) {
                 overwrite = true;
@@ -345,7 +346,7 @@ void Voronoi::checkVoro(int x, int y, int nx, int ny, dataCell& c, dataCell& nc)
   }
 }
 
-
+//排除那些仍在受remove影响的元素，将周边的上一轮次标记为voronoiKeep或voronoiPrune的元素加入到备选队列(pruneQueue_)中
 void Voronoi::reviveVoroNeighbors(int &x, int &y) {
   for (int dx=-1; dx<=1; dx++) {
     int nx = x+dx;
@@ -384,9 +385,15 @@ void Voronoi::mergeVoronoi(){
         for(int nx=-1; nx<=1; nx+=2){
           for(int ny=-1; ny<=1; ny+=2){
             if (x+nx<0 || x+nx>=sizeX_ || y+ny<0 || y+ny>=sizeY_) continue;
-            if (alternativeDiagram_[x+nx][y+ny] != free && alternativeDiagram_[x+nx][y+ny]!=voronoiKeep) continue;
-            if (alternativeDiagram_[x][y+ny] != free && alternativeDiagram_[x][y+ny]!=voronoiKeep) continue;
-            if (alternativeDiagram_[x+nx][y] != free && alternativeDiagram_[x+nx][y]!=voronoiKeep) continue;
+            
+            // 只考虑四方格子 
+            // | 1 | 1 | ? | 
+            // | 1 | 1 | ? |
+            // | ? | ? | ? |  
+            if (alternativeDiagram_[x+nx][y+ny] != free && alternativeDiagram_[x+nx][y+ny]!=voronoiKeep) continue; //对角
+            if (alternativeDiagram_[x][y+ny] != free && alternativeDiagram_[x][y+ny]!=voronoiKeep) continue;       //上下
+            if (alternativeDiagram_[x+nx][y] != free && alternativeDiagram_[x+nx][y]!=voronoiKeep) continue;       //左右
+
             int num=0;
             for(int dx=-1; dx<=1; dx++){
               for(int dy=-1; dy<=1; dy++){
@@ -401,6 +408,7 @@ void Voronoi::mergeVoronoi(){
             if(num<=2){
               alternativeDiagram_[x][y] = cut;
             }
+
           }
         }
       }
@@ -453,7 +461,7 @@ void Voronoi::visualize(const char *filename) {
   fclose(F);
 }
 
-
+// 论文所描述的剪枝算法
 void Voronoi::prune() {
   // filler
   //先遍历pruneQueue_中的元素，判断是否要加入到sortedPruneQueue_，
@@ -490,12 +498,13 @@ void Voronoi::prune() {
     //文章只提了对待考察栅格判断是否符合模式，这里为什么要对待考察栅格的上下左右4个邻居栅格都判断呢？
     //我认为判断模式的目的就是将Voronoi边夹着的、包裹的栅格置为备选，因为待考察栅格是备选了，才使得周围栅格可能会被Voronoi边包裹，所以才要逐一检查。
 
+    // 填补Voronoi的如下空隙
+    //    | ? | 1 | ? |
+    //    | 1 |   | 1 |
+    //    | ? | 1 | ? |
     if (x+2<sizeX_ && r.voronoi==occupied) {
       // fill to the right
       //如果r的上下左右4个元素都!=occupied，对应文章的P38模式  
-      //    | ? | 1 | ? |
-      //    | 1 |   | 1 |
-      //    | ? | 1 | ? |
       if (tr.voronoi!=occupied && br.voronoi!=occupied && data_[x+2][y].voronoi!=occupied) {
         r.voronoi = freeQueued;
         sortedPruneQueue_.push(r.sqdist, INTPOINT(x+1,y));
@@ -580,30 +589,31 @@ void Voronoi::updateAlternativePrunedDiagram() {
   for(int x=1; x<sizeX_-1; x++){
     for(int y=1; y<sizeY_-1; y++){
       dataCell& c = data_[x][y];
-	alternativeDiagram_[x][y] = c.voronoi;
-	if(c.voronoi <=free){
-	  sortedPruneQueue.push(c.sqdist, INTPOINT(x,y));
-	  end_cells.push(INTPOINT(x, y));
-	}
-    }
-  }
-
-  for(int x=1; x<sizeX_-1; x++){
-    for(int y=1; y<sizeY_-1; y++){
-      if( getNumVoronoiNeighborsAlternative(x, y) >= 3){
-	alternativeDiagram_[x][y] = voronoiKeep;
-	sortedPruneQueue.push(data_[x][y].sqdist, INTPOINT(x,y));
-	end_cells.push(INTPOINT(x, y));
+      alternativeDiagram_[x][y] = c.voronoi;
+      
+      if(c.voronoi <=free){
+        sortedPruneQueue.push(c.sqdist, INTPOINT(x,y));
+        end_cells.push(INTPOINT(x, y));
       }
     }
   }
 
+  // 将所有四联通下的空洞，设为voronoiKeep，而且运行两次? (膨胀)
   for(int x=1; x<sizeX_-1; x++){
     for(int y=1; y<sizeY_-1; y++){
       if( getNumVoronoiNeighborsAlternative(x, y) >= 3){
-	alternativeDiagram_[x][y] = voronoiKeep;
-	sortedPruneQueue.push(data_[x][y].sqdist, INTPOINT(x,y));
-	end_cells.push(INTPOINT(x, y));
+        alternativeDiagram_[x][y] = voronoiKeep;
+        sortedPruneQueue.push(data_[x][y].sqdist, INTPOINT(x,y));
+        end_cells.push(INTPOINT(x, y));
+      }
+    }
+  }
+  for(int x=1; x<sizeX_-1; x++){
+    for(int y=1; y<sizeY_-1; y++){
+      if( getNumVoronoiNeighborsAlternative(x, y) >= 3){
+          alternativeDiagram_[x][y] = voronoiKeep;
+          sortedPruneQueue.push(data_[x][y].sqdist, INTPOINT(x,y));
+          end_cells.push(INTPOINT(x, y));
       }
     }
   }
@@ -615,15 +625,15 @@ void Voronoi::updateAlternativePrunedDiagram() {
     if (markerMatchAlternative(p.x, p.y)) {
       alternativeDiagram_[p.x][p.y]=voronoiPrune;
     } else {
-  alternativeDiagram_[p.x][p.y]=voronoiKeep;
+      alternativeDiagram_[p.x][p.y]=voronoiKeep;
     }
   }
 
-  // //delete worms
+  // 删除孤立延申出的Voronoi边
+  // delete worms
   while (!end_cells.empty()) {
     INTPOINT p = end_cells.front();
     end_cells.pop();
-
     if (isVoronoiAlternative(p.x,p.y) && getNumVoronoiNeighborsAlternative(p.x, p.y) == 1) {
       alternativeDiagram_[p.x][p.y] = voronoiPrune;
 
@@ -637,6 +647,7 @@ void Voronoi::updateAlternativePrunedDiagram() {
           if (nx < 0 || nx >= sizeX_ || ny < 0 || ny >= sizeY_) {
             continue;
           }
+
           if (isVoronoiAlternative(nx,ny)) {
             if (getNumVoronoiNeighborsAlternative(nx, ny) == 1) {
               end_cells.push(INTPOINT(nx, ny));
@@ -646,6 +657,7 @@ void Voronoi::updateAlternativePrunedDiagram() {
       }
     }
   }
+
 }
 
 bool Voronoi::markerMatchAlternative(int x, int y) {
@@ -702,6 +714,8 @@ int Voronoi::getNumVoronoiNeighborsAlternative(int x, int y) {
   int count = 0;
   for (int dx = -1; dx <= 1; dx++) {
     for (int dy = -1; dy <= 1; dy++) {
+
+      //不考虑(x,y)点和对角线的点
       if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0)) {
         continue;
       }
