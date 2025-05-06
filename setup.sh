@@ -15,7 +15,7 @@ sudo make install
 # cd to the root directory
 cd ../../../ || exit
 
-# build g2o with branch "20230806_git"
+# build g2o with branch "2020410_git"
 # install prerequisites
 sudo apt update -q
 sudo apt install libeigen3-dev libspdlog-dev libsuitesparse-dev
