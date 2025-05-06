@@ -329,6 +329,8 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     getNearestNode(start, start_node_id);
     getNearestNode(end, end_node_id);
 
+    // TODO: Update the voronoi graph with "Bubble technique"
+
     // // debug
     // LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", start_node_id, end_node_id);
     

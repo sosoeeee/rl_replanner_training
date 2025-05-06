@@ -22,7 +22,7 @@ public:
         voronoi->initializeMap(costmap->getSizeInCellsX(), costmap->getSizeInCellsY(), getBoolMap(costmap));
         voronoi->update();
         voronoi->updateAlternativePrunedDiagram();  // prune the Voronoi
-        voronoi->mergeVoronoi();
+        // voronoi->mergeVoronoi();
     };
 
     ~VoronoiGraph(){};
