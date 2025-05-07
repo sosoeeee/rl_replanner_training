@@ -4,6 +4,7 @@ import os
 
 # Add the workspace path to the PYTHONPATH
 workspace_path = os.path.join(os.path.dirname(__file__) + "/../..")
+print("Workspace path:", workspace_path)
 sys.path.append(workspace_path)
 
 from rl_replanner_train.train_env import TrainEnv
@@ -33,7 +34,7 @@ env = TrainEnv(
     path_planner_setting_file='./cpp_utils/include/path_planner/planner_setting.yaml',
     traj_planner_setting_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     render_mode='ros',
-    render_real_time_factor=2,
+    render_real_time_factor=8,
     obser_width=obser_width,
     replay_traj_path='./rl_replanner_train/data',
     human_history_length=human_history_length,

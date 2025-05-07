@@ -9,9 +9,9 @@ from nav_msgs.msg import Path
 from visualization_msgs.msg import Marker, MarkerArray
 from nav_msgs.msg import OccupancyGrid
 
-import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('TkAgg')
+# import matplotlib.pyplot as plt
+# import matplotlib
+# matplotlib.use('TkAgg')
 
 rclpy.init()
 
@@ -25,15 +25,15 @@ costmap_publisher = render_node.create_publisher(OccupancyGrid, "costmap", 10)
 
 previous_marker_count = 0  # Add this line after creating render_node
 
-res_status, costmap_cpp = cpp_utils.loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml")
+res_status, costmap_cpp = cpp_utils.loadMap("./rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml")
 pyCostmap = PyCostmap2D(render_node)
 
 
 # Initialize the trajectory generator
 traj_generator = cpp_utils.TrajGenerator()
 traj_generator.initialize(
-    map_file="/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml",
-    planner_file="/home/rosdev/ros2_ws/cpp_utils/include/teb_local_planner/teb_params.yaml",
+    map_file="./rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml",
+    planner_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     path_resolution=0.025,
     time_resolution=0.1,
 )
@@ -187,16 +187,16 @@ while rclpy.ok():
     rclpy.spin_once(render_node, timeout_sec=0.1)
 
     # plot the trajectory
-    plt.figure(1)
-    plt.clf()
-    plt.plot(time_stamps, x_vels, label="x velocity")
-    plt.plot(time_stamps, y_vels, label="y velocity")
-    # plt.plot(time_stamps, omage_vels, label="omega velocity")
-    plt.xlabel("time [s]")
-    plt.ylabel("velocity [m/s]")
-    plt.legend()
-    plt.grid()
-    plt.pause(1.0)
+    # plt.figure(1)
+    # plt.clf()
+    # plt.plot(time_stamps, x_vels, label="x velocity")
+    # plt.plot(time_stamps, y_vels, label="y velocity")
+    # # plt.plot(time_stamps, omage_vels, label="omega velocity")
+    # plt.xlabel("time [s]")
+    # plt.ylabel("velocity [m/s]")
+    # plt.legend()
+    # plt.grid()
+    # plt.pause(1.0)
     
     # sleep for 1 second
     # time.sleep(1.0)

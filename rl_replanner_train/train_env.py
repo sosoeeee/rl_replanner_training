@@ -288,7 +288,6 @@ class TrainEnv(gym.Env):
             pass
         
         if len(self.current_robot_path) == 0:
-            print("[During step] Failed to find a path from start to goal.")
             terminated = True
 
         if terminated:

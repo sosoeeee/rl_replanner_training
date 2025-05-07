@@ -19,7 +19,7 @@ obstacles_publisher = render_node.create_publisher(MarkerArray, "obstacles", 10)
 
 # load config
 tebConfig = cpp_utils.TebConfig()
-tebConfig.configure(yaml_filename = "/home/rosdev/ros2_ws/cpp_utils/include/teb_local_planner/teb_params.yaml")
+tebConfig.configure(yaml_filename = "./cpp_utils/include/teb_local_planner/teb_params.yaml")
 
 # load obstacles
 obstacles = []

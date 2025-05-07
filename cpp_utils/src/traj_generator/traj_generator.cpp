@@ -239,7 +239,7 @@ void TrajGenerator::updateTrajectory()
     // planner_->setObstVector(obstacles_.get());
     // planner_->setViaPoints(&via_points_);
     // Initialize and run planner
-    auto start_time = std::chrono::high_resolution_clock::now();
+    // auto start_time = std::chrono::high_resolution_clock::now();
     TebOptimalPlanner planner(cfg_, obstacles_.get(), &via_points_);
 
     // use via_points_ to create init plan
@@ -254,9 +254,9 @@ void TrajGenerator::updateTrajectory()
         LOGGER_ERROR("teb_local_planner", "Failed to plan trajectory.");
         return;
     }
-    auto end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time = end_time - start_time;
-    LOGGER_INFO("teb_local_planner", "Planning time: %f ms", elapsed_time.count() * 1000);
+    // auto end_time = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> elapsed_time = end_time - start_time;
+    // LOGGER_INFO("teb_local_planner", "Planning time: %f ms", elapsed_time.count() * 1000);
 
     // Get the planned trajectory
     planner.getFullTrajectory(raw_trajectory_);
