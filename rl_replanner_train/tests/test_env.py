@@ -14,8 +14,10 @@ print("=====================================")
 # run environment
 reward_weight = {
         'task': 1.0,
-        'reg_angle': 0,
-        'reg_depth': 0,
+        'reg_angle_factor_a': 0.2,
+        'reg_angle_factor_b': 0.07,
+        'reg_depth_factor_a': 0.2,
+        'reg_depth_factor_b': 0.02,
         'reg_replan': 0.05,
         'state': 2.0,
         'exp_factor': 1.0,
@@ -52,11 +54,11 @@ while True:
     action = env.action_space.sample()
 
     # print('Action:', action)
-    action = {
-        'id': 0,
-        'params0': [],
-        'params1': [0.0, 0.0],
-    }
+    # action = {
+    #     'id': 0,
+    #     'params0': [],
+    #     'params1': [0.0, 0.0],
+    # }
     # print('Action:', action)
 
     obs, reward, terminated, truncated, info = env.step(action)

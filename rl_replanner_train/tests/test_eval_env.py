@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import sys
 import os
+import time
 
 # Add the workspace path to the PYTHONPATH
 workspace_path = os.path.join(os.path.dirname(__file__) + "/../..")
@@ -13,14 +14,16 @@ print("=====================================")
 
 # 设置环境参数
 reward_weight = {
-    'task': 1.0,
-    'reg_angle': 0,
-    'reg_depth': 0,
-    'reg_replan': 0.05,
-    'state': 2.0,
-    'exp_factor': 1.0,
-    'decay_factor': 0.98
-}
+        'task': 1.0,
+        'reg_angle_factor_a': 0.2,
+        'reg_angle_factor_b': 0.07,
+        'reg_depth_factor_a': 0.2,
+        'reg_depth_factor_b': 0.02,
+        'reg_replan': 0.05,
+        'state': 2.0,
+        'exp_factor': 1.0,
+        'decay_factor': 0.98
+    }
 obser_width = 5  # 单位：米
 human_history_length = 20
 robot_prediction_length = 100
@@ -65,7 +68,10 @@ while True:
         obs, info = env.reset()
         total_reward = 0  # 重置单条轨迹的奖励
         print('Trajectory ended. Resetting environment...')
-        break
+        # break
+        print('=====================================')
+        print('')
+        time.sleep(1)
         
     step += 1
 

@@ -364,6 +364,15 @@ class TrainEnv(gym.Env):
                                                          cpp_utils.Point(end[0], end[1]))
         self.current_robot_path = [[pose.x, pose.y] for pose in self.current_robot_path]
 
+        # connected to the nearest target（the global goal in this case）
+        # because the cone only be used once, so the extended path won't be influenced by the cone
+        if end[0] != self.global_goal[0] or end[1] != self.global_goal[1]:
+            self.rest_robot_path = self.path_planner.plan(cpp_utils.Point(end[0], end[1]),
+                                                        cpp_utils.Point(self.global_goal[0], self.global_goal[1]))
+            self.rest_robot_path = [[pose.x, pose.y] for pose in self.rest_robot_path]
+
+            self.current_robot_path += self.rest_robot_path
+
         # debug
         if self.render_mode == "ros":
             print("robot path length: ", len(self.current_robot_path))
@@ -701,25 +710,39 @@ class TrainEnv(gym.Env):
         if self.current_action[0] == LOCAL_GOAL:
             if "reg_angle" in self.reward_weight.keys():
                 angle_reg_reward = -np.arctan(self.current_action[1][1] / self.current_action[1][0]) / (np.pi / 2) * self.reward_weight['reg_angle']
+                # print("angle_reg_reward: ", angle_reg_reward)
             # change to the ln scale
-            elif "reg_angle_factor" in self.reward_weight.keys():
+            elif ("reg_angle_factor_a" in self.reward_weight.keys()) and ("reg_angle_factor_b" in self.reward_weight.keys()):
                 norm_angle = np.arctan(self.current_action[1][1] / self.current_action[1][0]) / (np.pi / 2)
-                print("norm_angle: ", norm_angle)
-                angle_reg_reward = 1 / self.reward_weight['reg_angle_factor'] * np.log(1 - norm_angle) 
+                angle_reg_reward = self.reward_weight['reg_angle_factor_a'] + self.reward_weight['reg_angle_factor_b'] * (np.log(1 - norm_angle)) / (1 - norm_angle)
+                if self.render_mode == "ros":
+                    print("norm_angle: ", norm_angle)
             else:
                 angle_reg_reward = 0.0
         else:
             angle_reg_reward = 0.0
 
         # depth
-        if self.current_action[0] == LOCAL_GOAL and self.current_action[1][0] < self.len_threshold:
-            if "reg_depth" in self.reward_weight.keys():
-                depth_reg_reward = (self.current_action[1][0] - self.len_threshold) / self.len_threshold * self.reward_weight['reg_depth']
-            # change to the ln scale
-            elif "reg_depth_factor" in self.reward_weight.keys():
-                norm_depth = self.current_action[1][0] / self.len_threshold
-                print("norm_depth: ", norm_depth)
-                depth_reg_reward = 1 / self.reward_weight['reg_depth_factor'] * np.log(norm_depth)
+        # if self.current_action[0] == LOCAL_GOAL and self.current_action[1][0] < self.len_threshold:
+        #     if "reg_depth" in self.reward_weight.keys():
+        #         depth_reg_reward = (self.current_action[1][0] - self.len_threshold) / self.len_threshold * self.reward_weight['reg_depth']
+        #     # change to the ln scale
+        #     elif "reg_depth_factor" in self.reward_weight.keys():
+        #         norm_depth = self.current_action[1][0] / self.len_threshold
+        #         print("norm_depth: ", norm_depth)
+        #         depth_reg_reward = 1 / self.reward_weight['reg_depth_factor'] * np.log(norm_depth)
+        #     else:
+        #         depth_reg_reward = 0.0
+        # else:
+        #     depth_reg_reward = 0.0
+
+        # depth (smooth func)
+        if self.current_action[0] == LOCAL_GOAL:
+            if ("reg_depth_factor_a" in self.reward_weight.keys()) and ("reg_depth_factor_b" in self.reward_weight.keys()):
+                norm_depth = ((self.current_action[1][0] / self.obser_width) - 1e-3) / (np.sqrt(2)/2 - 1e-3)
+                depth_reg_reward = self.reward_weight['reg_depth_factor_a'] + self.reward_weight['reg_depth_factor_b'] * np.log(norm_depth) / (norm_depth)
+                if self.render_mode == "ros":
+                    print("norm_depth: ", norm_depth)
             else:
                 depth_reg_reward = 0.0
         else:
