@@ -41,6 +41,7 @@ public:
     void addAdjacent(int id, float prob=1.0f);
 
     void addPath(Path path);
+    void removeAdjacent(int id);
 
     // Set the node that has been visited as 0, then update the probability of the left adjacent nodes
     // return true if node still has adjacent nodes, else return false

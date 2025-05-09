@@ -37,7 +37,7 @@ void TrajGenerator::initialize(const std::string &map_file, const std::string &p
         throw std::runtime_error("Failed to find 'inflation_layer' node in YAML file");
     }
     robot_radius_ = yaml_get_value<double>(inflation_layer_node, "robot_radius");
-    
+
     // initialize the voronoi graph
     voronoi_graph_ = std::make_unique<VoronoiGraph>(costmap_);
     voronoi_graph_->getVoronoiGraph();
@@ -57,7 +57,7 @@ void TrajGenerator::getNearestNode(Point p, int &node_id)
 {
     // get the nearest voronoi node to the Point p
     // TODO: Optimize the searching efficiency by using kd-tree or other methods
-    std::vector<VoronoiNode> nodes = voronoi_graph_->getAllNodes();
+    std::vector<VoronoiNode> nodes = voronoi_graph_->getAllNodesModified();
     double min_dist = std::numeric_limits<double>::max();
     double wx, wy, dist;
     for (const auto& node : nodes) {
@@ -364,6 +364,33 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     return trajectory_;
 }
 
+// add start and end as obstacles
+void TrajGenerator::addStartEndAsObstacles(const Point& start, const Point& end)
+{
+    // 创建costmap_modified_的副本
+    costmap_modified_ = std::make_shared<Costmap2D>(*costmap_);
+
+    // 1. 添加起点作为障碍物
+    unsigned int start_mx, start_my;
+    costmap_modified_->worldToMap(start.x, start.y, start_mx, start_my);
+    costmap_modified_->setCost(start_mx, start_my, nav2_costmap_2d::LETHAL_OBSTACLE);
+
+    // 使用添加起点后的costmap更新voronoi_graph_的voronoi_modified
+    voronoi_graph_->updateVoronoiGraph(costmap_modified_, MapPoint{static_cast<int>(start_mx), static_cast<int>(start_my)});
+    voronoi_graph_->getStartNeighbor();
+
+    // 2. 添加终点作为障碍物
+    unsigned int end_mx, end_my;
+    costmap_modified_->worldToMap(end.x, end.y, end_mx, end_my);
+
+    costmap_modified_->setCost(end_mx, end_my, nav2_costmap_2d::LETHAL_OBSTACLE);
+
+    // 使用添加终点后的costmap更新voronoi_graph_的voronoi_modified
+    voronoi_graph_->updateVoronoiGraph(costmap_modified_, MapPoint{static_cast<int>(end_mx), static_cast<int>(end_my)});
+    voronoi_graph_->getEndNeighbor();
+}
+
+
 std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajs(Point start, Point end)
 {   
     bool resample = false;
@@ -386,10 +413,12 @@ std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajs(Point start, Point
     {
         all_passby_nodes_.clear();
         // get the nearest voronoi node to the start Point and end Point
+        generateModifiedVoronoiGraph(start, end);
+
         int start_node_id, end_node_id;
         getNearestNode(start, start_node_id);
         getNearestNode(end, end_node_id);
-
+        
         std::vector<std::vector<Point>> trajectories;
         all_passby_nodes_ = voronoi_graph_->findAllPaths(start_node_id, end_node_id);
     }
@@ -433,4 +462,14 @@ std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajs(Point start, Point
     // LOGGER_INFO("teb_local_planner", "Total planning took %ld ms", total_duration.count());
 
     return trajectory_;
+}
+
+// generate the modified voronoi graph
+void TrajGenerator::generateModifiedVoronoiGraph(const Point& start, const Point& end)
+{
+    // 添加起点和终点作为障碍物
+    addStartEndAsObstacles(start, end);
+    
+    // 获取修改的Voronoi图
+    voronoi_graph_->getModifiedVoronoiGraph();
 }

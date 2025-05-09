@@ -51,14 +51,24 @@ public:
         return via_points;
     }
 
+    // 获取Voronoi图
+    VoronoiGraph* getVoronoiGraph() const { return voronoi_graph_.get(); }
+    std::shared_ptr<Costmap2D> getCostmapModified() const { return costmap_modified_; }
+
+    // 生成修改后的Voronoi图
+    void generateModifiedVoronoiGraph(const Point& start, const Point& end);
+
 private:
     void updateInitPlan(std::vector<int> passby_nodes, const Point& start, const Point& end);
     void getNearestNode(Point p, int &node_id);
     void updateCorridor();
     void updateViaPoints();
     void updateTrajectory();
+    void addStartEndAsObstacles(const Point& start, const Point& end);
+    void modifyVoronoiGraph(const Point& start, const Point& end);
 
     std::shared_ptr<Costmap2D> costmap_;
+    std::shared_ptr<Costmap2D> costmap_modified_;
     std::unique_ptr<VoronoiGraph> voronoi_graph_;
     double path_resolution_; // resolution of the init path
     double time_resolution_; // resolution of the time

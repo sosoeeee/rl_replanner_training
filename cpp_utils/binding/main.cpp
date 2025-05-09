@@ -134,6 +134,51 @@ PYBIND11_MODULE(cpp_utils, m) {
             "Clear all circles from the corridor");
 
     // Bind the Trajectory generator class
+    py::class_<VoronoiGraph, std::shared_ptr<VoronoiGraph>>(m, "VoronoiGraph")
+        .def("getAllNodes",
+             static_cast<std::vector<VoronoiNode>& (VoronoiGraph::*)()>(&VoronoiGraph::getAllNodes),
+             py::return_value_policy::reference_internal,
+             "Get all nodes in the Voronoi graph")
+        .def("getNodeById",
+             static_cast<VoronoiNode& (VoronoiGraph::*)(int)>(&VoronoiGraph::getNodeById),
+             py::return_value_policy::reference_internal,
+             "Get a node by its ID", py::arg("id"))
+        .def("getPassbyNodes", &VoronoiGraph::getPassbyNodes,
+            "Get passby nodes between two nodes", py::arg("start_id"), py::arg("end_id"))
+        .def("findAllPaths", &VoronoiGraph::findAllPaths,
+            "Find all paths between two nodes", py::arg("start_id"), py::arg("end_id"))
+        .def("getDistance", &VoronoiGraph::getDistance,
+            "Get distance to nearest obstacle", py::arg("x"), py::arg("y"))
+        .def("visualizeVoronoi", &VoronoiGraph::visualizeVoronoi,
+            "Visualize the original Voronoi graph", py::arg("filename"))
+        .def("visualizeVoronoiModified", &VoronoiGraph::visualizeVoronoiModified,
+            "Visualize the modified Voronoi graph", py::arg("filename"))
+        .def("updateStartNeighbor", static_cast<void (VoronoiGraph::*)()>(&VoronoiGraph::getStartNeighbor),
+            "Update unique nodes after adding start point as obstacle")
+        .def("updateEndNeighbor", static_cast<void (VoronoiGraph::*)()>(&VoronoiGraph::getEndNeighbor),
+            "Update unique nodes after adding end point as obstacle")
+        .def("getStartNeighborNodes", static_cast<const std::vector<VoronoiNode>& (VoronoiGraph::*)() const>(&VoronoiGraph::getStartNeighbor),
+            "Get the unique nodes after adding start point as obstacle",
+            py::return_value_policy::reference_internal)
+        .def("getEndNeighborNodes", static_cast<const std::vector<VoronoiNode>& (VoronoiGraph::*)() const>(&VoronoiGraph::getEndNeighbor),
+            "Get the unique nodes after adding end point as obstacle",
+            py::return_value_policy::reference_internal);
+
+    py::class_<VoronoiNode>(m, "VoronoiNode")
+        .def("getId", &VoronoiNode::getId,
+            "Get the node ID")
+        .def("getPosition", &VoronoiNode::getPosition,
+            "Get the node position")
+        .def("getAllAdjacent", &VoronoiNode::getAllAdjacent,
+            "Get all adjacent nodes")
+        .def("getPathById", &VoronoiNode::getPathById,
+            "Get path to a specific node", py::arg("id"));
+
+    py::class_<MapPoint>(m, "MapPoint")
+        .def(py::init<int, int>(), py::arg("x"), py::arg("y"))
+        .def_readwrite("x", &MapPoint::x)
+        .def_readwrite("y", &MapPoint::y);
+
     py::class_<TrajGenerator, std::shared_ptr<TrajGenerator>>(m, "TrajGenerator")
         .def(py::init())
         .def("initialize", &TrajGenerator::initialize, 
@@ -151,7 +196,17 @@ PYBIND11_MODULE(cpp_utils, m) {
         .def("getRawTraj", &TrajGenerator::getRawTraj,
             "Get the trajectory given by teb planner")
         .def("getCostmap", &TrajGenerator::getCostmap,
-            "Get the referred static map");
+            "Get the referred static map")
+        .def("get_voronoi_graph", &TrajGenerator::getVoronoiGraph,
+            "Get the Voronoi graph")
+        // .def("get_voronoi_graph_add_start_obstacle", &TrajGenerator::getVoronoiGraphAddStartObstacle,
+        //     "Get the Voronoi graph with start point as obstacle")
+        // .def("get_voronoi_graph_add_end_obstacle", &TrajGenerator::getVoronoiGraphAddEndObstacle,
+        //     "Get the Voronoi graph with end point as obstacle")
+        // .def("get_voronoi_graph_add_start_end_obstacle", &TrajGenerator::getVoronoiGraphAddStartEndObstacle,
+        //     "Get the Voronoi graph with both start and end points as obstacles")
+        .def("generate_modified_voronoi_graph", &TrajGenerator::generateModifiedVoronoiGraph,
+            "Generate modified Voronoi graph with start and end points as obstacles", py::arg("start"), py::arg("end"));
 
     // ============================ only expose when testing teb_local_planner ============================
     // Bind the TebConfig class
