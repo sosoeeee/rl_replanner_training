@@ -583,7 +583,6 @@ void Voronoi::updateAlternativePrunedDiagram() {
     }
   }
 
-
   std::queue<INTPOINT> end_cells;
   BucketPrioQueue<INTPOINT> sortedPruneQueue;
   for(int x=1; x<sizeX_-1; x++){
@@ -657,6 +656,26 @@ void Voronoi::updateAlternativePrunedDiagram() {
       }
     }
   }
+
+  // 再次执行四联通的路径腐蚀
+  for(int x=1; x<sizeX_-1; x++){
+    for(int y=1; y<sizeY_-1; y++){
+      dataCell& c = data_[x][y];
+      if(alternativeDiagram_[x][y] <=free){
+        sortedPruneQueue.push(c.sqdist, INTPOINT(x,y));
+      }
+    }
+  }
+  while (!sortedPruneQueue.empty()) {
+    INTPOINT p = sortedPruneQueue.pop();
+
+    if (markerMatchAlternative(p.x, p.y)) {
+      alternativeDiagram_[p.x][p.y]=voronoiPrune;
+    } else {
+      alternativeDiagram_[p.x][p.y]=voronoiKeep;
+    }
+  }
+
 
 }
 

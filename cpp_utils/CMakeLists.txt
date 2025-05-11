@@ -49,16 +49,6 @@ add_library(${path_library_name} SHARED
   src/${path_library_name}/navfn_planner_with_cone.cpp
   )
 
-# #add_exe
-# # 设置可执行文件的名称
-# set(test_executable_name my_test)
-
-# # 添加可执行文件
-# add_executable(${test_executable_name} src/${map_voronoi_name}/mytest.cpp)
-
-# # 链接库
-# target_link_libraries(${test_executable_name} PRIVATE ${map_voronoi_name} ${map_library_name} ${path_library_name})
-# target_include_directories(${map_voronoi_name} PUBLIC ./include)
 set(teb_local_planner_name teb_local_planner)
 
 add_library(${teb_local_planner_name} SHARED
@@ -84,9 +74,12 @@ add_library(${map_voronoi_name} SHARED
 )
 
 # add_exe
-# set(voronoi_executable_name voronoi_my)
-# add_executable(${voronoi_executable_name} src/${map_voronoi_name}/my.cpp)
 # target_link_libraries(${voronoi_executable_name} PRIVATE ${map_voronoi_name})
+
+# #add_exe
+set(voronoi_executable_name my_test)
+add_executable(${voronoi_executable_name} src/${map_voronoi_name}/mytest.cpp)
+target_link_libraries(${voronoi_executable_name} PRIVATE ${map_voronoi_name} ${map_library_name})
 
 set(traj_generator_name traj_generator)
 

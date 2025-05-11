@@ -40,7 +40,6 @@ void TrajGenerator::initialize(const std::string &map_file, const std::string &p
     
     // initialize the voronoi graph
     voronoi_graph_ = std::make_unique<VoronoiGraph>(costmap_);
-    voronoi_graph_->getVoronoiGraph();
 
     // initialize the teb planner
     cfg_.loadParamsFromYaml(planner_file);
@@ -325,15 +324,23 @@ void TrajGenerator::updateTrajectory()
 std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
 {
     // get the nearest voronoi node to the start Point and end Point
-    int start_node_id, end_node_id;
-    getNearestNode(start, start_node_id);
-    getNearestNode(end, end_node_id);
+    // int start_node_id, end_node_id;
+    // getNearestNode(start, start_node_id);
+    // getNearestNode(end, end_node_id);
+
+    // TODO: Update the voronoi graph with "Bubble technique"
+    unsigned int start_mx, start_my;
+    unsigned int end_mx, end_my;
+    costmap_->worldToMap(start.x, start.y, start_mx, start_my);
+    costmap_->worldToMap(end.x, end.y, end_mx, end_my);
+    voronoi_graph_->getVoronoiGraph(start_mx, start_my, end_mx, end_my);
 
     // // debug
     // LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", start_node_id, end_node_id);
     
     // sample the passby voronoi nodes from start node to end node
-    std::vector<int> passby_nodes = voronoi_graph_->getPassbyNodes(start_node_id, end_node_id);
+    // std::vector<int> passby_nodes = voronoi_graph_->getPassbyNodes(start_node_id, end_node_id);
+    std::vector<int> passby_nodes = voronoi_graph_->getPassbyNodes(voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
 
     // // debug
     // LOGGER_INFO("teb_local_planner", "Passby nodes: ");
@@ -383,13 +390,21 @@ std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajs(Point start, Point
     if (resample)
     {
         all_passby_nodes_.clear();
-        // get the nearest voronoi node to the start Point and end Point
-        int start_node_id, end_node_id;
-        getNearestNode(start, start_node_id);
-        getNearestNode(end, end_node_id);
+        // // get the nearest voronoi node to the start Point and end Point
+        // int start_node_id, end_node_id;
+        // getNearestNode(start, start_node_id);
+        // getNearestNode(end, end_node_id);
+
+        // TODO: Update the voronoi graph with "Bubble technique"
+        unsigned int start_mx, start_my;
+        unsigned int end_mx, end_my;
+        costmap_->worldToMap(start.x, start.y, start_mx, start_my);
+        costmap_->worldToMap(end.x, end.y, end_mx, end_my);
+        voronoi_graph_->getVoronoiGraph(start_mx, start_my, end_mx, end_my);
 
         std::vector<std::vector<Point>> trajectories;
-        all_passby_nodes_ = voronoi_graph_->findAllPaths(start_node_id, end_node_id);
+        // all_passby_nodes_ = voronoi_graph_->findAllPaths(start_node_id, end_node_id);
+        all_passby_nodes_ = voronoi_graph_->findAllPaths(voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
     }
 
     if (sample_count_ >= all_passby_nodes_.size())

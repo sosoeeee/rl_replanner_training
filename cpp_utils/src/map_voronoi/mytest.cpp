@@ -11,7 +11,6 @@
 #include "map_voronoi/voronoi.h"
 #include "map_voronoi/voronoinode.h"
 #include "map_voronoi/voronoigraph.h"
-#include "path_planner/navfn_planner_with_cone.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -19,7 +18,6 @@
 
 using namespace nav2_map_server;
 using namespace nav2_costmap_2d;
-using namespace nav2_navfn_planner_with_cone;
 
 std::tuple<LOAD_MAP_STATUS, std::shared_ptr<Costmap2D>>
 loadMap(const std::string &yaml_file) {
@@ -39,10 +37,10 @@ loadMap(const std::string &yaml_file) {
     static_layer.onInitialize();
     static_layer.updateCosts(map_ptr.get());
 
-    // load inflation layer
-    auto inflation_layer = InflationLayer(map_ptr.get(), yaml_file);
-    inflation_layer.onInitialize();
-    inflation_layer.updateCosts();
+    // // load inflation layer
+    // auto inflation_layer = InflationLayer(map_ptr.get(), yaml_file);
+    // inflation_layer.onInitialize();
+    // inflation_layer.updateCosts();
 
     // release the raw data
     delete[] data;
@@ -52,7 +50,7 @@ loadMap(const std::string &yaml_file) {
 
 int main() {
     // Load the map from the YAML file
-    auto [status, costmap] = loadMap("../input_map_img/turtlebot3_world.yaml");
+    auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml");
 
     // Get the map dimensions
     unsigned int sizeX = costmap->getSizeInCellsX();
@@ -62,10 +60,14 @@ int main() {
 
     // // Create and visualize Voronoi graph
     VoronoiGraph voronoigraph(costmap);
-    voronoigraph.getVoronoiGraph();
-    voronoigraph.visualizeVoronoi("initial.ppm");
+
+    voronoigraph.getVoronoiGraph(165, 195, 239, 207);
+
+    voronoigraph.visualizeVoronoi("modified_voronoi.ppm", 1);
+    voronoigraph.visualizeVoronoi("static_voronoi.ppm", 0);
     std::cout << "Generated initial frame.\n";
-    voronoigraph.findAllPaths(0,3);
+
+    // voronoigraph.findAllPaths(0,3);
 
     return 0;
 }

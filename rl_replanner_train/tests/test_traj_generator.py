@@ -37,9 +37,18 @@ traj_generator.initialize(
     path_resolution=0.025,
     time_resolution=0.1,
 )
+
+print("Initialized trajectory generator")
+
 pyCostmap.loadCostmapFromCostmapCpp(traj_generator.getCostmap())
 startPoint = cpp_utils.Point(-1.72, -0.217)
 endPoint = cpp_utils.Point(1.96, 0.395)
+
+# World to Map
+startPoint_map = pyCostmap.worldToMap(-1.72, -0.217)
+endPoint_map = pyCostmap.worldToMap(1.96, 0.395)
+print("startPoint_map: ", startPoint_map)
+print("endPoint_map: ", endPoint_map)
 
 
 while rclpy.ok():

@@ -100,3 +100,23 @@ int VoronoiNode::getAdjacent() {
 
     return adjacent[index].first;
 }
+
+void VoronoiNode::removeAdjacent(int id) {
+    // 找到要删除的邻接节点
+    auto it = std::find_if(adjacent.begin(), adjacent.end(),
+        [id](const std::pair<int, float>& pair) { return pair.first == id; });
+    
+    if (it != adjacent.end()) {
+        // 删除该邻接节点
+        adjacent.erase(it);
+        activated_adj--;
+
+        // 重新计算剩余节点的概率
+        if (!adjacent.empty()) {
+            float new_prob = 1.0f / adjacent.size();
+            for (auto& adj : adjacent) {
+                adj.second = new_prob;
+            }
+        }
+    }
+}
