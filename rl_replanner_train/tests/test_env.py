@@ -19,7 +19,6 @@ reward_weight = {
         'reg_angle_factor_b': 0.07,
         'reg_depth_factor_a': 0.2,
         'reg_depth_factor_b': 0.02,
-        'reg_replan': 0.05,
         'state': 2.0,
         'exp_factor': 1.0,
         'decay_factor': 0.98

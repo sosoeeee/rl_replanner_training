@@ -7,3 +7,5 @@ log/
 *.pyc
 __pycache__/
 *.egg-info
+
+eval_paths_diff_sg/
