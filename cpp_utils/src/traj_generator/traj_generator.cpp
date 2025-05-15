@@ -351,6 +351,9 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     // get initial path from voronoi graph
     updateInitPlan(passby_nodes, start, end);
 
+    // TODO: Update the init plan with modified voronoi graph (Don't need to connect the start and end point to the voronoi graph)
+    // updateInitPlan(passby_nodes);
+
     // LOGGER_INFO("teb_local_planner", "Initial path: ");
     // int idx = 0;
     // for (const auto& pose : init_plan_) {
@@ -421,6 +424,9 @@ std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajs(Point start, Point
     // auto start_time = std::chrono::high_resolution_clock::now();
 
     updateInitPlan(passby_nodes, start, end);
+    // TODO: Update the init plan with modified voronoi graph (Don't need to connect the start and end point to the voronoi graph)
+    // updateInitPlan(passby_nodes);
+    
     // auto init_plan_time = std::chrono::high_resolution_clock::now();
     // auto init_plan_duration = std::chrono::duration_cast<std::chrono::milliseconds>(init_plan_time - start_time);
     // LOGGER_INFO("teb_local_planner", "Init plan took %ld ms", init_plan_duration.count());

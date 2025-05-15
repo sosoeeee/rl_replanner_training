@@ -355,7 +355,7 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
     delete[] bool_map;
 
     // 2. build the graph
-    // TODO: change the buildGraph function to use the modified voronoi
+    // TODO: change the buildGraph function, we can select buildGraph according to the static voronoi or modified voronoi
     buildGraph(); 
 
     // 3. floodfill to get the start and end related voronoi node
