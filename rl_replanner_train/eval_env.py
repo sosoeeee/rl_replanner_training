@@ -50,6 +50,7 @@ class EvalEnv(gym.Env):
             decision_interval=1,
             render_real_time_factor=1.0,
             use_generator = False,
+            eval_path_directory='eval_paths',
         ):
         
         assert render_mode is None or render_mode in self.metadata["render_modes"], "Invalid render mode."
@@ -89,6 +90,20 @@ class EvalEnv(gym.Env):
 
         # define reward
         self.reward_weight = reward_weight
+        if "replan_punishment" in self.reward_weight.keys():
+            if ("reg_angle_factor_a" in self.reward_weight.keys()) and ("reg_angle_factor_b" in self.reward_weight.keys()) and ("reg_depth_factor_b" not in self.reward_weight.keys()):
+                # at start the normed angle is 1/2
+                self.angle_c_ = (1 / 2) ** (self.reward_weight['reg_angle_factor_b']) * (self.reward_weight["replan_punishment"] / np.log(2))
+            elif ("reg_angle_factor_a" not in self.reward_weight.keys()) and ("reg_angle_factor_b" not in self.reward_weight.keys()) and ("reg_depth_factor_b" in self.reward_weight.keys()):
+                # at start the normed depth is 1/3 (depend to the action space rescale)
+                self.depth_c_ = (1 / 3) ** (self.reward_weight['reg_depth_factor_b']) * (self.reward_weight["replan_punishment"] / np.log(3))
+            elif ("reg_angle_factor_a" in self.reward_weight.keys()) and ("reg_angle_factor_b" in self.reward_weight.keys()) and ("reg_depth_factor_b" in self.reward_weight.keys()):
+                # at start the normed angle is 1/2 and depth is 1/3
+                self.angle_c_ = (1 / 2) ** (self.reward_weight['reg_angle_factor_b']) * ((self.reward_weight["replan_punishment"] / 2) / np.log(2))
+                self.depth_c_ = (1 / 3) ** (self.reward_weight['reg_depth_factor_b']) * ((self.reward_weight["replan_punishment"] / 2) / np.log(3))
+            else:
+                raise ValueError("Invalid reward weight setting. No reg reward function to calculate the replan punishment.")
+        
         self.decay_factor = self.reward_weight['decay_factor'] # task reward decay factor
         self.exp_factor = self.reward_weight['exp_factor']     # when error is 0.5 (which is half length of edge of partial square map), the approximate reward is 0.3
         self.len_threshold = 1/4  # half length of the partial square map
@@ -103,7 +118,7 @@ class EvalEnv(gym.Env):
         # human path
         self.use_generator = use_generator
         if self.use_generator:
-            self.replay_traj_files = glob.glob(replay_traj_path + '/eval_paths/*.txt')
+            self.replay_traj_files = glob.glob(replay_traj_path + '/' + eval_path_directory + '/*.txt')
         else:
             self.replay_traj_files = glob.glob(replay_traj_path + '/*.txt')
 
@@ -112,7 +127,7 @@ class EvalEnv(gym.Env):
         self.path_resolution = 0.05 / 2
         self.human_path_buffer = []
         self.future_human_path_buffer = []
-        self.traj_index = 0  # the index of the current trajectory
+        self.traj_index = -1  # the index of the current trajectory
 
         # robot path
         self.current_robot_path = None
@@ -174,9 +189,7 @@ class EvalEnv(gym.Env):
         self.future_human_path_buffer = []
 
         # time elapsed
-        self._plan_robot_path([self.current_human_traj[0][0], self.current_human_traj[0][1]], self.global_goal)
-        
-        if len(self.current_robot_path) == 0:
+        if not self._plan_robot_path([self.current_human_traj[0][0], self.current_human_traj[0][1]], self.global_goal):
             raise ValueError("[SimulationWorld] Failed to find a path from start to goal.")
         
         self.human_path_buffer.append([self.current_human_traj[0][0], self.current_human_traj[0][1]])
@@ -221,13 +234,16 @@ class EvalEnv(gym.Env):
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        # Reset the trajectory index
-        self.traj_index = np.random.randint(0, len(self.replay_traj_files))
-        traj_file = self.replay_traj_files[self.traj_index]
-        self.current_human_traj = np.loadtxt(traj_file)
 
         if self.render_mode == "ros":
+            self.traj_index += 1
             print("\n\n ======================== Resetting trajectory: {} ======================== \n\n".format(self.traj_index + 1))
+        else:
+            # Reset the trajectory index
+            self.traj_index = np.random.randint(0, len(self.replay_traj_files))
+
+        traj_file = self.replay_traj_files[self.traj_index]
+        self.current_human_traj = np.loadtxt(traj_file)
 
         self.current_human_traj_length = len(self.current_human_traj)
 
@@ -261,16 +277,16 @@ class EvalEnv(gym.Env):
                                             current_pos=self.cur_position,
                                             radius=self.current_action[1][1],
                                             is_enabled=True)
-                self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal)
+                
+                if not self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal):
+                    terminated = True
                 # use point on robot path as the start point
                 # self._plan_robot_path([self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]], self.pred_goal)
             else:
                 terminated = True
+
         elif self.current_action[0] == DO_NOTHING:
             pass
-        
-        if len(self.current_robot_path) == 0:
-            terminated = True
 
         if terminated:
             end_reward = -1
@@ -296,7 +312,7 @@ class EvalEnv(gym.Env):
 
         # normalize the reward with the trajectory length
         reward_without_end = self.reward - end_reward * self.reward_weight['state']
-        normalized_reward = reward_without_end / (self.current_human_traj_length / (self.decision_interval // self.time_resolution)) * (self.reward_weight['state'] * 2) + end_reward * self.reward_weight['state']
+        normalized_reward = reward_without_end / (self.current_human_traj_length / (self.decision_interval // self.time_resolution)) + end_reward * self.reward_weight['state']
 
         # the evlaution env is not terminated until all trajectories are finished
         return self.structure_obs, normalized_reward, terminated, False, info
@@ -350,11 +366,18 @@ class EvalEnv(gym.Env):
                                                          cpp_utils.Point(end[0], end[1]))
         self.current_robot_path = [[pose.x, pose.y] for pose in self.current_robot_path]
 
+        if len(self.current_robot_path) == 0:
+            return False
+
         # connected to the nearest target（the global goal in this case）
+        # because the cone only be used once, so the extended path won't be influenced by the cone
         if end[0] != self.global_goal[0] or end[1] != self.global_goal[1]:
             self.rest_robot_path = self.path_planner.plan(cpp_utils.Point(end[0], end[1]),
                                                         cpp_utils.Point(self.global_goal[0], self.global_goal[1]))
             self.rest_robot_path = [[pose.x, pose.y] for pose in self.rest_robot_path]
+
+            if len(self.rest_robot_path) == 0:
+                return False
 
             self.current_robot_path += self.rest_robot_path
 
@@ -363,6 +386,8 @@ class EvalEnv(gym.Env):
             print("robot path length: ", len(self.current_robot_path))
 
         self.robot_closest_idx = 0
+
+        return True
 
     def _get_human_path(self):
         # update the human path buffer
@@ -668,9 +693,9 @@ class EvalEnv(gym.Env):
             # debug
             # if self.render_mode == 'ros':
             #     print("l2_error: ", np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1))
-                # print("exp_error: ", exp_error)
-                # print("decay_weight: ", np.round(decay_weight, 2))
-                # print("decay_weight sum is: ", np.sum(decay_weight))
+            #     print("exp_error: ", exp_error)
+            #     print("decay_weight: ", np.round(decay_weight, 2))
+            #     print("decay_weight sum is: ", np.sum(decay_weight))
 
         else:
             task_reward = 0.0
@@ -684,7 +709,8 @@ class EvalEnv(gym.Env):
             # change to the ln scale
             elif ("reg_angle_factor_a" in self.reward_weight.keys()) and ("reg_angle_factor_b" in self.reward_weight.keys()):
                 norm_angle = np.arctan(self.current_action[1][1] / self.current_action[1][0]) / (np.pi / 2)
-                angle_reg_reward = self.reward_weight['reg_angle_factor_a'] + self.reward_weight['reg_angle_factor_b'] * (np.log(1 - norm_angle)) / (1 - norm_angle)
+                angle_reg_reward = self.reward_weight['reg_angle_factor_a'] + \
+                                   self.angle_c_ * (np.log(1 - norm_angle)) / (1 - norm_angle) ** self.reward_weight['reg_angle_factor_b']
                 if self.render_mode == "ros":
                     print("norm_angle: ", norm_angle)
             else:
@@ -708,9 +734,9 @@ class EvalEnv(gym.Env):
 
         # depth (smooth func)
         if self.current_action[0] == LOCAL_GOAL:
-            if ("reg_depth_factor_a" in self.reward_weight.keys()) and ("reg_depth_factor_b" in self.reward_weight.keys()):
+            if "reg_depth_factor_b" in self.reward_weight.keys():
                 norm_depth = ((self.current_action[1][0] / self.obser_width) - 1e-3) / (np.sqrt(2)/2 - 1e-3)
-                depth_reg_reward = self.reward_weight['reg_depth_factor_a'] + self.reward_weight['reg_depth_factor_b'] * np.log(norm_depth) / (norm_depth)
+                depth_reg_reward = self.depth_c_ * np.log(norm_depth) / (norm_depth) ** self.reward_weight['reg_depth_factor_b']
                 if self.render_mode == "ros":
                     print("norm_depth: ", norm_depth)
             else:
@@ -719,20 +745,20 @@ class EvalEnv(gym.Env):
             depth_reg_reward = 0.0
         
         # replan
-        if self.current_action[0] == DO_NOTHING:
-            replan_reward = 0.0
-        else:
-            replan_reward = -1 * self.reward_weight['reg_replan']
+        # if self.current_action[0] == DO_NOTHING:
+        #     replan_reward = 0.0
+        # else:
+        #     replan_reward = -1 * self.reward_weight['reg_replan']
         
-        self.reward = task_reward + angle_reg_reward + depth_reg_reward + replan_reward
+        self.reward = task_reward + angle_reg_reward + depth_reg_reward
         
         # debug
         # print("============== reward terms ==============")
-        # if self.render_mode == "ros":
-        #     print("task_reward: ", task_reward)
-        #     print("angle_reg_reward: ", angle_reg_reward)
-        #     print("depth_reg_reward: ", depth_reg_reward)
-        #     print("replan_reward: ", replan_reward)
+        if self.render_mode == "ros":
+            print("task_reward: ", task_reward)
+            print("angle_reg_reward: ", angle_reg_reward)
+            # print("depth_reg_reward: ", depth_reg_reward)
+            # print("replan_reward: ", replan_reward)
 
         return self.reward
 

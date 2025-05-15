@@ -35,11 +35,14 @@ traj_generator.initialize(
     time_resolution=0.1,
 )
 pyCostmap.loadCostmapFromCostmapCpp(traj_generator.getCostmap())
-startPoint = cpp_utils.Point(-1.72, -0.217)
-endPoint = cpp_utils.Point(1.96, 0.395)
+# startPoint = cpp_utils.Point(-1.72, -0.217)
+# endPoint = cpp_utils.Point(1.96, 0.395)
+
+startPoint = cpp_utils.Point(-0.217, -1.72)
+endPoint = cpp_utils.Point(0.395, 1.96)
 
 # 轨迹文件
-data_dir = "rl_replanner_train/data/eval_paths"
+data_dir = "rl_replanner_train/data/eval_paths_diff_sg"
 if not os.path.exists(data_dir):
     print("data_dir not exists")
     exit()
