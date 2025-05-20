@@ -213,17 +213,17 @@ PYBIND11_MODULE(cpp_utils, m) {
         .def("getDistance", &VoronoiGraph::getDistance,
             "Get distance to nearest obstacle", py::arg("x"), py::arg("y"))
         .def("visualizeVoronoi", &VoronoiGraph::visualizeVoronoi,
-            "Visualize the original Voronoi graph", py::arg("filename"), py::arg("type") = 0)
-        .def("updateStartNeighbor", static_cast<void (VoronoiGraph::*)()>(&VoronoiGraph::getStartNeighbor),
-            "Update unique nodes after adding start point as obstacle")
-        .def("updateEndNeighbor", static_cast<void (VoronoiGraph::*)()>(&VoronoiGraph::getEndNeighbor),
-            "Update unique nodes after adding end point as obstacle")
-        .def("getStartNeighborNodes", static_cast<const std::vector<VoronoiNode>& (VoronoiGraph::*)() const>(&VoronoiGraph::getStartNeighbor),
-            "Get the unique nodes after adding start point as obstacle",
-            py::return_value_policy::reference_internal)
-        .def("getEndNeighborNodes", static_cast<const std::vector<VoronoiNode>& (VoronoiGraph::*)() const>(&VoronoiGraph::getEndNeighbor),
-            "Get the unique nodes after adding end point as obstacle",
-            py::return_value_policy::reference_internal);
+            "Visualize the original Voronoi graph", py::arg("filename"), py::arg("type") = 0);
+        // .def("updateStartNeighbor", static_cast<void (VoronoiGraph::*)()>(&VoronoiGraph::getStartNeighbor),
+        //     "Update unique nodes after adding start point as obstacle")
+        // .def("updateEndNeighbor", static_cast<void (VoronoiGraph::*)()>(&VoronoiGraph::getEndNeighbor),
+        //     "Update unique nodes after adding end point as obstacle")
+        // .def("getStartNeighborNodes", static_cast<const std::vector<VoronoiNode>& (VoronoiGraph::*)() const>(&VoronoiGraph::getStartNeighbor),
+        //     "Get the unique nodes after adding start point as obstacle",
+        //     py::return_value_policy::reference_internal)
+        // .def("getEndNeighborNodes", static_cast<const std::vector<VoronoiNode>& (VoronoiGraph::*)() const>(&VoronoiGraph::getEndNeighbor),
+        //     "Get the unique nodes after adding end point as obstacle",
+        //     py::return_value_policy::reference_internal);
 
     py::class_<VoronoiNode>(m, "VoronoiNode")
         .def("getId", &VoronoiNode::getId,

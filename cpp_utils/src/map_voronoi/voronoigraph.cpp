@@ -375,11 +375,26 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
     voronoi_modified->updateAlternativePrunedDiagram();  // prune the Voronoi
     getStartNeighbor();
 
+    // 打印起点邻接点信息
+    LOGGER_INFO("VoronoiGraph", "Start point neighbors (%zu nodes):", voronoi_nodes_startNeighbor.size());
+    for (const auto& node : voronoi_nodes_startNeighbor) {
+        LOGGER_INFO("VoronoiGraph", "  Node ID: %d, Position: (%d, %d)", 
+            node.getId(), node.getPosition().x, node.getPosition().y);
+    }
+
     bool_map[end_mx][end_my] = true; // set end point as free
     voronoi_modified->initializeMap(costmap->getSizeInCellsX(), costmap->getSizeInCellsY(), bool_map);
     voronoi_modified->update();
     voronoi_modified->updateAlternativePrunedDiagram();  // prune the Voronoi
     getEndNeighbor();
+
+    // 打印终点邻接点信息
+    LOGGER_INFO("VoronoiGraph", "End point neighbors (%zu nodes):", voronoi_nodes_endNeighbor.size());
+    for (const auto& node : voronoi_nodes_endNeighbor) {
+        LOGGER_INFO("VoronoiGraph", "  Node ID: %d, Position: (%d, %d)", 
+            node.getId(), node.getPosition().x, node.getPosition().y);
+    }
+
     //release the bool map
     for (int x = 0; x < costmap->getSizeInCellsX(); x++) {
         delete[] bool_map[x];
@@ -416,43 +431,6 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
         }
     }
 
-    // 添加起点作为节点
-    start_point_node_id = id++;
-    VoronoiNode start_node(start_point_node_id, MapPoint{static_cast<int>(start_mx), static_cast<int>(start_my)});
-    voronoi_nodes_modified.push_back(start_node);
-
-    // 为起点添加邻节点和路径
-    for (const auto& neighbor : voronoi_nodes_startNeighbor) {
-        // 添加邻接关系
-        start_node.addAdjacent(neighbor.getId());
-        
-        // 创建从起点到邻节点的直线路径
-        Path path;
-        // TODO: use A* to find the path, rather than only appending start and end points
-        path.path_points.push_back(start_node.getPosition());
-        path.path_points.push_back(neighbor.getPosition());
-        path.end_node_id = neighbor.getId();
-        start_node.addPath(path);
-    }
-
-    // 添加终点作为节点
-    end_point_node_id = id++;
-    VoronoiNode end_node(end_point_node_id, MapPoint{static_cast<int>(end_mx), static_cast<int>(end_my)});
-    voronoi_nodes_modified.push_back(end_node);
-
-    // 为终点添加邻节点和路径
-    for (const auto& neighbor : voronoi_nodes_endNeighbor) {
-        // 添加邻接关系
-        end_node.addAdjacent(neighbor.getId());
-        
-        // 创建从终点到邻节点的直线路径
-        Path path;
-        // TODO: use A* to find the path, rather than only appending start and end points
-        path.path_points.push_back(end_node.getPosition());
-        path.path_points.push_back(neighbor.getPosition());
-        path.end_node_id = neighbor.getId();
-        end_node.addPath(path);
-    }
 
     // 为其他节点建立连接关系
     int node_size = voronoi_nodes_modified.size();
@@ -553,9 +531,217 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
         delete[] map_flag;
     }
 
-    // 删除voronoi_nodes_startNeighbor之间的相邻关系
-    for (auto& node : voronoi_nodes_startNeighbor) {
+    // 删除没有邻接点的节点
+    for(int i=voronoi_nodes_modified.size()-1;i>=0;i--){
+        VoronoiNode& node = voronoi_nodes_modified[i];
         std::vector<std::pair<int, float>> adjacent = node.getAllAdjacent();
+        if(adjacent.size()==0){
+            voronoi_nodes_modified.erase(voronoi_nodes_modified.begin()+i);
+        }
+    }
+
+    //更新邻接点id
+    LOGGER_INFO("VoronoiGraph", "Updating start neighbor node IDs...");
+    std::vector<VoronoiNode> updated_start_neighbors;
+    for (const auto& start_neighbor : voronoi_nodes_startNeighbor) {
+        bool found_match = false;
+        MapPoint start_pos = start_neighbor.getPosition();
+        
+        // 遍历modified_nodes寻找匹配的节点
+        for (const auto& modified_node : voronoi_nodes_modified) {
+            MapPoint modified_pos = modified_node.getPosition();
+            if (start_pos.x == modified_pos.x && start_pos.y == modified_pos.y) {
+                // 找到匹配的节点，创建新节点
+                VoronoiNode new_node(modified_node.getId(), start_pos);
+                updated_start_neighbors.push_back(new_node);
+                LOGGER_INFO("VoronoiGraph", "Updated start neighbor node ID: %d -> %d, Position: (%d, %d)", 
+                    start_neighbor.getId(), modified_node.getId(), start_pos.x, start_pos.y);
+                found_match = true;
+                break;
+            }
+        }
+        
+        if (!found_match) {
+            LOGGER_INFO("VoronoiGraph", "Removed start neighbor node with no match, Position: (%d, %d)", 
+                start_pos.x, start_pos.y);
+        }
+    }
+    
+    // 更新voronoi_nodes_startNeighbor
+    voronoi_nodes_startNeighbor = updated_start_neighbors;
+    LOGGER_INFO("VoronoiGraph", "Start neighbor nodes after update: %zu", voronoi_nodes_startNeighbor.size());
+    for (const auto& node : voronoi_nodes_startNeighbor) {
+        LOGGER_INFO("VoronoiGraph", "  Node ID: %d, Position: (%d, %d)", 
+            node.getId(), node.getPosition().x, node.getPosition().y);
+    }
+
+    // 更新终点邻接点ID
+    LOGGER_INFO("VoronoiGraph", "Updating end neighbor node IDs...");
+    std::vector<VoronoiNode> updated_end_neighbors;
+    for (const auto& end_neighbor : voronoi_nodes_endNeighbor) {
+        bool found_match = false;
+        MapPoint end_pos = end_neighbor.getPosition();
+        
+        // 遍历modified_nodes寻找匹配的节点
+        for (const auto& modified_node : voronoi_nodes_modified) {
+            MapPoint modified_pos = modified_node.getPosition();
+            if (end_pos.x == modified_pos.x && end_pos.y == modified_pos.y) {
+                // 找到匹配的节点，创建新节点
+                VoronoiNode new_node(modified_node.getId(), end_pos);
+                updated_end_neighbors.push_back(new_node);
+                LOGGER_INFO("VoronoiGraph", "Updated end neighbor node ID: %d -> %d, Position: (%d, %d)", 
+                    end_neighbor.getId(), modified_node.getId(), end_pos.x, end_pos.y);
+                found_match = true;
+                break;
+            }
+        }
+        
+        if (!found_match) {
+            LOGGER_INFO("VoronoiGraph", "Removed end neighbor node with no match, Position: (%d, %d)", 
+                end_pos.x, end_pos.y);
+        }
+    }
+    
+    // 更新voronoi_nodes_endNeighbor
+    voronoi_nodes_endNeighbor = updated_end_neighbors;
+    LOGGER_INFO("VoronoiGraph", "End neighbor nodes after update: %zu", voronoi_nodes_endNeighbor.size());
+    for (const auto& node : voronoi_nodes_endNeighbor) {
+        LOGGER_INFO("VoronoiGraph", "  Node ID: %d, Position: (%d, %d)", 
+            node.getId(), node.getPosition().x, node.getPosition().y);
+    }
+
+    // 添加起点作为节点
+    start_point_node_id = id++;
+    VoronoiNode start_node(start_point_node_id, MapPoint{static_cast<int>(start_mx), static_cast<int>(start_my)});
+    voronoi_nodes_modified.push_back(start_node);
+
+    // 为起点添加邻节点和路径
+    for (const auto& neighbor : voronoi_nodes_startNeighbor) {
+        // 添加邻接关系
+        start_node.addAdjacent(neighbor.getId());
+        voronoi_nodes_modified[neighbor.getId()].addAdjacent(start_point_node_id);
+        
+        // 创建从起点到邻节点的直线路径
+        Path path;
+        // 使用Bresenham算法生成直线路径点
+        std::vector<MapPoint> line_points;
+        int x1 = start_node.getPosition().x, y1 = start_node.getPosition().y;
+        int x2 = neighbor.getPosition().x, y2 = neighbor.getPosition().y;
+        
+        int dx = abs(x2 - x1);
+        int dy = abs(y2 - y1);
+        int sx = (x1 < x2) ? 1 : -1;
+        int sy = (y1 < y2) ? 1 : -1;
+        int err = dx - dy;
+        
+        while (true) {
+            line_points.push_back(MapPoint{x1, y1});
+            if (x1 == x2 && y1 == y2) break;
+            int e2 = 2 * err;
+            if (e2 > -dy) {
+                err -= dy;
+                x1 += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y1 += sy;
+            }
+        }
+        path.path_points = line_points;
+        path.end_node_id = neighbor.getId();
+        start_node.addPath(path);
+        
+        // 创建从邻节点到起点的反向路径
+        Path reverse_path;
+        reverse_path.path_points = line_points;
+        std::reverse(reverse_path.path_points.begin(), reverse_path.path_points.end());
+        reverse_path.end_node_id = start_point_node_id;
+        voronoi_nodes_modified[neighbor.getId()].addPath(reverse_path);
+        
+        // 打印路径信息
+        LOGGER_INFO("VoronoiGraph", "Added bidirectional path between start node (ID: %d) and neighbor (ID: %d):", 
+            start_point_node_id, neighbor.getId());
+        LOGGER_INFO("VoronoiGraph", "  Path points: (%d,%d) <-> (%d,%d)", 
+            start_node.getPosition().x, start_node.getPosition().y,
+            neighbor.getPosition().x, neighbor.getPosition().y);
+    }
+
+    // 添加终点作为节点
+    end_point_node_id = id++;
+    VoronoiNode end_node(end_point_node_id, MapPoint{static_cast<int>(end_mx), static_cast<int>(end_my)});
+    voronoi_nodes_modified.push_back(end_node);
+
+    // 为终点添加邻节点和路径
+    for (const auto& neighbor : voronoi_nodes_endNeighbor) {
+        // 添加邻接关系
+        end_node.addAdjacent(neighbor.getId());
+        voronoi_nodes_modified[neighbor.getId()].addAdjacent(end_point_node_id);
+        
+        // 创建从终点到邻节点的直线路径
+        Path path;
+        // 使用Bresenham算法生成直线路径点
+        std::vector<MapPoint> line_points;
+        int x1 = end_node.getPosition().x, y1 = end_node.getPosition().y;
+        int x2 = neighbor.getPosition().x, y2 = neighbor.getPosition().y;
+        
+        int dx = abs(x2 - x1);
+        int dy = abs(y2 - y1);
+        int sx = (x1 < x2) ? 1 : -1;
+        int sy = (y1 < y2) ? 1 : -1;
+        int err = dx - dy;
+        
+        while (true) {
+            line_points.push_back(MapPoint{x1, y1});
+            if (x1 == x2 && y1 == y2) break;
+            int e2 = 2 * err;
+            if (e2 > -dy) {
+                err -= dy;
+                x1 += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y1 += sy;
+            }
+        }
+        path.path_points = line_points;
+        path.end_node_id = neighbor.getId();
+        end_node.addPath(path);
+        
+        // 创建从邻节点到终点的反向路径
+        Path reverse_path;
+        reverse_path.path_points = line_points;
+        std::reverse(reverse_path.path_points.begin(), reverse_path.path_points.end());
+        reverse_path.end_node_id = end_point_node_id;
+        voronoi_nodes_modified[neighbor.getId()].addPath(reverse_path);
+        
+        // 打印路径信息
+        LOGGER_INFO("VoronoiGraph", "Added bidirectional path between end node (ID: %d) and neighbor (ID: %d):", 
+            end_point_node_id, neighbor.getId());
+        LOGGER_INFO("VoronoiGraph", "  Path points: (%d,%d) <-> (%d,%d)", 
+            end_node.getPosition().x, end_node.getPosition().y,
+            neighbor.getPosition().x, neighbor.getPosition().y);
+    }
+
+    // 更新voronoi_nodes_modified中的起点和终点节点
+    size_t start_node_index = voronoi_nodes_modified.size() - 2;  // 倒数第二个位置
+    size_t end_node_index = voronoi_nodes_modified.size() - 1;    // 倒数第一个位置
+
+    LOGGER_INFO("VoronoiGraph", "Updating start node at index %zu and end node at index %zu", 
+        start_node_index, end_node_index);
+
+    voronoi_nodes_modified[start_node_index] = start_node;
+    voronoi_nodes_modified[end_node_index] = end_node;
+
+    // 删除voronoi_nodes_startNeighbor之间的相邻关系
+    LOGGER_INFO("VoronoiGraph", "Removing connections between start neighbor nodes...");
+    for (const auto& node : voronoi_nodes_startNeighbor) {
+        int node_id = node.getId();
+        if (node_id >= voronoi_nodes_modified.size()) {
+            LOGGER_WARN("VoronoiGraph", "Invalid node ID %d in start neighbors", node_id);
+            continue;
+        }
+        
+        std::vector<std::pair<int, float>> adjacent = voronoi_nodes_modified[node_id].getAllAdjacent();
         for (const auto& adj : adjacent) {
             // 检查相邻节点是否也在voronoi_nodes_startNeighbor中
             bool is_in_start_neighbor = false;
@@ -565,16 +751,28 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
                     break;
                 }
             }
-            // 如果在startNeighbor中，删除这个相邻关系
-            if (is_in_start_neighbor) {
-                node.removeAdjacent(adj.first);
+            // 如果在startNeighbor中，删除双向连接
+            if (is_in_start_neighbor && adj.first < voronoi_nodes_modified.size()) {
+                // 从当前节点删除连接
+                voronoi_nodes_modified[node_id].removeAdjacent(adj.first);
+                // 从目标节点删除连接
+                voronoi_nodes_modified[adj.first].removeAdjacent(node_id);
+                LOGGER_INFO("VoronoiGraph", "Removed bidirectional connection between start neighbors: %d <-> %d", 
+                    node_id, adj.first);
             }
         }
     }
 
     // 删除voronoi_nodes_endNeighbor之间的相邻关系
-    for (auto& node : voronoi_nodes_endNeighbor) {
-        std::vector<std::pair<int, float>> adjacent = node.getAllAdjacent();
+    LOGGER_INFO("VoronoiGraph", "Removing connections between end neighbor nodes...");
+    for (const auto& node : voronoi_nodes_endNeighbor) {
+        int node_id = node.getId();
+        if (node_id >= voronoi_nodes_modified.size()) {
+            LOGGER_WARN("VoronoiGraph", "Invalid node ID %d in end neighbors", node_id);
+            continue;
+        }
+        
+        std::vector<std::pair<int, float>> adjacent = voronoi_nodes_modified[node_id].getAllAdjacent();
         for (const auto& adj : adjacent) {
             // 检查相邻节点是否也在voronoi_nodes_endNeighbor中
             bool is_in_end_neighbor = false;
@@ -584,12 +782,35 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
                     break;
                 }
             }
-            // 如果在endNeighbor中，删除这个相邻关系
-            if (is_in_end_neighbor) {
-                node.removeAdjacent(adj.first);
+            // 如果在endNeighbor中，删除双向连接
+            if (is_in_end_neighbor && adj.first < voronoi_nodes_modified.size()) {
+                // 从当前节点删除连接
+                voronoi_nodes_modified[node_id].removeAdjacent(adj.first);
+                // 从目标节点删除连接
+                voronoi_nodes_modified[adj.first].removeAdjacent(node_id);
+                LOGGER_INFO("VoronoiGraph", "Removed bidirectional connection between end neighbors: %d <-> %d", 
+                    node_id, adj.first);
             }
         }
     }
+
+    // 在函数结束前打印所有节点的邻接点信息
+    LOGGER_INFO("VoronoiGraph", "All nodes in modified graph (%zu nodes):", voronoi_nodes_modified.size());
+    for (const auto& node : voronoi_nodes_modified) {
+        LOGGER_INFO("VoronoiGraph", "Node ID: %d, Position: (%d, %d)", 
+            node.getId(), node.getPosition().x, node.getPosition().y);
+        
+        // 打印该节点的所有邻接点
+        std::vector<std::pair<int, float>> adjacent = node.getAllAdjacent();
+        LOGGER_INFO("VoronoiGraph", "  Adjacent nodes (%zu):", adjacent.size());
+        for (const auto& adj : adjacent) {
+            LOGGER_INFO("VoronoiGraph", "    Node ID: %d, Probability: %.3f", adj.first, adj.second);
+        }
+    }
+
+    // 打印起点和终点节点的ID
+    LOGGER_INFO("VoronoiGraph", "Start point node ID: %d", start_point_node_id);
+    LOGGER_INFO("VoronoiGraph", "End point node ID: %d", end_point_node_id);
 }
 
 

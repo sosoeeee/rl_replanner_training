@@ -327,6 +327,12 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     // int start_node_id, end_node_id;
     // getNearestNode(start, start_node_id);
     // getNearestNode(end, end_node_id);
+        // 检查 Voronoi 图是否初始化
+        if (!voronoi_graph_) {
+            LOGGER_ERROR("teb_local_planner", "Voronoi graph is not initialized");
+            return {};
+        }
+    
 
     // TODO: Update the voronoi graph with "Bubble technique"
     unsigned int start_mx, start_my;
@@ -348,6 +354,10 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     //     LOGGER_INFO("teb_local_planner", "%d", node_id);
     // }
 
+    if (passby_nodes.empty()) {
+        LOGGER_ERROR("teb_local_planner", "No valid path found");
+        return {};
+    }
     // get initial path from voronoi graph
     updateInitPlan(passby_nodes, start, end);
 

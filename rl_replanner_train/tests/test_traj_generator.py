@@ -2,6 +2,7 @@ import cpp_utils
 import numpy as np
 import rclpy
 import time
+import os
 from rl_replanner_train.render.costmap_2d import PyCostmap2D
 
 from geometry_msgs.msg import PoseStamped
@@ -12,6 +13,14 @@ from nav_msgs.msg import OccupancyGrid
 # import matplotlib.pyplot as plt
 # import matplotlib
 # matplotlib.use('TkAgg')
+
+# 获取当前文件所在目录的绝对路径
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# 获取项目根目录
+project_root = os.path.dirname(os.path.dirname(current_dir))
+# 构建地图文件的绝对路径
+map_file = os.path.join(project_root, "rl_replanner_train", "maps", "tb3_classic", "turtlebot3_world.yaml")
+planner_file = os.path.join(project_root, "cpp_utils", "include", "teb_local_planner", "teb_params.yaml")
 
 rclpy.init()
 
@@ -25,15 +34,16 @@ costmap_publisher = render_node.create_publisher(OccupancyGrid, "costmap", 10)
 
 previous_marker_count = 0  # Add this line after creating render_node
 
-res_status, costmap_cpp = cpp_utils.loadMap("./rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml")
+print(f"Loading map from: {map_file}")
+res_status, costmap_cpp = cpp_utils.loadMap(map_file)
 pyCostmap = PyCostmap2D(render_node)
 
 
 # Initialize the trajectory generator
 traj_generator = cpp_utils.TrajGenerator()
 traj_generator.initialize(
-    map_file="./rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml",
-    planner_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
+    map_file=map_file,
+    planner_file=planner_file,
     path_resolution=0.025,
     time_resolution=0.1,
 )
