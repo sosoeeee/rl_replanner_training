@@ -531,6 +531,7 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
         delete[] map_flag;
     }
 
+    // 四连通问题补丁（与上面的代码相关）
     // 删除没有邻接点的节点
     for(int i=voronoi_nodes_modified.size()-1;i>=0;i--){
         VoronoiNode& node = voronoi_nodes_modified[i];
@@ -539,6 +540,7 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
             voronoi_nodes_modified.erase(voronoi_nodes_modified.begin()+i);
         }
     }
+    // 四连通问题补丁
 
     //更新邻接点id
     LOGGER_INFO("VoronoiGraph", "Updating start neighbor node IDs...");
