@@ -342,17 +342,17 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     voronoi_graph_->getVoronoiGraph(start_mx, start_my, end_mx, end_my);
 
     // // debug
-    // LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", start_node_id, end_node_id);
+    LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
     
     // sample the passby voronoi nodes from start node to end node
     // std::vector<int> passby_nodes = voronoi_graph_->getPassbyNodes(start_node_id, end_node_id);
     std::vector<int> passby_nodes = voronoi_graph_->getPassbyNodes(voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
 
     // // debug
-    // LOGGER_INFO("teb_local_planner", "Passby nodes: ");
-    // for (const auto& node_id : passby_nodes) {
-    //     LOGGER_INFO("teb_local_planner", "%d", node_id);
-    // }
+    LOGGER_INFO("teb_local_planner", "Passby nodes: ");
+    for (const auto& node_id : passby_nodes) {
+        LOGGER_INFO("teb_local_planner", "%d", node_id);
+    }
 
     if (passby_nodes.empty()) {
         LOGGER_ERROR("teb_local_planner", "No valid path found");
