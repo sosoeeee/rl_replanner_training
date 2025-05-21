@@ -199,7 +199,7 @@ void VoronoiGraph::buildGraph(){
 
 void VoronoiGraph::resetAllProbabilities()
 {
-    for (auto& node : voronoi_nodes) {
+    for (auto& node : voronoi_nodes_modified) {
         node.resetProbability();
     }
 }
@@ -213,7 +213,9 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
 
     // add start node
     passby_nodes.push_back(start_id);
-    std::vector<std::pair<int, float>> adjacent_nodes = voronoi_nodes[start_id].getAllAdjacent();
+
+    if (start_id < 0 || start_id >= voronoi_nodes_modified.size()) throw std::out_of_range("Invalid start_id");
+    std::vector<std::pair<int, float>> adjacent_nodes = voronoi_nodes_modified[start_id].getAllAdjacent();
     
     // debug
     LOGGER_INFO("VoronoiGraph", "Start node ID: %d. Its adjacent nodes are:", start_id);
@@ -222,9 +224,9 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
     }
 
     for (const auto& pair : adjacent_nodes) {
-        activated = voronoi_nodes[pair.first].deactivate(start_id);
+        activated = voronoi_nodes_modified[pair.first].deactivate(start_id);
         if (!activated && pair.first != end_id) {
-            activated = voronoi_nodes[start_id].deactivate(pair.first);
+            activated = voronoi_nodes_modified[start_id].deactivate(pair.first);
             if (!activated) 
             {
                 LOGGER_ERROR("VoronoiGraph", "Node %d has no adjacent nodes. That should not happen.", start_id);
@@ -233,11 +235,11 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
         }
     }
 
-    int next_id = voronoi_nodes[start_id].getAdjacent();
+    int next_id = voronoi_nodes_modified[start_id].getAdjacent();
     int backtrack_id = -1;
     while (next_id != end_id) {
         passby_nodes.push_back(next_id);
-        adjacent_nodes = voronoi_nodes[next_id].getAllAdjacent();
+        adjacent_nodes = voronoi_nodes_modified[next_id].getAllAdjacent();
 
         // debug
         LOGGER_INFO("VoronoiGraph", "Next node ID: %d. Its adjacent nodes are:", next_id);
@@ -248,9 +250,9 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
         // deactivate the adjacent nodes
         bool backtracking = false;
         for (const auto& pair : adjacent_nodes) {
-            activated = voronoi_nodes[pair.first].deactivate(next_id);
+            activated = voronoi_nodes_modified[pair.first].deactivate(next_id);
             if (!activated && pair.first != end_id) {
-                activated = voronoi_nodes[next_id].deactivate(pair.first);
+                activated = voronoi_nodes_modified[next_id].deactivate(pair.first);
                 if (!activated) 
                 {
                     // LOGGER_WARN("VoronoiGraph", "Node %d has no adjacent nodes. Start backtracking.", next_id);
@@ -267,24 +269,24 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
                 passby_nodes.pop_back();
                 next_id = passby_nodes.back();
 
-                adjacent_nodes = voronoi_nodes[backtrack_id].getAllAdjacent();
+                adjacent_nodes = voronoi_nodes_modified[backtrack_id].getAllAdjacent();
                 for (const auto& pair : adjacent_nodes) {
                     if (pair.first != next_id) {
-                    activated = voronoi_nodes[pair.first].activate(backtrack_id);
+                    activated = voronoi_nodes_modified[pair.first].activate(backtrack_id);
                     }
                 }
 
                 // debug
                 LOGGER_INFO("VoronoiGraph", "Backtracking to node ID: %d. Its adjacent nodes are:", next_id);
-                adjacent_nodes = voronoi_nodes[next_id].getAllAdjacent();
+                adjacent_nodes = voronoi_nodes_modified[next_id].getAllAdjacent();
                 for (const auto& pair : adjacent_nodes) {
                     LOGGER_INFO("VoronoiGraph", "Adjacent Node ID: %d, Probability: %f", pair.first, pair.second);
                 }
 
-            } while (voronoi_nodes[next_id].hasAdjacent() == false);
+            } while (voronoi_nodes_modified[next_id].hasAdjacent() == false);
         }
 
-        next_id = voronoi_nodes[next_id].getAdjacent();
+        next_id = voronoi_nodes_modified[next_id].getAdjacent();
     }
 
     passby_nodes.push_back(end_id);
@@ -295,7 +297,7 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
 std::vector<std::vector<int>> VoronoiGraph::findAllPaths(int start_id, int end_id) {
     std::vector<std::vector<int>> all_paths;
     std::vector<int> path;
-    std::vector<bool> visited(voronoi_nodes.size(), false);
+    std::vector<bool> visited(voronoi_nodes_modified.size(), false);
     
     std::function<void(int)> dfs = [&](int current_id) {
         visited[current_id] = true;
@@ -304,7 +306,7 @@ std::vector<std::vector<int>> VoronoiGraph::findAllPaths(int start_id, int end_i
         if (current_id == end_id) {
             all_paths.push_back(path);
         } else {
-            for (const auto& neighbor : voronoi_nodes[current_id].getNeighbors()) {
+            for (const auto& neighbor : voronoi_nodes_modified[current_id].getNeighbors()) {
                 if (!visited[neighbor]) {
                     dfs(neighbor);
                 }
