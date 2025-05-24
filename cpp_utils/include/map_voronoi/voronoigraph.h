@@ -49,10 +49,12 @@ public:
     const std::vector<VoronoiNode>& getAllNodes() const { return voronoi_nodes; }
     // get node by id
     VoronoiNode& getNodeById(int id) {
-        if (id < 0 || id >= voronoi_nodes.size()) {
+        // if (id < 0 || id >= voronoi_nodes.size()) {
+        if (id < 0 || id >= voronoi_nodes_modified.size()) {
             throw std::out_of_range("Node ID is out of range");
         }
-        return voronoi_nodes[id];
+        // return voronoi_nodes[id];
+        return voronoi_nodes_modified[id];
     }
     const VoronoiNode& getNodeById(int id) const {
         if (id < 0 || id >= voronoi_nodes.size()) {

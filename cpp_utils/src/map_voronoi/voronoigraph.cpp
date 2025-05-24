@@ -425,6 +425,16 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
                     }
                 }
                 if(num >= 3) {
+                                        
+                    // if the node is near the last node , then we see it as the same node
+                    if(voronoi_nodes_modified.size()!=0){
+                        VoronoiNode last_node = voronoi_nodes_modified.back();
+                        MapPoint position=last_node.getPosition();
+                        if(abs(position.x-x)<=1 && abs(position.y-y)<=1){
+                            id--;
+                        }
+                    }
+
                     VoronoiNode node(id, MapPoint{x, y});
                     voronoi_nodes_modified.push_back(node);
                     id++;
@@ -432,6 +442,15 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
             }
         }
     }
+
+// // 
+//     LOGGER_INFO("VoronoiGraph", "Testing voronoi_nodes_modified size: %zu", voronoi_nodes_modified.size());
+//     LOGGER_INFO("VoronoiGraph", "All nodes in voronoi_nodes_modified:");
+//     for (const auto& node : voronoi_nodes_modified) {
+//         LOGGER_INFO("VoronoiGraph", "Node ID: %d, Position: (%d, %d)", 
+//             node.getId(), node.getPosition().x, node.getPosition().y);
+//     }
+// //  
 
 
     // 为其他节点建立连接关系
@@ -533,7 +552,15 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
         delete[] map_flag;
     }
 
-    // 四连通问题补丁（与上面的代码相关）
+// // 
+// LOGGER_INFO("VoronoiGraph", "Testing voronoi_nodes_modified size: %zu", voronoi_nodes_modified.size());
+// LOGGER_INFO("VoronoiGraph", "All nodes in voronoi_nodes_modified:");
+// for (const auto& node : voronoi_nodes_modified) {
+//     LOGGER_INFO("VoronoiGraph", "Node ID: %d, Position: (%d, %d)", 
+//         node.getId(), node.getPosition().x, node.getPosition().y);
+// }
+// //  
+
     // 删除没有邻接点的节点
     for(int i=voronoi_nodes_modified.size()-1;i>=0;i--){
         VoronoiNode& node = voronoi_nodes_modified[i];
@@ -542,7 +569,15 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
             voronoi_nodes_modified.erase(voronoi_nodes_modified.begin()+i);
         }
     }
-    // 四连通问题补丁
+
+// // 
+//     LOGGER_INFO("VoronoiGraph", "Testing voronoi_nodes_modified size: %zu", voronoi_nodes_modified.size());
+//     LOGGER_INFO("VoronoiGraph", "All nodes in voronoi_nodes_modified:");
+//     for (const auto& node : voronoi_nodes_modified) {
+//         LOGGER_INFO("VoronoiGraph", "Node ID: %d, Position: (%d, %d)", 
+//             node.getId(), node.getPosition().x, node.getPosition().y);
+//     }
+// //     
 
     //更新邻接点id
     LOGGER_INFO("VoronoiGraph", "Updating start neighbor node IDs...");
@@ -617,7 +652,7 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
     // 添加起点作为节点
     start_point_node_id = id++;
     VoronoiNode start_node(start_point_node_id, MapPoint{static_cast<int>(start_mx), static_cast<int>(start_my)});
-    voronoi_nodes_modified.push_back(start_node);
+    // voronoi_nodes_modified.push_back(start_node);
 
     // 为起点添加邻节点和路径
     for (const auto& neighbor : voronoi_nodes_startNeighbor) {
@@ -673,7 +708,7 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
     // 添加终点作为节点
     end_point_node_id = id++;
     VoronoiNode end_node(end_point_node_id, MapPoint{static_cast<int>(end_mx), static_cast<int>(end_my)});
-    voronoi_nodes_modified.push_back(end_node);
+    // voronoi_nodes_modified.push_back(end_node);
 
     // 为终点添加邻节点和路径
     for (const auto& neighbor : voronoi_nodes_endNeighbor) {
@@ -727,14 +762,16 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
     }
 
     // 更新voronoi_nodes_modified中的起点和终点节点
-    size_t start_node_index = voronoi_nodes_modified.size() - 2;  // 倒数第二个位置
-    size_t end_node_index = voronoi_nodes_modified.size() - 1;    // 倒数第一个位置
+    // size_t start_node_index = voronoi_nodes_modified.size() - 2;  // 倒数第二个位置
+    // size_t end_node_index = voronoi_nodes_modified.size() - 1;    // 倒数第一个位置
 
-    LOGGER_INFO("VoronoiGraph", "Updating start node at index %zu and end node at index %zu", 
-        start_node_index, end_node_index);
+    // LOGGER_INFO("VoronoiGraph", "Updating start node at index %zu and end node at index %zu", 
+    //     start_node_index, end_node_index);
 
-    voronoi_nodes_modified[start_node_index] = start_node;
-    voronoi_nodes_modified[end_node_index] = end_node;
+    // voronoi_nodes_modified[start_node_index] = start_node;
+    voronoi_nodes_modified.push_back(start_node);
+    // voronoi_nodes_modified[end_node_index] = end_node;
+    voronoi_nodes_modified.push_back(end_node);
 
     // 删除voronoi_nodes_startNeighbor之间的相邻关系
     LOGGER_INFO("VoronoiGraph", "Removing connections between start neighbor nodes...");

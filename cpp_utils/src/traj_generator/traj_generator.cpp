@@ -74,19 +74,19 @@ void TrajGenerator::updateInitPlan(std::vector<int> passby_nodes, const Point& s
 {
     init_plan_.clear();
     
-    // 1. start to start node
-    VoronoiNode start_node = voronoi_graph_->getNodeById(passby_nodes[0]);
-    double start_wx, start_wy;
-    costmap_->mapToWorld(start_node.getPosition().x, start_node.getPosition().y, start_wx, start_wy);
-    // connect the start Point to the start node according to path resolution
-    double dist = sqrt(pow(start_wx - start.x, 2) + pow(start_wy - start.y, 2));
-    int num_points = static_cast<int>(dist / path_resolution_);
-    double dx = (start_wx - start.x) / num_points;
-    double dy = (start_wy - start.y) / num_points;
-    for (int i = 0; i < num_points; ++i) {
-        init_plan_.push_back(PoseSE2(start.x + i * dx, start.y + i * dy, 0.0));
-    }
-    init_plan_.push_back(PoseSE2(start_wx, start_wy, 0.0));
+    // // 1. start to start node
+    // VoronoiNode start_node = voronoi_graph_->getNodeById(passby_nodes[0]);
+    // double start_wx, start_wy;
+    // costmap_->mapToWorld(start_node.getPosition().x, start_node.getPosition().y, start_wx, start_wy);
+    // // connect the start Point to the start node according to path resolution
+    // double dist = sqrt(pow(start_wx - start.x, 2) + pow(start_wy - start.y, 2));
+    // int num_points = static_cast<int>(dist / path_resolution_);
+    // double dx = (start_wx - start.x) / num_points;
+    // double dy = (start_wy - start.y) / num_points;
+    // for (int i = 0; i < num_points; ++i) {
+    //     init_plan_.push_back(PoseSE2(start.x + i * dx, start.y + i * dy, 0.0));
+    // }
+    // init_plan_.push_back(PoseSE2(start_wx, start_wy, 0.0));
     
     // 2. passby nodes
     for (int i = 0; i < passby_nodes.size() - 1; ++i) {
@@ -95,6 +95,7 @@ void TrajGenerator::updateInitPlan(std::vector<int> passby_nodes, const Point& s
 
         double last_wx, last_wy;
         double cur_wx, cur_wy;
+        double dist; // Declare the variable 'dist'
         costmap_->mapToWorld(start_node.getPosition().x, start_node.getPosition().y, last_wx, last_wy);
         for (const auto& Point : path_points) {
             costmap_->mapToWorld(Point.x, Point.y, cur_wx, cur_wy);
@@ -116,20 +117,20 @@ void TrajGenerator::updateInitPlan(std::vector<int> passby_nodes, const Point& s
     }
 
     // 3. end node to end
-    VoronoiNode end_node = voronoi_graph_->getNodeById(passby_nodes.back());
-    double end_wx, end_wy;
-    costmap_->mapToWorld(end_node.getPosition().x, end_node.getPosition().y, end_wx, end_wy);
-    // connect the end node to the end Point according to path resolution
-    dist = sqrt(pow(end_wx - end.x, 2) + pow(end_wy - end.y, 2));
-    num_points = static_cast<int>(dist / path_resolution_);
-    dx = (end.x - end_wx) / num_points;
-    dy = (end.y - end_wy) / num_points;
+    // VoronoiNode end_node = voronoi_graph_->getNodeById(passby_nodes.back());
+    // double end_wx, end_wy;
+    // costmap_->mapToWorld(end_node.getPosition().x, end_node.getPosition().y, end_wx, end_wy);
+    // // connect the end node to the end Point according to path resolution
+    // dist = sqrt(pow(end_wx - end.x, 2) + pow(end_wy - end.y, 2));
+    // num_points = static_cast<int>(dist / path_resolution_);
+    // dx = (end.x - end_wx) / num_points;
+    // dy = (end.y - end_wy) / num_points;
 
-    // skip the end_node point, i starts from 1
-    for (int i = 1; i < num_points; ++i) {
-        init_plan_.push_back(PoseSE2(end_wx + i * dx, end_wy + i * dy, 0.0));
-    }   
-    init_plan_.push_back(PoseSE2(end.x, end.y, 0.0));
+    // // skip the end_node point, i starts from 1
+    // for (int i = 1; i < num_points; ++i) {
+    //     init_plan_.push_back(PoseSE2(end_wx + i * dx, end_wy + i * dy, 0.0));
+    // }   
+    // init_plan_.push_back(PoseSE2(end.x, end.y, 0.0));
 }
 
 void TrajGenerator::updateCorridor()
@@ -364,11 +365,11 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     // TODO: Update the init plan with modified voronoi graph (Don't need to connect the start and end point to the voronoi graph)
     // updateInitPlan(passby_nodes);
 
-    // LOGGER_INFO("teb_local_planner", "Initial path: ");
-    // int idx = 0;
-    // for (const auto& pose : init_plan_) {
-    //     LOGGER_INFO("teb_local_planner", "Pose %d: (%f, %f)", idx++, pose.x(), pose.y());
-    // }
+    LOGGER_INFO("teb_local_planner", "Initial path: ");
+    int idx = 0;
+    for (const auto& pose : init_plan_) {
+        LOGGER_INFO("teb_local_planner", "Pose %d: (%f, %f)", idx++, pose.x(), pose.y());
+    }
 
     // create circular corridor
     updateCorridor();
