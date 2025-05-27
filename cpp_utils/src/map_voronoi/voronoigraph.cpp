@@ -449,6 +449,13 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
 //     for (const auto& node : voronoi_nodes_modified) {
 //         LOGGER_INFO("VoronoiGraph", "Node ID: %d, Position: (%d, %d)", 
 //             node.getId(), node.getPosition().x, node.getPosition().y);
+        
+//         // 输出该节点的所有邻接点信息
+//         std::vector<std::pair<int, float>> adjacent = node.getAllAdjacent();
+//         LOGGER_INFO("VoronoiGraph", "  Adjacent nodes (%zu):", adjacent.size());
+//         for (const auto& adj : adjacent) {
+//             LOGGER_INFO("VoronoiGraph", "    Node ID: %d, Probability: %.3f", adj.first, adj.second);
+//         }
 //     }
 // //  
 
@@ -513,7 +520,19 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
                     MapPoint start2 = node2.getPosition();
                     int target_id = node2.getId();
                     if(end.x==start2.x && end.y==start2.y){
+                        map_flag[end.x][end.y]=false;
+                        // 检查target_id是否已经是start_id的邻接点
+                        std::vector<std::pair<int, float>> adjacent = voronoi_nodes_modified[i].getAllAdjacent();
+                        for(const auto& adj : adjacent) {
+                            if(adj.first == target_id) {
+                                is_end = true;
+                                break;
+                            }
+                        }
+                        if(is_end) break;
+
                         if(start_id==target_id){
+                            map_flag[end.x][end.y]=true;   // 防止重复访问要被删除的节点
                             is_end = true;
                             break;
                         }
@@ -558,6 +577,13 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
 // for (const auto& node : voronoi_nodes_modified) {
 //     LOGGER_INFO("VoronoiGraph", "Node ID: %d, Position: (%d, %d)", 
 //         node.getId(), node.getPosition().x, node.getPosition().y);
+    
+//     // 输出该节点的所有邻接点信息
+//     std::vector<std::pair<int, float>> adjacent = node.getAllAdjacent();
+//     LOGGER_INFO("VoronoiGraph", "  Adjacent nodes (%zu):", adjacent.size());
+//     for (const auto& adj : adjacent) {
+//         LOGGER_INFO("VoronoiGraph", "    Node ID: %d, Probability: %.3f", adj.first, adj.second);
+//     }
 // }
 // //  
 
