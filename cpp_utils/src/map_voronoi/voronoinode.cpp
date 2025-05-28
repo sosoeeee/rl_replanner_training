@@ -62,7 +62,7 @@ bool VoronoiNode::activate(int id) {
 
             for (auto& adj : adjacent) {
                 if (adj.second != 0.0f) {
-                    adj.second == prob; // Distribute the probability of the added node to the remaining nodes
+                    adj.second = prob; // Distribute the probability of the added node to the remaining nodes
                 }
             }
 
