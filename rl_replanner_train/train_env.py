@@ -83,17 +83,18 @@ class TrainEnv(gym.Env):
 
         # define reward
         self.reward_weight = reward_weight
+        init_portion = self.reward_weight['reg_depth_init_portion']
         if "replan_punishment" in self.reward_weight.keys():
             if ("reg_angle_factor_a" in self.reward_weight.keys()) and ("reg_angle_factor_b" in self.reward_weight.keys()) and ("reg_depth_factor_b" not in self.reward_weight.keys()):
                 # at start the normed angle is 1/2
                 self.angle_c_ = (1 / 2) ** (self.reward_weight['reg_angle_factor_b']) * (self.reward_weight["replan_punishment"] / np.log(2))
             elif ("reg_angle_factor_a" not in self.reward_weight.keys()) and ("reg_angle_factor_b" not in self.reward_weight.keys()) and ("reg_depth_factor_b" in self.reward_weight.keys()):
-                # at start the normed depth is 1/3 (depend to the action space rescale)
-                self.depth_c_ = (1 / 3) ** (self.reward_weight['reg_depth_factor_b']) * (self.reward_weight["replan_punishment"] / np.log(3))
+                # at start the normed depth is 1/init_portion (depend to the action space rescale)
+                self.depth_c_ = (1 / init_portion) ** (self.reward_weight['reg_depth_factor_b']) * (self.reward_weight["replan_punishment"] / np.log(init_portion))
             elif ("reg_angle_factor_a" in self.reward_weight.keys()) and ("reg_angle_factor_b" in self.reward_weight.keys()) and ("reg_depth_factor_b" in self.reward_weight.keys()):
-                # at start the normed angle is 1/2 and depth is 1/3
+                # at start the normed angle is 1/2 and depth is 1/init_portion
                 self.angle_c_ = (1 / 2) ** (self.reward_weight['reg_angle_factor_b']) * ((self.reward_weight["replan_punishment"] / 2) / np.log(2))
-                self.depth_c_ = (1 / 3) ** (self.reward_weight['reg_depth_factor_b']) * ((self.reward_weight["replan_punishment"] / 2) / np.log(3))
+                self.depth_c_ = (1 / init_portion) ** (self.reward_weight['reg_depth_factor_b']) * ((self.reward_weight["replan_punishment"] / 2) / np.log(init_portion))
             else:
                 raise ValueError("Invalid reward weight setting. No reg reward function to calculate the replan punishment.")
 
@@ -266,9 +267,33 @@ class TrainEnv(gym.Env):
         self.render()
 
         return self.structure_obs, info
+    
+    # def check_action_validity(self, action: Dict[str, Union[int, np.ndarray]]):
+    #     cur_action = self.action_converter.convert(action)
+    #     self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]]
+
+    #     if cur_action[0] == LOCAL_GOAL:
+    #         # rescale to the map size
+    #         cur_action[1][0] = cur_action[1][0] * self.obser_width
+    #         cur_action[1][1] = cur_action[1][1] * self.obser_width
+
+    #         is_goal_valid, goal, cone_center = self._check_predicted_goal(depth=cur_action[1][0], radius=cur_action[1][1])
+
+    #         if is_goal_valid:
+    #             self.path_planner.loadCone(cone_center=cone_center, 
+    #                                         current_pos=self.cur_position,
+    #                                         radius=cur_action[1][1],
+    #                                         is_enabled=True)
+    #             if not self._check_robot_path([self.cur_position[0], self.cur_position[1]], goal):
+    #                 return 0
+    #         else:
+    #             return 0
+
+    #     return 1
 
     def step(self, raw_action: Dict[str, Union[int, np.ndarray]]):
         self.current_action = self.action_converter.convert(raw_action)
+        self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]] 
 
         # self.current_action = (1, np.array([0.08, 0.02]))
 
@@ -291,7 +316,6 @@ class TrainEnv(gym.Env):
                                             current_pos=self.cur_position,
                                             radius=self.current_action[1][1],
                                             is_enabled=True)
-                
                 if not self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal):
                     terminated = True
                 # use point on robot path as the start point
@@ -557,9 +581,6 @@ class TrainEnv(gym.Env):
             raise e
         
     def _get_predicted_goal(self, depth, radius):
-        # position
-        self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]]  
-        
         # load cone from robot's perspective
         # self.cur_position = [self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]]
 
@@ -810,9 +831,83 @@ class TrainEnv(gym.Env):
 
             # sleep this thread to make the simulation real-time
             time.sleep(self.decision_interval / self.render_real_time_factor)
+        
+    # def _check_robot_path(self, start, end):
+    #     cur_robot_path = self.path_planner.plan(cpp_utils.Point(start[0], start[1]), 
+    #                                                      cpp_utils.Point(end[0], end[1]))
+    #     cur_robot_path = [[pose.x, pose.y] for pose in cur_robot_path]
+
+    #     if len(cur_robot_path) == 0:
+    #         return False
+
+    #     # connected to the nearest target（the global goal in this case）
+    #     # because the cone only be used once, so the extended path won't be influenced by the cone
+    #     if end[0] != self.global_goal[0] or end[1] != self.global_goal[1]:
+    #         rest_robot_path = self.path_planner.plan(cpp_utils.Point(end[0], end[1]),
+    #                                                     cpp_utils.Point(self.global_goal[0], self.global_goal[1]))
+    #         rest_robot_path = [[pose.x, pose.y] for pose in rest_robot_path]
+
+    #         if len(rest_robot_path) == 0:
+    #             return False
+
+    #     return True
+
             
+    # def _check_predicted_goal(self, depth, radius):
+    #     # cause before step, the robot direction is updated first
+    #     cur_idx = int(self.time // self.time_resolution)
+    #     speed_window = self.current_human_traj[cur_idx - self.speed_buffer_length + 1:cur_idx + 1]
+    #     robot_direction = np.array([np.mean(np.array(speed_window[:, 3])),
+    #                                np.mean(np.array(speed_window[:, 4]))]) 
+    #     robot_direction = robot_direction / (robot_direction.dot(robot_direction)**0.5)
 
+    #     cone_center = [
+    #         self.cur_position[0] + depth * robot_direction[0],
+    #         self.cur_position[1] + depth * robot_direction[1]
+    #     ]
+    #     vertices = []
+    #     for i in range(2):
+    #         x = cone_center[0] + radius * robot_direction[1] * math.cos(i * math.pi)
+    #         y = cone_center[1] - radius * robot_direction[0] * math.cos(i * math.pi)
+    #         vertices.append({'x': x, 'y': y})
 
+    #     # Intersection of two perpendicular lines
+    #     global_x = self.global_goal[0]
+    #     global_y = self.global_goal[1]
+    #     inter_x = ((global_y - vertices[0]['y']) * (vertices[1]['y'] - vertices[0]['y']) * (vertices[1]['x'] - vertices[0]['x']) +
+    #                global_x * (vertices[1]['x'] - vertices[0]['x']) * (vertices[1]['x'] - vertices[0]['x']) + 
+    #                vertices[0]['x'] * (vertices[1]['y'] - vertices[0]['y']) * (vertices[1]['y'] - vertices[0]['y'])) / ((vertices[1]['y'] - vertices[0]['y']) * (vertices[1]['y'] - vertices[0]['y']) + (vertices[1]['x'] - vertices[0]['x']) * (vertices[1]['x'] - vertices[0]['x']))
+    #     inter_y = (vertices[0]['x'] - vertices[1]['x']) / (vertices[1]['y'] - vertices[0]['y']) * (inter_x - global_x) + global_y
+        
+    #     # select the nearest point to the global goal from the base edge of cone
+    #     vector_0 = np.array([global_x - vertices[0]['x'], global_y - vertices[0]['y']])
+    #     module_0 = vector_0.dot(vector_0) ** 0.5
+    #     vector_1 = np.array([global_x - vertices[1]['x'], global_y - vertices[1]['y']])
+    #     module_1 = vector_1.dot(vector_1) ** 0.5
+    #     base_direction = np.array([robot_direction[1], -robot_direction[0]])
+    #     cos_0 = vector_0.dot(base_direction) / module_0
+    #     cos_1 = vector_1.dot(base_direction) / module_1
 
+    #     try:
+    #         if cos_0 * cos_1 > 0:
+    #             # unilateral
+    #             if abs(cos_0) < abs(cos_1):
+    #                 # the vertex 0 is close to global goal
+    #                 pred_position = self._avoidObstacles(vertices[0], vertices[1], vertices[0])
+    #             else:
+    #                 # the vertex 1 is close to global goal
+    #                 pred_position = self._avoidObstacles(vertices[0], vertices[1], vertices[1])
+    #         else:
+    #             # bilateral
+    #             pred_position = self._avoidObstacles(vertices[0], vertices[1], {'x':inter_x, 'y':inter_y})
+    #     except Exception as e:
+    #         # print('[Predictor] Fail to get the predicted goal: %s' % str(e))
+    #         return False, None, None
+        
+    #     if pred_position is None:
+    #          return False, None, None
+
+    #     return True, pred_position, cone_center
+    
 
 
