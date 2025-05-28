@@ -15,10 +15,10 @@ print("=====================================")
 # run environment
 reward_weight = {
         'task': 1.0,
-        'reg_angle_factor_a': 0.2,
-        'reg_angle_factor_b': 0.07,
-        'reg_depth_factor_a': 0.2,
-        'reg_depth_factor_b': 0.02,
+        'replan_punishment': 0.3,
+        'reg_angle_factor_a': 0.0,
+        'reg_angle_factor_b': 3.0,
+        'reg_depth_factor_b': 3.0,
         'state': 2.0,
         'exp_factor': 1.0,
         'decay_factor': 0.98

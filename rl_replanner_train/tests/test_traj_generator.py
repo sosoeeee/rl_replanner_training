@@ -17,6 +17,9 @@ rclpy.init()
 
 render_node = rclpy.create_node("render_node")
 
+map_name = "turtlebot3_world_3"
+map_path = "./rl_replanner_train/maps/tb3_classic/" + map_name + ".yaml"
+
 path_publisher = render_node.create_publisher(Path, "path", 10)
 init_path_publisher = render_node.create_publisher(Path, "init_path", 10)
 raw_traj_publisher = render_node.create_publisher(Path, "raw_traj", 10)
@@ -25,14 +28,14 @@ costmap_publisher = render_node.create_publisher(OccupancyGrid, "costmap", 10)
 
 previous_marker_count = 0  # Add this line after creating render_node
 
-res_status, costmap_cpp = cpp_utils.loadMap("./rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml")
+res_status, costmap_cpp = cpp_utils.loadMap(map_path)
 pyCostmap = PyCostmap2D(render_node)
 
 
 # Initialize the trajectory generator
 traj_generator = cpp_utils.TrajGenerator()
 traj_generator.initialize(
-    map_file="./rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml",
+    map_file=map_path,
     planner_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     path_resolution=0.025,
     time_resolution=0.1,
@@ -199,6 +202,6 @@ while rclpy.ok():
     # plt.pause(1.0)
     
     # sleep for 1 second
-    # time.sleep(1.0)
+    time.sleep(1.0)
 
 # rclpy.shutdown()
