@@ -118,8 +118,12 @@ class EvalEnv(gym.Env):
 
         # human path
         self.use_generator = use_generator
+        map_name = map_setting_file.split('/')[-1].split('.')[0]
+        eval_path_directory = map_name + '/' + eval_path_directory
+        print("Eval path directory: ", eval_path_directory)
         if self.use_generator:
             self.replay_traj_files = glob.glob(replay_traj_path + '/' + eval_path_directory + '/*.txt')
+            print("Replay trajectory files found: ", len(self.replay_traj_files))
         else:
             self.replay_traj_files = glob.glob(replay_traj_path + '/*.txt')
 
@@ -237,7 +241,7 @@ class EvalEnv(gym.Env):
         super().reset(seed=seed)
 
         if self.render_mode == "ros":
-            self.traj_index += 1
+            self.traj_index = (self.traj_index + 1) % len(self.replay_traj_files)
             print("\n\n ======================== Resetting trajectory: {} ======================== \n\n".format(self.traj_index + 1))
         else:
             # Reset the trajectory index

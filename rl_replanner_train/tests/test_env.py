@@ -19,6 +19,7 @@ reward_weight = {
         'reg_angle_factor_a': 0.0,
         'reg_angle_factor_b': 3.0,
         'reg_depth_factor_b': 3.0,
+        'reg_depth_init_portion': 2.0,
         'state': 2.0,
         'exp_factor': 1.0,
         'decay_factor': 0.98
@@ -29,7 +30,7 @@ robot_prediction_length=100
 speed_buffer_length=4
 env = TrainEnv(
     reward_weight=reward_weight,
-    map_setting_file='./rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml',
+    map_setting_file='./rl_replanner_train/maps/tb3_classic/turtlebot3_world_3.yaml',
     path_planner_setting_file='./cpp_utils/include/path_planner/planner_setting.yaml',
     traj_planner_setting_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     render_mode='ros',

@@ -336,24 +336,43 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     
 
     // TODO: Update the voronoi graph with "Bubble technique"
-    unsigned int start_mx, start_my;
-    unsigned int end_mx, end_my;
-    costmap_->worldToMap(start.x, start.y, start_mx, start_my);
-    costmap_->worldToMap(end.x, end.y, end_mx, end_my);
-    voronoi_graph_->getVoronoiGraph(start_mx, start_my, end_mx, end_my);
+    bool rebuild = false;
+    if (!last_start_point_ || !last_end_point_)
+    {
+        last_start_point_ = std::make_unique<Point>(start);
+        last_end_point_ = std::make_unique<Point>(end);
+        rebuild = true;
+    }
+    else if (std::abs(last_start_point_->x - start.x) > 1e-6 || std::abs(last_start_point_->y - start.y) > 1e-6 ||
+             std::abs(last_end_point_->x - end.x) > 1e-6 || std::abs(last_end_point_->y - end.y) > 1e-6)
+    {
+        last_start_point_ = std::make_unique<Point>(start);
+        last_end_point_ = std::make_unique<Point>(end);
+        rebuild = true;
+        LOGGER_INFO("teb_local_planner", "Start point or end point changed, rebuilding voronoi graph.");
+    }
+
+    if (rebuild)
+    {
+        unsigned int start_mx, start_my;
+        unsigned int end_mx, end_my;
+        costmap_->worldToMap(start.x, start.y, start_mx, start_my);
+        costmap_->worldToMap(end.x, end.y, end_mx, end_my);
+        voronoi_graph_->getVoronoiGraph(start_mx, start_my, end_mx, end_my);
+    }
 
     // // debug
-    LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
+    // LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
     
     // sample the passby voronoi nodes from start node to end node
     // std::vector<int> passby_nodes = voronoi_graph_->getPassbyNodes(start_node_id, end_node_id);
     std::vector<int> passby_nodes = voronoi_graph_->getPassbyNodes(voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
 
     // // debug
-    LOGGER_INFO("teb_local_planner", "Passby nodes: ");
-    for (const auto& node_id : passby_nodes) {
-        LOGGER_INFO("teb_local_planner", "%d", node_id);
-    }
+    // LOGGER_INFO("teb_local_planner", "Passby nodes: ");
+    // for (const auto& node_id : passby_nodes) {
+    //     LOGGER_INFO("teb_local_planner", "%d", node_id);
+    // }
 
     if (passby_nodes.empty()) {
         LOGGER_ERROR("teb_local_planner", "No valid path found");
@@ -365,11 +384,11 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     // TODO: Update the init plan with modified voronoi graph (Don't need to connect the start and end point to the voronoi graph)
     // updateInitPlan(passby_nodes);
 
-    LOGGER_INFO("teb_local_planner", "Initial path: ");
-    int idx = 0;
-    for (const auto& pose : init_plan_) {
-        LOGGER_INFO("teb_local_planner", "Pose %d: (%f, %f)", idx++, pose.x(), pose.y());
-    }
+    // LOGGER_INFO("teb_local_planner", "Initial path: ");
+    // int idx = 0;
+    // for (const auto& pose : init_plan_) {
+    //     LOGGER_INFO("teb_local_planner", "Pose %d: (%f, %f)", idx++, pose.x(), pose.y());
+    // }
 
     // create circular corridor
     updateCorridor();

@@ -19,7 +19,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # 获取项目根目录
 project_root = os.path.dirname(os.path.dirname(current_dir))
 # 构建地图文件的绝对路径
-map_file = os.path.join(project_root, "rl_replanner_train", "maps", "tb3_classic", "turtlebot3_world.yaml")
+map_file = os.path.join(project_root, "rl_replanner_train", "maps", "tb3_classic", "turtlebot3_world_3.yaml")
 planner_file = os.path.join(project_root, "cpp_utils", "include", "teb_local_planner", "teb_params.yaml")
 
 rclpy.init()
