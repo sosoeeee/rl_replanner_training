@@ -90,16 +90,17 @@ class EvalEnv(gym.Env):
 
         # define reward
         self.reward_weight = reward_weight
-        init_portion = self.reward_weight['reg_depth_init_portion']
         if "replan_punishment" in self.reward_weight.keys():
             if ("reg_angle_factor_a" in self.reward_weight.keys()) and ("reg_angle_factor_b" in self.reward_weight.keys()) and ("reg_depth_factor_b" not in self.reward_weight.keys()):
                 # at start the normed angle is 1/2
                 self.angle_c_ = (1 / 2) ** (self.reward_weight['reg_angle_factor_b']) * (self.reward_weight["replan_punishment"] / np.log(2))
-            elif ("reg_angle_factor_a" not in self.reward_weight.keys()) and ("reg_angle_factor_b" not in self.reward_weight.keys()) and ("reg_depth_factor_b" in self.reward_weight.keys()):
+            elif ("reg_angle_factor_a" not in self.reward_weight.keys()) and ("reg_angle_factor_b" not in self.reward_weight.keys()) and ("reg_depth_factor_b" in self.reward_weight.keys() and 'reg_depth_init_portion' in self.reward_weight.keys()):
                 # at start the normed depth is 1/init_portion (depend to the action space rescale)
+                init_portion = self.reward_weight['reg_depth_init_portion']
                 self.depth_c_ = (1 / init_portion) ** (self.reward_weight['reg_depth_factor_b']) * (self.reward_weight["replan_punishment"] / np.log(init_portion))
-            elif ("reg_angle_factor_a" in self.reward_weight.keys()) and ("reg_angle_factor_b" in self.reward_weight.keys()) and ("reg_depth_factor_b" in self.reward_weight.keys()):
+            elif ("reg_angle_factor_a" in self.reward_weight.keys()) and ("reg_angle_factor_b" in self.reward_weight.keys()) and ("reg_depth_factor_b" in self.reward_weight.keys() and 'reg_depth_init_portion' in self.reward_weight.keys()):
                 # at start the normed angle is 1/2 and depth is 1/init_portion
+                init_portion = self.reward_weight['reg_depth_init_portion']
                 self.angle_c_ = (1 / 2) ** (self.reward_weight['reg_angle_factor_b']) * ((self.reward_weight["replan_punishment"] / 2) / np.log(2))
                 self.depth_c_ = (1 / init_portion) ** (self.reward_weight['reg_depth_factor_b']) * ((self.reward_weight["replan_punishment"] / 2) / np.log(init_portion))
             else:
