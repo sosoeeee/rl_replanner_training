@@ -18,6 +18,7 @@ reward_weight = {
         'replan_punishment': 0.3,
         'reg_angle_factor_a': 0.0,
         'reg_angle_factor_b': 3.0,
+        'reg_angle_factor_k': 0.02,
         'reg_depth_factor_b': 3.0,
         'reg_depth_init_portion': 2.0,
         'state': 2.0,
@@ -30,7 +31,7 @@ robot_prediction_length=100
 speed_buffer_length=4
 env = TrainEnv(
     reward_weight=reward_weight,
-    map_setting_file='./rl_replanner_train/maps/tb3_classic/turtlebot3_world_3.yaml',
+    map_setting_file='./rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml',
     path_planner_setting_file='./cpp_utils/include/path_planner/planner_setting.yaml',
     traj_planner_setting_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     render_mode='ros',
@@ -52,14 +53,14 @@ print("Action space:", env.action_space)
 step = 0
 total_reward = 0
 while True:
-    action = env.action_space.sample()
+    # action = env.action_space.sample()
 
     # print('Action:', action)
-    # action = {
-    #     'id': 0,
-    #     'params0': [],
-    #     'params1': [0.0, 0.0],
-    # }
+    action = {
+        'id': 0,
+        'params0': [],
+        'params1': [0.0, 0.0],
+    }
     # print('Action:', action)
 
     obs, reward, terminated, truncated, info = env.step(action)

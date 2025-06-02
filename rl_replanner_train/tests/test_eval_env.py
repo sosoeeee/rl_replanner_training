@@ -15,11 +15,6 @@ print("=====================================")
 # run environment
 reward_weight = {
         'task': 1.0,
-        'replan_punishment': 0.3,
-        'reg_angle_factor_a': 0.0,
-        'reg_angle_factor_b': 3.0,
-        'reg_depth_factor_b': 3.0,
-        'reg_depth_init_portion': 2.0,
         'state': 2.0,
         'exp_factor': 1.0,
         'decay_factor': 0.98
@@ -34,9 +29,8 @@ env = EvalEnv(
     reward_weight=reward_weight,
     map_setting_file='./rl_replanner_train/maps/tb3_classic/turtlebot3_world_3.yaml',
     path_planner_setting_file='./cpp_utils/include/path_planner/planner_setting.yaml',
-    traj_planner_setting_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     render_mode='ros',
-    render_real_time_factor=8,
+    render_real_time_factor=10,
     obser_width=obser_width,
     replay_traj_path='./rl_replanner_train/data/',
     human_history_length=human_history_length,
@@ -56,10 +50,22 @@ total_reward = 0  # 累计奖励
 
 while True:
     action = env.action_space.sample()
+
+    # action = {
+    #     'id': 1,
+    #     'params0': [],
+    #     'params1': [1e-3, 1e-3],
+    # }
+
     obs, reward, terminated, truncated, info = env.step(action)
+    step += 1
     total_reward += reward
 
+    print("")
+    print('action:', action)
     print('Reward:', reward)
+    print('Info:', info)
+    print('Step:', step)
     print(f'Current trajectory: {env.traj_index + 1}/{len(env.replay_traj_files)}')
     print(f'Total reward: {total_reward:.2f}')
 
@@ -67,12 +73,11 @@ while True:
     if terminated:
         obs, info = env.reset()
         total_reward = 0  # 重置单条轨迹的奖励
+        step = 0
         print('Trajectory ended. Resetting environment...')
         # break
         print('=====================================')
         print('')
         time.sleep(1)
         
-    step += 1
-
 env.close()

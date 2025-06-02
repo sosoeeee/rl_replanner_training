@@ -22,7 +22,7 @@ costmap_publisher = render_node.create_publisher(OccupancyGrid, "costmap", 10)
 
 previous_marker_count = 0  # Add this line after creating render_node
 
-map_name = "turtlebot3_world_3"
+map_name = "turtlebot3_world"
 
 res_status, costmap_cpp = cpp_utils.loadMap("./rl_replanner_train/maps/tb3_classic/" + map_name + ".yaml")
 pyCostmap = PyCostmap2D(render_node)
