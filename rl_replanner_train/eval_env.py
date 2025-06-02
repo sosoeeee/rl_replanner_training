@@ -91,7 +91,7 @@ class EvalEnv(BaseEnv):
 
         self.replan_num = 0
         self.current_step = 0
-        self.current_human_traj_length = len(self.current_human_traj)
+        self.total_reward_before_normalization = 0.0
 
     def _get_info(self, end_reward=0, is_terminal=False):
         self.current_step += 1
@@ -124,13 +124,16 @@ class EvalEnv(BaseEnv):
         else:
             task_reward = 0.0
 
-        self.reward = task_reward / (self.current_human_traj_length // (self.decision_interval // self.time_resolution))
-        
+        self.total_reward_before_normalization += task_reward
+
         # debug
         if self.render_mode == "ros":
             print("task_reward: ", task_reward)
 
-        return self.reward
+        if not is_terminal:
+            self.reward = 0.0
+        else:
+            self.reward = self.total_reward_before_normalization / (self.current_step + 1)
 
             
 

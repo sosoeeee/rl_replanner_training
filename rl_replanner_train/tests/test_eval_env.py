@@ -66,7 +66,7 @@ while True:
     print('Reward:', reward)
     print('Info:', info)
     print('Step:', step)
-    print(f'Current trajectory: {env.traj_index + 1}/{len(env.replay_traj_files)}')
+    print(f'Current trajectory: {env.traj_index}/{len(env.replay_traj_files)}')
     print(f'Total reward: {total_reward:.2f}')
 
     ## 目前我采取的计算总体reward的方式：由env.traj_index判断是否终止    （也可以移植到eval_env.py中的自定义函数中）
