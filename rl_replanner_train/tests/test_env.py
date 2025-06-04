@@ -19,8 +19,8 @@ reward_weight = {
         'reg_angle_factor_a': 0.0,
         'reg_angle_factor_b': 3.0,
         'reg_angle_factor_k': 0.02,
-        'reg_depth_factor_b': 3.0,
-        'reg_depth_init_portion': 2.0,
+        # 'reg_depth_factor_b': 3.0,
+        # 'reg_depth_init_portion': 2.0,
         'state': 2.0,
         'exp_factor': 1.0,
         'decay_factor': 0.98
@@ -35,7 +35,7 @@ env = TrainEnv(
     path_planner_setting_file='./cpp_utils/include/path_planner/planner_setting.yaml',
     traj_planner_setting_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     render_mode='ros',
-    render_real_time_factor=8,
+    render_real_time_factor=3,
     obser_width=obser_width,
     replay_traj_path='./rl_replanner_train/data',
     human_history_length=human_history_length,
@@ -53,14 +53,14 @@ print("Action space:", env.action_space)
 step = 0
 total_reward = 0
 while True:
-    # action = env.action_space.sample()
+    action = env.action_space.sample()
 
     # print('Action:', action)
-    action = {
-        'id': 0,
-        'params0': [],
-        'params1': [0.0, 0.0],
-    }
+    # action = {
+    #     'id': 0,
+    #     'params0': [],
+    #     'params1': [0.0, 0.0],
+    # }
     # print('Action:', action)
 
     obs, reward, terminated, truncated, info = env.step(action)

@@ -93,6 +93,45 @@ class EvalEnv(BaseEnv):
         self.current_step = 0
         self.total_reward_before_normalization = 0.0
 
+    # when evaluating, if the robot action is invalid, current episode will be terminated
+    def _interact(self):
+        # This function is used to interact with the environment
+        self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]] 
+
+        terminated = False
+
+        # apply action
+        # direction vector is average velocity calculated from past trajectory
+        self._get_robot_direction()
+
+        if self.current_action[0] == LOCAL_GOAL:
+            # rescale to the map size
+            self.current_action[1][0] = self.current_action[1][0] * self.obser_width
+            self.current_action[1][1] = self.current_action[1][1] * self.obser_width
+
+            if self._get_predicted_goal(depth=self.current_action[1][0], radius=self.current_action[1][1]):
+                self.path_planner.loadCone(cone_center=self.cone_center, 
+                                            current_pos=self.cur_position,
+                                            radius=self.current_action[1][1],
+                                            is_enabled=True)
+                if not self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal):
+                    terminated = True
+                # use point on robot path as the start point
+                # self._plan_robot_path([self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]], self.pred_goal)
+            else:
+                terminated = True
+
+        if terminated:
+            end_reward = -1
+        elif self._get_human_path():
+            terminated = True
+            end_reward = 1
+        else:
+            self.time += self.decision_interval
+            end_reward = 0
+
+        return terminated, end_reward
+    
     def _get_info(self, end_reward=0, is_terminal=False):
         self.current_step += 1
         if self.current_action[0] == LOCAL_GOAL:
@@ -120,7 +159,7 @@ class EvalEnv(BaseEnv):
             exp_error = np.exp(- self.exp_factor * np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1))
             decay_weight = [self.decay_factor ** i for i in range(eval_length)] 
             decay_weight = np.array(decay_weight) * (1 - self.decay_factor) / (1 - self.decay_factor ** (eval_length))
-            task_reward = decay_weight.dot(exp_error) * self.reward_weight['task']
+            task_reward = decay_weight.dot(exp_error)
         else:
             task_reward = 0.0
 

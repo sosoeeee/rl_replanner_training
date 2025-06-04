@@ -99,7 +99,53 @@ class TrainEnv(BaseEnv):
                 self.current_human_traj = np.array(traj_data)
             else:
                 raise ValueError("[SimulationWorld] Failed to generate human trajectory.")
+    
+    # When trianing, allow robot change its aciton when current one is invalid
+    def _interact(self):
+        # debug
+        # if self.render_mode == "ros":
+        #     print("current action: ", self.current_action)
 
+        # This function is used to interact with the environment
+        self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]] 
+
+        terminated = False
+
+        # apply action
+        # direction vector is average velocity calculated from past trajectory
+        is_valid = True
+        self._get_robot_direction()
+
+        if self.current_action[0] == LOCAL_GOAL:
+            # rescale to the map size
+            self.current_action[1][0] = self.current_action[1][0] * self.obser_width
+            self.current_action[1][1] = self.current_action[1][1] * self.obser_width
+
+            if self._get_predicted_goal(depth=self.current_action[1][0], radius=self.current_action[1][1]):
+                self.path_planner.loadCone(cone_center=self.cone_center, 
+                                            current_pos=self.cur_position,
+                                            radius=self.current_action[1][1],
+                                            is_enabled=True)
+                if not self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal):
+                    is_valid = False
+                # use point on robot path as the start point
+                # self._plan_robot_path([self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]], self.pred_goal)
+            else:
+                is_valid = False
+
+        if not is_valid:
+            # time won't elapse if the action is invalid
+            end_reward = -1
+        else:
+            end_reward = 0  
+            if self._get_human_path():
+                terminated = True
+                end_reward = 1
+            else:
+                self.time += self.decision_interval
+
+        return terminated, end_reward
+    
     def _get_info(self, end_reward=0, is_terminal=False):
         self.info = {}
     
@@ -189,8 +235,9 @@ class TrainEnv(BaseEnv):
         self.reward = task_reward + angle_reg_reward + depth_reg_reward + end_reward * self.reward_weight['state']
         
         # debug
-        # print("============== reward terms ==============")
         if self.render_mode == "ros":
+            print("============== reward terms ==============")
+            print("end_reward: ", end_reward * self.reward_weight['state'])
             print("task_reward: ", task_reward)
             print("angle_reg_reward: ", angle_reg_reward)
             print("depth_reg_reward: ", depth_reg_reward)

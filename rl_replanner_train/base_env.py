@@ -186,6 +186,10 @@ class BaseEnv(gym.Env):
     def _reset_human_traj(self, seed=None, options=None):
         pass 
 
+    @abc.abstractmethod
+    def _interact(self):
+        pass
+
     @abc.abstractmethod         
     def _get_info(self, end_reward=0, is_terminal=False):
         pass
@@ -195,6 +199,7 @@ class BaseEnv(gym.Env):
         pass
 
     def reset(self, seed=None, options=None):
+        super().reset(seed=seed)
         self._reset_human_traj(seed, options)
         self._reset_internal(seed, options)
 
@@ -241,11 +246,13 @@ class BaseEnv(gym.Env):
 
         self.human_path_buffer = []
         self.future_human_path_buffer = []
-
+        self.current_robot_path = None
+        
         # time elapsed
         if not self._plan_robot_path([self.current_human_traj[0][0], self.current_human_traj[0][1]], self.global_goal):
             raise ValueError("[SimulationWorld] Failed to find a path from start to goal.")
         
+        # TODO: try different start point (pick accroding to random seed)
         self.human_path_buffer.append([self.current_human_traj[0][0], self.current_human_traj[0][1]])
         idx = 1
         while len(self.human_path_buffer) < self.human_history_length:
@@ -283,48 +290,6 @@ class BaseEnv(gym.Env):
 
         self.render()
 
-    def _interact(self):
-        # debug
-        # if self.render_mode == "ros":
-        #     print("current action: ", self.current_action)
-
-        # This function is used to interact with the environment
-        self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]] 
-
-        terminated = False
-
-        # apply action
-        # direction vector is average velocity calculated from past trajectory
-        self._get_robot_direction()
-
-        if self.current_action[0] == LOCAL_GOAL:
-            # rescale to the map size
-            self.current_action[1][0] = self.current_action[1][0] * self.obser_width
-            self.current_action[1][1] = self.current_action[1][1] * self.obser_width
-
-            if self._get_predicted_goal(depth=self.current_action[1][0], radius=self.current_action[1][1]):
-                self.path_planner.loadCone(cone_center=self.cone_center, 
-                                            current_pos=self.cur_position,
-                                            radius=self.current_action[1][1],
-                                            is_enabled=True)
-                if not self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal):
-                    terminated = True
-                # use point on robot path as the start point
-                # self._plan_robot_path([self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]], self.pred_goal)
-            else:
-                terminated = True
-
-        if terminated:
-            end_reward = -1
-        elif self._get_human_path():
-            terminated = True
-            end_reward = 1
-        else:
-            self.time += self.decision_interval
-            end_reward = 0
-
-        return terminated, end_reward
-
     # after calling _get_obs, the flag 'is_obs_ready_' will be set to false
     def _get_obs(self, is_terminal=False):
         self.structure_obs = {}
@@ -347,18 +312,29 @@ class BaseEnv(gym.Env):
     
     def _get_robot_direction(self):
         # direction vector is average velocity calculated from past trajectory
-        cur_idx = int(self.time // self.time_resolution)
-        speed_window = self.current_human_traj[cur_idx - self.speed_buffer_length + 1:cur_idx + 1]
-        self.robot_direction = np.array([np.mean(np.array(speed_window[:, 3])),
-                                   np.mean(np.array(speed_window[:, 4]))]) 
+        # cur_idx = int(self.time // self.time_resolution)
+        # speed_window = self.current_human_traj[cur_idx - self.speed_buffer_length + 1:cur_idx + 1]
+        # self.robot_direction = np.array([np.mean(np.array(speed_window[:, 3])),
+        #                            np.mean(np.array(speed_window[:, 4]))]) 
+
+        # differential value of self.human_path_buffer (get rid of the velocity component)
+        path_buffer = np.array(self.human_path_buffer)
+        diff = path_buffer[1:] - path_buffer[:-1]
+        speed_window = diff[-self.speed_buffer_length:]  # get the last speed_buffer_length elements
+        self.robot_direction = np.array([np.mean(np.array(speed_window[:, 0])),
+                                   np.mean(np.array(speed_window[:, 1]))]) 
+
         self.robot_direction = self.robot_direction / (self.robot_direction.dot(self.robot_direction)**0.5)
 
     def _plan_robot_path(self, start, end):
+        last_robot_path = self.current_robot_path.copy() if self.current_robot_path is not None else []
+
         self.current_robot_path = self.path_planner.plan(cpp_utils.Point(start[0], start[1]), 
                                                          cpp_utils.Point(end[0], end[1]))
         self.current_robot_path = [[pose.x, pose.y] for pose in self.current_robot_path]
 
         if len(self.current_robot_path) == 0:
+            self.current_robot_path = last_robot_path
             return False
 
         # connected to the nearest target（the global goal in this case）
@@ -369,6 +345,7 @@ class BaseEnv(gym.Env):
             self.rest_robot_path = [[pose.x, pose.y] for pose in self.rest_robot_path]
 
             if len(self.rest_robot_path) == 0:
+                self.current_robot_path = last_robot_path
                 return False
 
             self.current_robot_path += self.rest_robot_path
@@ -454,10 +431,10 @@ class BaseEnv(gym.Env):
 
         self.robot_closest_idx = min(idx_, cur_robot_path_length - 1)
 
-        if self.render_mode == "ros":
-            print("robot starting idx: ", start_idx)
-            print("robot ending idx: ", end_idx)
-            print("robot closest idx: ", self.robot_closest_idx)
+        # if self.render_mode == "ros":
+        #     print("robot starting idx: ", start_idx)
+        #     print("robot ending idx: ", end_idx)
+        #     print("robot closest idx: ", self.robot_closest_idx)
 
         self.robot_path_buffer = self.current_robot_path[self.robot_closest_idx: self.robot_closest_idx + self.robot_prediction_length]
 
