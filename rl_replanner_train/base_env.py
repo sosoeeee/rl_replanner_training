@@ -262,9 +262,17 @@ class BaseEnv(gym.Env):
 
             x = self.current_human_traj[idx][0]
             y = self.current_human_traj[idx][1]
+
             distance = ((x - self.human_path_buffer[-1][0]) ** 2 + (y - self.human_path_buffer[-1][1]) ** 2) ** 0.5
-            if distance >= self.path_resolution:
-                self.human_path_buffer.append([x, y])
+
+            while len(self.human_path_buffer) < self.human_history_length and distance >= self.path_resolution:
+                # linear interpolation
+                ratio = self.path_resolution / distance
+                new_x = self.human_path_buffer[-1][0] + (x - self.human_path_buffer[-1][0]) * ratio
+                new_y = self.human_path_buffer[-1][1] + (y - self.human_path_buffer[-1][1]) * ratio
+                self.human_path_buffer.append([new_x, new_y])
+                # update distance
+                distance = ((x - self.human_path_buffer[-1][0]) ** 2 + (y - self.human_path_buffer[-1][1]) ** 2) ** 0.5
 
         # get future human path buffer for reward calculation
         self.f_idx = idx + 1
@@ -278,9 +286,16 @@ class BaseEnv(gym.Env):
                 x = self.current_human_traj[self.f_idx][0]
                 y = self.current_human_traj[self.f_idx][1]
                 distance = ((x - self.future_human_path_buffer[-1][0]) ** 2 + (y - self.future_human_path_buffer[-1][1]) ** 2) ** 0.5
-                if distance >= self.path_resolution:
-                    self.future_human_path_buffer.append([x, y])
 
+                while len(self.future_human_path_buffer) < self.robot_prediction_length and distance >= self.path_resolution:
+                    # self.future_human_path_buffer.append([x, y])
+                    # linear interpolation
+                    ratio = self.path_resolution / distance
+                    new_x = self.future_human_path_buffer[-1][0] + (x - self.future_human_path_buffer[-1][0]) * ratio
+                    new_y = self.future_human_path_buffer[-1][1] + (y - self.future_human_path_buffer[-1][1]) * ratio
+                    self.future_human_path_buffer.append([new_x, new_y])
+                    # update distance
+                    distance = ((x - self.future_human_path_buffer[-1][0]) ** 2 + (y - self.future_human_path_buffer[-1][1]) ** 2) ** 0.5
 
         self.time += self.time_resolution * idx
 
@@ -370,25 +385,41 @@ class BaseEnv(gym.Env):
             x = self.current_human_traj[i][0]
             y = self.current_human_traj[i][1]
             distance = ((x - self.human_path_buffer[-1][0]) ** 2 + (y - self.human_path_buffer[-1][1]) ** 2) ** 0.5
-            if distance >= self.path_resolution:
+            while distance >= self.path_resolution:
+                # self.future_human_path_buffer.append([x, y])
+                # linear interpolation
                 self.human_path_buffer.pop(0)
-                self.human_path_buffer.append([x, y])
+                ratio = self.path_resolution / distance
+                new_x = self.human_path_buffer[-1][0] + (x - self.human_path_buffer[-1][0]) * ratio
+                new_y = self.human_path_buffer[-1][1] + (y - self.human_path_buffer[-1][1]) * ratio
+                self.human_path_buffer.append([new_x, new_y])
+                # update distance
+                distance = ((x - self.human_path_buffer[-1][0]) ** 2 + (y - self.human_path_buffer[-1][1]) ** 2) ** 0.5
 
-                # update furture human path buffer also
-                self.future_human_path_buffer.pop(0)
-                while len(self.future_human_path_buffer) < self.robot_prediction_length:
-                    self.f_idx += 1
-                    if self.f_idx >= len(self.current_human_traj):
-                        # assume that human intention is standing still
-                        self.future_human_path_buffer.append([self.current_human_traj[-1][0], self.current_human_traj[-1][1]]) 
-                        continue
+        # update furture human path buffer also
+        self.f_idx = min(idx + idx_len + 1, len(self.current_human_traj) - 1)
+        self.future_human_path_buffer = [[self.current_human_traj[self.f_idx][0], self.current_human_traj[self.f_idx][1]]]
+        while len(self.future_human_path_buffer) < self.robot_prediction_length:
+            self.f_idx += 1
+            if self.f_idx >= len(self.current_human_traj):
+                # assume that human intention is standing still
+                self.future_human_path_buffer.append([self.current_human_traj[-1][0], self.current_human_traj[-1][1]]) 
+                continue
 
-                    x = self.current_human_traj[self.f_idx][0]
-                    y = self.current_human_traj[self.f_idx][1]
-                    distance = ((x - self.future_human_path_buffer[-1][0]) ** 2 + (y - self.future_human_path_buffer[-1][1]) ** 2) ** 0.5
-                    if distance >= self.path_resolution:
-                        self.future_human_path_buffer.append([x, y])
-                
+            x = self.current_human_traj[self.f_idx][0]
+            y = self.current_human_traj[self.f_idx][1]
+            distance = ((x - self.future_human_path_buffer[-1][0]) ** 2 + (y - self.future_human_path_buffer[-1][1]) ** 2) ** 0.5
+
+            while distance >= self.path_resolution and len(self.future_human_path_buffer) < self.robot_prediction_length:
+                # self.future_human_path_buffer.append([x, y])
+                # linear interpolation
+                ratio = self.path_resolution / distance
+                new_x = self.future_human_path_buffer[-1][0] + (x - self.future_human_path_buffer[-1][0]) * ratio
+                new_y = self.future_human_path_buffer[-1][1] + (y - self.future_human_path_buffer[-1][1]) * ratio
+                self.future_human_path_buffer.append([new_x, new_y])
+                # update distance
+                distance = ((x - self.future_human_path_buffer[-1][0]) ** 2 + (y - self.future_human_path_buffer[-1][1]) ** 2) ** 0.5
+                        
         return False
     
     def _get_future_human_path(self, furture_len):

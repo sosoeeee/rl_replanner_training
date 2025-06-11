@@ -46,9 +46,11 @@ class EvalEnv(BaseEnv):
             decision_interval=1,
             render_real_time_factor=1.0,
             use_generator = False,
+            eval_ordered=False,  # if True, the evaluation will be in order of the eval_path_directory
         ):
         # addtional parameters
         self.eval_path_directory = eval_path_directory
+        self.eval_ordered = eval_ordered
 
         super().__init__(
             reward_weight=reward_weight,
@@ -75,10 +77,14 @@ class EvalEnv(BaseEnv):
         else:
             self.replay_traj_files = glob.glob(self.replay_traj_path + '/*.txt')
 
-        self.traj_index = 0
+        self.traj_index = -1
 
     def _reset_human_traj(self, seed=None, options=None):
         if self.render_mode == "ros":
+            self.eval_ordered = True  # when rendering in ROS, always evaluate in order
+            print("Warning: eval_ordered is set to True when rendering in ROS.")
+
+        if self.eval_ordered:
             # evaluate in order
             self.traj_index = (self.traj_index + 1) % len(self.replay_traj_files)
             print("\n\n ======================== Resetting trajectory: {} ======================== \n\n".format(self.traj_index))
@@ -146,6 +152,8 @@ class EvalEnv(BaseEnv):
             self.info = {
                 'is_success': is_success,
                 'replan_freq': self.replan_num / self.current_step,  # replan frequency
+                'cur_idx': self.traj_index,
+                'eval_traj_num': len(self.replay_traj_files),
             }
         else:
             self.info = {}

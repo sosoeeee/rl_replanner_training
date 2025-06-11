@@ -43,12 +43,15 @@ endPoint = cpp_utils.Point(1.96, 0.395)
 # startPoint = cpp_utils.Point(-0.217, -1.72)
 # endPoint = cpp_utils.Point(0.395, 1.96)
 
+# root_dir = "rl_replanner_train/data/"
+root_dir = "/home/rosdev/ros2_ws/data_collection/data/"
+
 # create map directory
-if not os.path.exists("rl_replanner_train/data/" + map_name):
-    os.makedirs("rl_replanner_train/data/" + map_name)
+if not os.path.exists(root_dir + map_name):
+    os.makedirs(root_dir + map_name)
 
 # 轨迹文件
-data_dir = "rl_replanner_train/data/" + map_name + "/eval_paths"
+data_dir = root_dir + map_name + "/eval_paths"
 if not os.path.exists(data_dir):
     print("data_dir not exists")
     os.makedirs(data_dir)
