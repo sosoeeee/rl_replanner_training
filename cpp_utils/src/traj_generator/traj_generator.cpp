@@ -70,7 +70,7 @@ void TrajGenerator::getNearestNode(Point p, int &node_id)
     }
 }
 
-void TrajGenerator::updateInitPlan(std::vector<int> passby_nodes, const Point& start, const Point& end)
+void TrajGenerator::updateInitPlan(std::vector<int> passby_nodes)
 {
     init_plan_.clear();
     
@@ -337,6 +337,7 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
 
     // TODO: Update the voronoi graph with "Bubble technique"
     bool rebuild = false;
+    bool swap_start_end = false;
     if (!last_start_point_ || !last_end_point_)
     {
         last_start_point_ = std::make_unique<Point>(start);
@@ -346,10 +347,20 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     else if (std::abs(last_start_point_->x - start.x) > 1e-6 || std::abs(last_start_point_->y - start.y) > 1e-6 ||
              std::abs(last_end_point_->x - end.x) > 1e-6 || std::abs(last_end_point_->y - end.y) > 1e-6)
     {
-        last_start_point_ = std::make_unique<Point>(start);
-        last_end_point_ = std::make_unique<Point>(end);
-        rebuild = true;
-        LOGGER_INFO("teb_local_planner", "Start point or end point changed, rebuilding voronoi graph.");
+        // Check whether the start and end points have exchanged
+        if (std::abs(last_start_point_->x - end.x) < 1e-6 && std::abs(last_start_point_->y - end.y) < 1e-6 &&
+            std::abs(last_end_point_->x - start.x) < 1e-6 && std::abs(last_end_point_->y - start.y) < 1e-6)
+        {
+            swap_start_end = true;
+            // LOGGER_INFO("teb_local_planner", "Start point and end point have exchanged.");
+        }
+        else
+        {
+            last_start_point_ = std::make_unique<Point>(start);
+            last_end_point_ = std::make_unique<Point>(end);
+            rebuild = true;
+            LOGGER_INFO("teb_local_planner", "Start point or end point changed, rebuilding voronoi graph.");
+        }
     }
 
     if (rebuild)
@@ -366,7 +377,14 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     
     // sample the passby voronoi nodes from start node to end node
     // std::vector<int> passby_nodes = voronoi_graph_->getPassbyNodes(start_node_id, end_node_id);
-    std::vector<int> passby_nodes = voronoi_graph_->getPassbyNodes(voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
+    std::vector<int> passby_nodes;
+    if (swap_start_end)
+    {
+        passby_nodes = voronoi_graph_->getPassbyNodes(voronoi_graph_->getEndId(), voronoi_graph_->getStartId());
+    }
+    else{
+        passby_nodes = voronoi_graph_->getPassbyNodes(voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
+    }
 
     // // debug
     // LOGGER_INFO("teb_local_planner", "Passby nodes: ");
@@ -379,10 +397,10 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
         return {};
     }
     // get initial path from voronoi graph
-    updateInitPlan(passby_nodes, start, end);
+    // updateInitPlan(passby_nodes, start, end);
 
     // TODO: Update the init plan with modified voronoi graph (Don't need to connect the start and end point to the voronoi graph)
-    // updateInitPlan(passby_nodes);
+    updateInitPlan(passby_nodes);
 
     // LOGGER_INFO("teb_local_planner", "Initial path: ");
     // int idx = 0;
@@ -453,9 +471,9 @@ std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajs(Point start, Point
     // get initial path from voronoi graph
     // auto start_time = std::chrono::high_resolution_clock::now();
 
-    updateInitPlan(passby_nodes, start, end);
+    // updateInitPlan(passby_nodes, start, end);
     // TODO: Update the init plan with modified voronoi graph (Don't need to connect the start and end point to the voronoi graph)
-    // updateInitPlan(passby_nodes);
+    updateInitPlan(passby_nodes);
     
     // auto init_plan_time = std::chrono::high_resolution_clock::now();
     // auto init_plan_duration = std::chrono::duration_cast<std::chrono::milliseconds>(init_plan_time - start_time);

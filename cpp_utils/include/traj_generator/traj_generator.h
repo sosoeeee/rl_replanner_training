@@ -52,7 +52,7 @@ public:
     }
 
 private:
-    void updateInitPlan(std::vector<int> passby_nodes, const Point& start, const Point& end);
+    void updateInitPlan(std::vector<int> passby_nodes);
     void getNearestNode(Point p, int &node_id);
     void updateCorridor();
     void updateViaPoints();
