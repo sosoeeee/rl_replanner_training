@@ -63,7 +63,8 @@ class TrainEnv(BaseEnv):
         )
 
     def _init_human_traj(self):
-        self.replay_traj_files = glob.glob(self.replay_traj_path + '/*.txt')
+        map_name = self.map_setting_file.split('/')[-1].split('.')[0]
+        self.replay_traj_files = glob.glob(self.replay_traj_path + '/' + map_name + '/collected_paths/*.txt')
 
         # TODO: initialize the human traj generator
         if self.use_generator:

@@ -75,7 +75,7 @@ class EvalEnv(BaseEnv):
         if self.use_generator:
             self.replay_traj_files = glob.glob(self.replay_traj_path + '/' + self.eval_path_directory + '/*.txt')
         else:
-            self.replay_traj_files = glob.glob(self.replay_traj_path + '/*.txt')
+            self.replay_traj_files = glob.glob(self.replay_traj_path + '/' + map_name + '/collected_paths/*.txt')
 
         self.traj_index = -1
 
