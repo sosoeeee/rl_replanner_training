@@ -19,7 +19,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # 获取项目根目录
 project_root = os.path.dirname(os.path.dirname(current_dir))
 # 构建地图文件的绝对路径
-map_file = os.path.join(project_root, "rl_replanner_train", "maps", "tb3_classic", "turtlebot3_world.yaml")
+# map_file = os.path.join(project_root, "rl_replanner_train", "maps", "tb3_classic", "turtlebot3_world.yaml")
+map_file = os.path.join(project_root, "rl_replanner_train", "maps", "tb3_classic", "room.yaml")
 planner_file = os.path.join(project_root, "cpp_utils", "include", "teb_local_planner", "teb_params.yaml")
 
 rclpy.init()
@@ -51,8 +52,10 @@ traj_generator.initialize(
 print("Initialized trajectory generator")
 
 pyCostmap.loadCostmapFromCostmapCpp(traj_generator.getCostmap())
-startPoint = cpp_utils.Point(-1.72, -0.217)
-endPoint = cpp_utils.Point(1.96, 0.395)
+# startPoint = cpp_utils.Point(-1.72, -0.217)
+# endPoint = cpp_utils.Point(1.96, 0.395)
+startPoint = cpp_utils.Point(-1.25, -1.53)
+endPoint = cpp_utils.Point(7.2, -7)
 
 # World to Map
 startPoint_map = pyCostmap.worldToMap(-1.72, -0.217)

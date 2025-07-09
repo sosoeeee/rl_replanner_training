@@ -200,6 +200,10 @@ void TrajGenerator::updateViaPoints()
     // Skip first and last circles, start from index 1 and end before the last circle
     for (size_t i = 1; i < circles_.size() - 1; ++i) {
         const auto& circle = circles_[i];
+        // if (circle.radius <= 0 || std::isnan(circle.radius)) {
+        //     // 跳过该圆
+        //     continue;
+        // }
         // sample via points in the circle
         std::normal_distribution<double> dist_x(circle.x, circle.radius / sigma_factor);
         px = dist_x(gen);
@@ -341,6 +345,7 @@ std::vector<Point> TrajGenerator::sampleTraj(Point start, Point end)
     costmap_->worldToMap(start.x, start.y, start_mx, start_my);
     costmap_->worldToMap(end.x, end.y, end_mx, end_my);
     voronoi_graph_->getVoronoiGraph(start_mx, start_my, end_mx, end_my);
+    voronoi_graph_->pruneEdgesByObstacleClearance(costmap_->getResolution(), robot_radius_);
 
     // // debug
     LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
@@ -415,6 +420,8 @@ std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajs(Point start, Point
         costmap_->worldToMap(start.x, start.y, start_mx, start_my);
         costmap_->worldToMap(end.x, end.y, end_mx, end_my);
         voronoi_graph_->getVoronoiGraph(start_mx, start_my, end_mx, end_my);
+        voronoi_graph_->pruneEdgesByObstacleClearance(costmap_->getResolution(), robot_radius_);
+        // LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
 
         std::vector<std::vector<Point>> trajectories;
         // all_passby_nodes_ = voronoi_graph_->findAllPaths(start_node_id, end_node_id);
@@ -429,12 +436,14 @@ std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajs(Point start, Point
     }
 
     std::vector<int> passby_nodes = all_passby_nodes_[sample_count_];
+    // LOGGER_INFO("teb_local_planner", "Sampling distinct homotopy trajectory %d with passby nodes: ", sample_count_);
     sample_count_++;
 
     // get initial path from voronoi graph
     // auto start_time = std::chrono::high_resolution_clock::now();
 
     updateInitPlan(passby_nodes, start, end);
+    // LOGGER_INFO("teb_local_planner", "Initial path size: %zu", init_plan_.size());
     // TODO: Update the init plan with modified voronoi graph (Don't need to connect the start and end point to the voronoi graph)
     // updateInitPlan(passby_nodes);
     
@@ -444,18 +453,21 @@ std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajs(Point start, Point
 
     // create circular corridor
     updateCorridor();
+    // LOGGER_INFO("teb_local_planner", "Corridor size: %zu", circles_.size());
     // auto corridor_time = std::chrono::high_resolution_clock::now();
     // auto corridor_duration = std::chrono::duration_cast<std::chrono::milliseconds>(corridor_time - init_plan_time);
     // LOGGER_INFO("teb_local_planner", "Corridor creation took %ld ms", corridor_duration.count());
 
     // sample via points from the corridor
     updateViaPoints();
+    // LOGGER_INFO("teb_local_planner", "Via points size: %zu", via_points_.size());
     // auto via_points_time = std::chrono::high_resolution_clock::now();
     // auto via_points_duration = std::chrono::duration_cast<std::chrono::milliseconds>(via_points_time - corridor_time);
     // LOGGER_INFO("teb_local_planner", "Via points sampling took %ld ms", via_points_duration.count());
 
     // plan trajectory
     updateTrajectory();
+    // LOGGER_INFO("teb_local_planner", "Trajectory size: %zu", trajectory_.size());
     // auto end_time = std::chrono::high_resolution_clock::now();
     // auto traj_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - via_points_time);
     // auto total_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);

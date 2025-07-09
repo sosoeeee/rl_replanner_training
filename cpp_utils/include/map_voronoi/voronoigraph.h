@@ -4,6 +4,7 @@
 #include <vector>
 #include <utility>
 #include <memory>
+#include <queue>
 #include "voronoi.h"
 #include "voronoinode.h"
 
@@ -68,6 +69,10 @@ public:
     // when using modified voronoi, the start_id and end_id are the id of the start point node and end point node
     int getStartId() const { return start_point_node_id; }
     int getEndId() const { return end_point_node_id; }
+    // 测试函数:用于打印所有路径中的最小距离
+    void printMinDistOnAllPathsInModifiedGraph();
+
+    void pruneEdgesByObstacleClearance(float map_resolution, float robot_radius);
 
 private:
     bool** getBoolMap(std::shared_ptr<Costmap2D> costmap);
@@ -85,8 +90,6 @@ private:
     std::vector<VoronoiNode> voronoi_nodes_startNeighbor;
     std::vector<VoronoiNode> voronoi_nodes_endNeighbor;
 
-    void getStartNeighbor();
-    void getEndNeighbor();
     const std::vector<VoronoiNode>& getStartNeighbor() const { return voronoi_nodes_startNeighbor; }
     const std::vector<VoronoiNode>& getEndNeighbor() const { return voronoi_nodes_endNeighbor; }
 
