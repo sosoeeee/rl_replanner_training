@@ -3,6 +3,7 @@
 // step2: cmake ..
 // step3: make 
 // step4: ./my_test
+// sudo make install
 
 #include "map_loader/map_io.hpp"
 #include "map_loader/costmap_2d.hpp"
@@ -50,7 +51,8 @@ loadMap(const std::string &yaml_file) {
 
 int main() {
     // Load the map from the YAML file
-    auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml");
+    // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml");
+    auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/room.yaml");
 
     // Get the map dimensions
     unsigned int sizeX = costmap->getSizeInCellsX();
@@ -61,7 +63,8 @@ int main() {
     // // Create and visualize Voronoi graph
     VoronoiGraph voronoigraph(costmap);
 
-    voronoigraph.getVoronoiGraph(165, 195, 239, 207);
+    // voronoigraph.getVoronoiGraph(165, 195, 239, 207);
+    voronoigraph.getVoronoiGraph(246, 727, 415, 617);
 
     voronoigraph.visualizeVoronoi("modified_voronoi.ppm", 1);
     voronoigraph.visualizeVoronoi("static_voronoi.ppm", 0);

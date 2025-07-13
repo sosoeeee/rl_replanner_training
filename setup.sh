@@ -48,4 +48,6 @@ pip install -e .
 # sudo apt-get install python3-tk
 
 # RUN the following command to test the installation
+# 添加环境路径(如果需要)
+# export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 # python3 ./rl_replanner_train/tests/test_env.py
