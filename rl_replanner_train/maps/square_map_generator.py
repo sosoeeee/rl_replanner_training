@@ -46,7 +46,7 @@ def generate_map(map_size_meters, cell_resolution_m, num_obstacles,
         boundary_margin: 边界障碍物距离地图边缘的距离（米）
     """
     # 保存路径
-    save_dir = "./tb3_classic"
+    save_dir = "./sim_maps"
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     output_path = os.path.join(save_dir, output_filename)

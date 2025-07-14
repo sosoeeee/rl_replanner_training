@@ -51,8 +51,8 @@ loadMap(const std::string &yaml_file) {
 
 int main() {
     // Load the map from the YAML file
-    // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml");
-    auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/room.yaml");
+    // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/sim_maps/turtlebot3_world.yaml");
+    auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/sim_maps/room.yaml");
 
     // Get the map dimensions
     unsigned int sizeX = costmap->getSizeInCellsX();

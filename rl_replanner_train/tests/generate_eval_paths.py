@@ -22,29 +22,29 @@ costmap_publisher = render_node.create_publisher(OccupancyGrid, "costmap", 10)
 
 previous_marker_count = 0  # Add this line after creating render_node
 
-map_name = "turtlebot3_world"
+map_name = "room"
 
-res_status, costmap_cpp = cpp_utils.loadMap("./rl_replanner_train/maps/tb3_classic/" + map_name + ".yaml")
+res_status, costmap_cpp = cpp_utils.loadMap("./rl_replanner_train/maps/sim_maps/" + map_name + ".yaml")
 pyCostmap = PyCostmap2D(render_node)
 
 
 # Initialize the trajectory generator
 traj_generator = cpp_utils.TrajGenerator()
 traj_generator.initialize(
-    map_file="./rl_replanner_train/maps/tb3_classic/" + map_name + ".yaml",
+    map_file="./rl_replanner_train/maps/sim_maps/" + map_name + ".yaml",
     planner_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     path_resolution=0.025,
     time_resolution=0.1,
 )
 pyCostmap.loadCostmapFromCostmapCpp(traj_generator.getCostmap())
-startPoint = cpp_utils.Point(-1.72, -0.217)
-endPoint = cpp_utils.Point(1.96, 0.395)
+# startPoint = cpp_utils.Point(-1.72, -0.217)
+# endPoint = cpp_utils.Point(1.96, 0.395)
 
-# startPoint = cpp_utils.Point(-0.217, -1.72)
-# endPoint = cpp_utils.Point(0.395, 1.96)
+startPoint = cpp_utils.Point(-1.25, -1.53)
+endPoint = cpp_utils.Point(7.2, -7)
 
-# root_dir = "rl_replanner_train/data/"
-root_dir = "/home/rosdev/ros2_ws/data_collection/data/"
+root_dir = "rl_replanner_train/data/"
+# root_dir = "/home/rosdev/ros2_ws/data_collection/data/"
 
 # create map directory
 if not os.path.exists(root_dir + map_name):

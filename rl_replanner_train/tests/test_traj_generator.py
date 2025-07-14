@@ -19,8 +19,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # 获取项目根目录
 project_root = os.path.dirname(os.path.dirname(current_dir))
 # 构建地图文件的绝对路径
-# map_file = os.path.join(project_root, "rl_replanner_train", "maps", "tb3_classic", "turtlebot3_world.yaml")
-map_file = os.path.join(project_root, "rl_replanner_train", "maps", "tb3_classic", "room.yaml")
+# map_file = os.path.join(project_root, "rl_replanner_train", "maps", "sim_maps", "turtlebot3_world.yaml")
+map_file = os.path.join(project_root, "rl_replanner_train", "maps", "sim_maps", "room.yaml")
 planner_file = os.path.join(project_root, "cpp_utils", "include", "teb_local_planner", "teb_params.yaml")
 
 rclpy.init()
@@ -28,7 +28,7 @@ rclpy.init()
 render_node = rclpy.create_node("render_node")
 
 map_name = "turtlebot3_world_3"
-map_path = "./rl_replanner_train/maps/tb3_classic/" + map_name + ".yaml"
+map_path = "./rl_replanner_train/maps/sim_maps/" + map_name + ".yaml"
 
 path_publisher = render_node.create_publisher(Path, "path", 10)
 init_path_publisher = render_node.create_publisher(Path, "init_path", 10)
