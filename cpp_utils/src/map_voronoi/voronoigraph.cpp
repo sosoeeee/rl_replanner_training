@@ -94,13 +94,14 @@ void VoronoiGraph::buildGraph(){
             MapPoint start = node.getPosition();
             Path center_path;
             
-            // if the node is near the last node , then we see it as the same node
-            if(i!=0){
-                VoronoiNode last_node = voronoi_nodes[i-1];
-                MapPoint last_position = last_node.getPosition();
-                if(abs(last_position.x-start.x)<=1 && abs(last_position.y-start.y)<=1){
-                    center_path.path_points.push_back(last_position);
-                    j=i-1;
+            while(j!=0){
+                VoronoiNode last_node = voronoi_nodes[j-1];
+                int last_id = last_node.getId();
+                if(last_id==start_id){
+                    j=j-1;
+                }
+                else{
+                    break;
                 }
             }
 
@@ -139,7 +140,19 @@ void VoronoiGraph::buildGraph(){
                     MapPoint start2 = node2.getPosition();
                     int target_id = node2.getId();
                     if(end.x==start2.x && end.y==start2.y){
+                        map_flag[end.x][end.y]=false;  // 两个节点间有两个路径的临时解决办法
+                        // 检查target_id是否已经是start_id的邻接点
+                        std::vector<std::pair<int, float>> adjacent = voronoi_nodes[j].getAllAdjacent();
+                        for(const auto& adj : adjacent) {
+                            if(adj.first == target_id) {
+                                is_end = true;
+                                break;
+                            }
+                        }
+                        if(is_end) break;
+
                         if(start_id==target_id){
+                            map_flag[end.x][end.y]=true;   // 防止重复访问要被删除的节点
                             is_end = true;
                             break;
                         }
@@ -914,6 +927,8 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
 
     // 在函数结束前调用打印最小距离的函数
     // printMinDistOnAllPathsInModifiedGraph();
+    // 在函数结束前打印节点数量：
+    LOGGER_INFO("VoronoiGraph", "Modified Voronoi graph built with %zu nodes.", voronoi_nodes_modified.size());
 }
 
 void VoronoiGraph::printMinDistOnAllPathsInModifiedGraph() {
