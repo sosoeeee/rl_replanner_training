@@ -29,14 +29,15 @@ public:
         LOGGER_INFO("VoronoiGraph", "Voronoi graph initialized with size (%d, %d)", costmap->getSizeInCellsX(), costmap->getSizeInCellsY());
 
         // initialize the static Voronoi graph
-        buildGraph();
+        // buildGraph();
 
-        LOGGER_INFO("VoronoiGraph", "Voronoi graph built with %zu nodes", voronoi_nodes.size());
+        // LOGGER_INFO("VoronoiGraph", "Voronoi graph built with %zu nodes", voronoi_nodes.size());
     };
 
     ~VoronoiGraph(){};
 
-    void visualizeVoronoi(const std::string& filename, int type=0); // 0: original, 1: modified
+    // void visualizeVoronoi(const std::string& filename, int type=0); // 0: original, 1: modified
+    void visualizeVoronoi(const std::string& filename); // visualize the modified voronoi graph
 
     // get distance to the nearest obstacle (used by the bubble corridor during traj generation)
     float getDistance(int x, int y) { return voronoi_static->getDistance(x, y); }
@@ -46,42 +47,49 @@ public:
 
     // @ Old Version
     // get all nodes by pointer (used to find the nearest node to start and end point during traj generation)
-    std::vector<VoronoiNode>& getAllNodes() { return voronoi_nodes; }
-    const std::vector<VoronoiNode>& getAllNodes() const { return voronoi_nodes; }
+    // std::vector<VoronoiNode>& getAllNodes() { return voronoi_nodes; }
+    // const std::vector<VoronoiNode>& getAllNodes() const { return voronoi_nodes; }
     // get node by id
+    // VoronoiNode& getNodeById(int id) {
+    //     // if (id < 0 || id >= voronoi_nodes.size()) {
+    //     if (id < 0 || id >= voronoi_nodes_modified.size()) {
+    //         throw std::out_of_range("Node ID is out of range");
+    //     }
+    //     // return voronoi_nodes[id];
+    //     return voronoi_nodes_modified[id];
+    // }
+    // 之前的函数代码逻辑有问题，错误的将id和索引混用，现已纠正：
     VoronoiNode& getNodeById(int id) {
-        // if (id < 0 || id >= voronoi_nodes.size()) {
-        if (id < 0 || id >= voronoi_nodes_modified.size()) {
-            throw std::out_of_range("Node ID is out of range");
+        for (auto& node : voronoi_nodes_modified) {
+            if (node.getId() == id) {
+                return node;
+            }
         }
-        // return voronoi_nodes[id];
-        return voronoi_nodes_modified[id];
+        throw std::out_of_range("Node with given ID not found: " + std::to_string(id));
     }
-    const VoronoiNode& getNodeById(int id) const {
-        if (id < 0 || id >= voronoi_nodes.size()) {
-            throw std::out_of_range("Node ID is out of range");
-        }
-        return voronoi_nodes[id];
-    } 
-
+    // const VoronoiNode& getNodeById(int id) const {
+    //     if (id < 0 || id >= voronoi_nodes.size()) {
+    //         throw std::out_of_range("Node ID is out of range");
+    //     }
+    //     return voronoi_nodes[id];
+    // } 
     // @ Bubble technique
     void getVoronoiGraph(unsigned int start_mx, unsigned int start_my, unsigned int end_mx, unsigned int end_my);
     // when using modified voronoi, the start_id and end_id are the id of the start point node and end point node
     int getStartId() const { return start_point_node_id; }
     int getEndId() const { return end_point_node_id; }
     // 测试函数:用于打印所有路径中的最小距离
-    void printMinDistOnAllPathsInModifiedGraph();
-
+    // void printMinDistOnAllPathsInModifiedGraph();
     void pruneEdgesByObstacleClearance(float map_resolution, float robot_radius);
 
 private:
     bool** getBoolMap(std::shared_ptr<Costmap2D> costmap);
-    void buildGraph();
+    // void buildGraph();
     void resetAllProbabilities();
 
     std::shared_ptr<Costmap2D> costmap;
     std::shared_ptr<Voronoi> voronoi_static = std::make_shared<Voronoi>();
-    std::vector<VoronoiNode> voronoi_nodes; // List of Voronoi nodes
+    // std::vector<VoronoiNode> voronoi_nodes; // List of Voronoi nodes
 
     // @ Bubble technique
     std::shared_ptr<Voronoi> voronoi_modified = std::make_shared<Voronoi>();  // Bubble technique (see the start and end as obstacles)

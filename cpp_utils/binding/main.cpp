@@ -198,10 +198,10 @@ PYBIND11_MODULE(cpp_utils, m) {
         // ============================ only expose when testing VoronoiGraph ============================
     // Bind the Trajectory generator class
     py::class_<VoronoiGraph, std::shared_ptr<VoronoiGraph>>(m, "VoronoiGraph")
-        .def("getAllNodes",
-             static_cast<std::vector<VoronoiNode>& (VoronoiGraph::*)()>(&VoronoiGraph::getAllNodes),
-             py::return_value_policy::reference_internal,
-             "Get all nodes in the Voronoi graph")
+        // .def("getAllNodes",
+        //      static_cast<std::vector<VoronoiNode>& (VoronoiGraph::*)()>(&VoronoiGraph::getAllNodes),
+        //      py::return_value_policy::reference_internal,
+        //      "Get all nodes in the Voronoi graph")
         .def("getNodeById",
              static_cast<VoronoiNode& (VoronoiGraph::*)(int)>(&VoronoiGraph::getNodeById),
              py::return_value_policy::reference_internal,
@@ -213,7 +213,8 @@ PYBIND11_MODULE(cpp_utils, m) {
         .def("getDistance", &VoronoiGraph::getDistance,
             "Get distance to nearest obstacle", py::arg("x"), py::arg("y"))
         .def("visualizeVoronoi", &VoronoiGraph::visualizeVoronoi,
-            "Visualize the original Voronoi graph", py::arg("filename"), py::arg("type") = 0);
+            // "Visualize the original Voronoi graph", py::arg("filename"), py::arg("type") = 0);
+            "Visualize the modified Voronoi graph", py::arg("filename"));
         // .def("updateStartNeighbor", static_cast<void (VoronoiGraph::*)()>(&VoronoiGraph::getStartNeighbor),
         //     "Update unique nodes after adding start point as obstacle")
         // .def("updateEndNeighbor", static_cast<void (VoronoiGraph::*)()>(&VoronoiGraph::getEndNeighbor),
