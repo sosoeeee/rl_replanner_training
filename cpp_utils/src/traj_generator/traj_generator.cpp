@@ -38,7 +38,7 @@ void TrajGenerator::initialize(const std::string &map_file, const std::string &p
     }
     robot_radius_ = yaml_get_value<double>(inflation_layer_node, "robot_radius");
     
-    // initialize the voronoi graph
+    // // initialize the voronoi graph
     voronoi_graph_ = std::make_unique<VoronoiGraph>(costmap_);
 
     // initialize the teb planner
@@ -52,23 +52,23 @@ void TrajGenerator::initialize(const std::string &map_file, const std::string &p
     // planner_ = std::make_unique<TebOptimalPlanner>(cfg_, obstacles_.get(), &via_points_);
 }
 
-void TrajGenerator::getNearestNode(Point p, int &node_id)
-{
-    // get the nearest voronoi node to the Point p
-    // TODO: Optimize the searching efficiency by using kd-tree or other methods
-    std::vector<VoronoiNode> nodes = voronoi_graph_->getAllNodes();
-    double min_dist = std::numeric_limits<double>::max();
-    double wx, wy, dist;
-    for (const auto& node : nodes) {
-        costmap_->mapToWorld(node.getPosition().x, node.getPosition().y, wx, wy);
-        dist = sqrt(pow(wx - p.x, 2) + pow(wy - p.y, 2));
+// void TrajGenerator::getNearestNode(Point p, int &node_id)
+// {
+//     // get the nearest voronoi node to the Point p
+//     // TODO: Optimize the searching efficiency by using kd-tree or other methods
+//     std::vector<VoronoiNode> nodes = voronoi_graph_->getAllNodes();
+//     double min_dist = std::numeric_limits<double>::max();
+//     double wx, wy, dist;
+//     for (const auto& node : nodes) {
+//         costmap_->mapToWorld(node.getPosition().x, node.getPosition().y, wx, wy);
+//         dist = sqrt(pow(wx - p.x, 2) + pow(wy - p.y, 2));
 
-        if (dist < min_dist) {
-            min_dist = dist;
-            node_id = node.getId();
-        }
-    }
-}
+//         if (dist < min_dist) {
+//             min_dist = dist;
+//             node_id = node.getId();
+//         }
+//     }
+// }
 
 void TrajGenerator::updateInitPlan(std::vector<int> passby_nodes)
 {

@@ -2,26 +2,35 @@
 #include <unordered_map>
 #include <unordered_set>
 
-void VoronoiGraph::visualizeVoronoi(const std::string& filename, int type) {
-    switch (type) {
-        case 0:
-            if (voronoi_static) {
-                voronoi_static->visualize(filename.c_str());
-            }
-            else {
-                std::cerr << "Voronoi object is not initialized." << std::endl;
-            }
-            break;
-        case 1:
-            if (voronoi_modified) {
-                voronoi_modified->visualize(filename.c_str());
-            } else {
-                std::cerr << "Modified Voronoi object is not initialized." << std::endl;
-            }
-            break;
-        default:
-            std::cerr << "Invalid type for Voronoi visualization." << std::endl;
-            break;
+// void VoronoiGraph::visualizeVoronoi(const std::string& filename, int type) {
+//     switch (type) {
+//         case 0:
+//             if (voronoi_static) {
+//                 voronoi_static->visualize(filename.c_str());
+//             }
+//             else {
+//                 std::cerr << "Voronoi object is not initialized." << std::endl;
+//             }
+//             break;
+//         case 1:
+//             if (voronoi_modified) {
+//                 voronoi_modified->visualize(filename.c_str());
+//             } else {
+//                 std::cerr << "Modified Voronoi object is not initialized." << std::endl;
+//             }
+//             break;
+//         default:
+//             std::cerr << "Invalid type for Voronoi visualization." << std::endl;
+//             break;
+//     }
+// }
+
+// 由于没有初始图构建，可视化函数可以替换：
+void VoronoiGraph::visualizeVoronoi(const std::string& filename) {
+    if (voronoi_modified) {
+        voronoi_modified->visualize(filename.c_str());
+    } else {
+        std::cerr << "Modified Voronoi object is not initialized." << std::endl;
     }
 }
 
@@ -41,163 +50,176 @@ bool** VoronoiGraph::getBoolMap(std::shared_ptr<Costmap2D> costmap){
 // TODO: Use BFS to speed up the building process
 // we merge the same node during the process of finding the path 
 // if the node is near the last node, then we see it as the same node
-void VoronoiGraph::buildGraph(){
-    int sizeX = voronoi_static->getSizeX();
-    int sizeY = voronoi_static->getSizeY();
-    int id=0;
-    for(int y = sizeY-1; y >=0; y--){
-        for(int x = 0; x<sizeX; x++){
-            if (voronoi_static->isVoronoiAlternative(x,y)) {
-                int num=0;
-                for(int nx=-1; nx<=1; nx++){
-                  for(int ny=-1; ny<=1; ny++){
-                    if (nx==0 && ny==0) continue;
-                    if(nx*ny==-1||nx*ny==1) continue;
-                    if (x+nx<0 || x+nx>=sizeX || y+ny<0 || y+ny>=sizeY) continue;
-                    if (voronoi_static->isVoronoiAlternative(x+nx,y+ny)) {
-                      num++;
-                    }
-                  }
-                }
-                if(num>=3){
+// void VoronoiGraph::buildGraph(){
+//     int sizeX = voronoi_static->getSizeX();
+//     int sizeY = voronoi_static->getSizeY();
+//     int id=0;
+//     for(int y = sizeY-1; y >=0; y--){
+//         for(int x = 0; x<sizeX; x++){
+//             if (voronoi_static->isVoronoiAlternative(x,y)) {
+//                 int num=0;
+//                 for(int nx=-1; nx<=1; nx++){
+//                   for(int ny=-1; ny<=1; ny++){
+//                     if (nx==0 && ny==0) continue;
+//                     if(nx*ny==-1||nx*ny==1) continue;
+//                     if (x+nx<0 || x+nx>=sizeX || y+ny<0 || y+ny>=sizeY) continue;
+//                     if (voronoi_static->isVoronoiAlternative(x+nx,y+ny)) {
+//                       num++;
+//                     }
+//                   }
+//                 }
+//                 if(num>=3){
 
-                    // if the node is near the last node , then we see it as the same node
-                    if(voronoi_nodes.size()!=0){
-                        VoronoiNode last_node = voronoi_nodes.back();
-                        MapPoint position=last_node.getPosition();
-                        if(abs(position.x-x)<=1 && abs(position.y-y)<=1){
-                            id--;
-                        }
-                    }
+//                     // if the node is near the last node , then we see it as the same node
+//                     if(voronoi_nodes.size()!=0){
+//                         VoronoiNode last_node = voronoi_nodes.back();
+//                         MapPoint position=last_node.getPosition();
+//                         if(abs(position.x-x)<=1 && abs(position.y-y)<=1){
+//                             id--;
+//                         }
+//                     }
                     
-                    VoronoiNode node(id, MapPoint{x, y});  //same node 
-                    voronoi_nodes.push_back(node);
-                    id++;
-                }
-            }
-        }
-    }
+//                     VoronoiNode node(id, MapPoint{x, y});  //same node 
+//                     voronoi_nodes.push_back(node);
+//                     id++;
+//                 }
+//             }
+//         }
+//     }
 
-    //find path:
-    int node_size = voronoi_nodes.size();
-    for(int i=0;i<node_size;i++){
+//     //find path:
+//     int node_size = voronoi_nodes.size();
+//     for(int i=0;i<node_size;i++){
         
-        bool** map_flag = new bool*[sizeX];
-        for (int x = 0; x < sizeX; x++) {
-            map_flag[x] = new bool[sizeY]();
-        }
+//         bool** map_flag = new bool*[sizeX];
+//         for (int x = 0; x < sizeX; x++) {
+//             map_flag[x] = new bool[sizeY]();
+//         }
 
-        while(true){
-            int j=i;
-            VoronoiNode node = voronoi_nodes[i];
-            int start_id = node.getId();
-            MapPoint start = node.getPosition();
-            Path center_path;
+//         while(true){
+//             int j=i;
+//             VoronoiNode node = voronoi_nodes[i];
+//             int start_id = node.getId();
+//             MapPoint start = node.getPosition();
+//             Path center_path;
             
-            // if the node is near the last node , then we see it as the same node
-            if(i!=0){
-                VoronoiNode last_node = voronoi_nodes[i-1];
-                MapPoint last_position = last_node.getPosition();
-                if(abs(last_position.x-start.x)<=1 && abs(last_position.y-start.y)<=1){
-                    center_path.path_points.push_back(last_position);
-                    j=i-1;
-                }
-            }
+//             while(j!=0){
+//                 VoronoiNode last_node = voronoi_nodes[j-1];
+//                 int last_id = last_node.getId();
+//                 if(last_id==start_id){
+//                     j=j-1;
+//                 }
+//                 else{
+//                     break;
+//                 }
+//             }
 
-            MapPoint end;
-            end.x = start.x;
-            end.y = start.y;
-            center_path.path_points.push_back(start);
-            bool flag = false;
+//             MapPoint end;
+//             end.x = start.x;
+//             end.y = start.y;
+//             center_path.path_points.push_back(start);
+//             bool flag = false;
 
-            map_flag[end.x][end.y]=true;
+//             map_flag[end.x][end.y]=true;
 
-            while(true){
-                if(end.x+1<sizeX && map_flag[end.x+1][end.y]==false && voronoi_static->isVoronoiAlternative(end.x+1,end.y)){
-                    end.x = end.x+1;
-                    center_path.path_points.push_back(end);
-                    map_flag[end.x][end.y]=true;
-                }else if(end.y+1<sizeY && map_flag[end.x][end.y+1]==false && voronoi_static->isVoronoiAlternative(end.x,end.y+1)){
-                    end.y = end.y+1;
-                    center_path.path_points.push_back(end);
-                    map_flag[end.x][end.y]=true;
-                }else if(end.x-1>=0 && map_flag[end.x-1][end.y]==false && voronoi_static->isVoronoiAlternative(end.x-1,end.y)){
-                    end.x = end.x-1;
-                    center_path.path_points.push_back(end);
-                    map_flag[end.x][end.y]=true;
-                }else if(end.y-1>=0 && map_flag[end.x][end.y-1]==false && voronoi_static->isVoronoiAlternative(end.x,end.y-1)){
-                    end.y = end.y-1;
-                    center_path.path_points.push_back(end);
-                    map_flag[end.x][end.y]=true;
-                }else{
-                    flag=true;
-                    break;
-                }
-                bool is_end = false;
-                for(int k=0;k<node_size;k++){
-                    VoronoiNode node2 = voronoi_nodes[k];
-                    MapPoint start2 = node2.getPosition();
-                    int target_id = node2.getId();
-                    if(end.x==start2.x && end.y==start2.y){
-                        if(start_id==target_id){
-                            is_end = true;
-                            break;
-                        }
-                        if(k!=0){
-                            VoronoiNode node3 = voronoi_nodes[k-1];
-                            int last_id = node3.getId();
-                            MapPoint last_position = node3.getPosition();
-                            if(target_id==last_id){
-                                center_path.end_node_id = last_id;
-                                center_path.path_points.push_back(last_position);
-                                voronoi_nodes[j].addAdjacent(last_id);
-                                voronoi_nodes[j].addPath(center_path);
-                                is_end = true;
-                                break;
-                            }
+//             while(true){
+//                 if(end.x+1<sizeX && map_flag[end.x+1][end.y]==false && voronoi_static->isVoronoiAlternative(end.x+1,end.y)){
+//                     end.x = end.x+1;
+//                     center_path.path_points.push_back(end);
+//                     map_flag[end.x][end.y]=true;
+//                 }else if(end.y+1<sizeY && map_flag[end.x][end.y+1]==false && voronoi_static->isVoronoiAlternative(end.x,end.y+1)){
+//                     end.y = end.y+1;
+//                     center_path.path_points.push_back(end);
+//                     map_flag[end.x][end.y]=true;
+//                 }else if(end.x-1>=0 && map_flag[end.x-1][end.y]==false && voronoi_static->isVoronoiAlternative(end.x-1,end.y)){
+//                     end.x = end.x-1;
+//                     center_path.path_points.push_back(end);
+//                     map_flag[end.x][end.y]=true;
+//                 }else if(end.y-1>=0 && map_flag[end.x][end.y-1]==false && voronoi_static->isVoronoiAlternative(end.x,end.y-1)){
+//                     end.y = end.y-1;
+//                     center_path.path_points.push_back(end);
+//                     map_flag[end.x][end.y]=true;
+//                 }else{
+//                     flag=true;
+//                     break;
+//                 }
+//                 bool is_end = false;
+//                 for(int k=0;k<node_size;k++){
+//                     VoronoiNode node2 = voronoi_nodes[k];
+//                     MapPoint start2 = node2.getPosition();
+//                     int target_id = node2.getId();
+//                     if(end.x==start2.x && end.y==start2.y){
+//                         map_flag[end.x][end.y]=false;  // 两个节点间有两个路径的临时解决办法
+//                         // 检查target_id是否已经是start_id的邻接点
+//                         std::vector<std::pair<int, float>> adjacent = voronoi_nodes[j].getAllAdjacent();
+//                         for(const auto& adj : adjacent) {
+//                             if(adj.first == target_id) {
+//                                 is_end = true;
+//                                 break;
+//                             }
+//                         }
+//                         if(is_end) break;
 
-                        }
-                        center_path.end_node_id = target_id;
-                        voronoi_nodes[j].addAdjacent(target_id);
-                        voronoi_nodes[j].addPath(center_path);
-                        is_end = true;
-                        break;
-                    }
-                }
-                if(is_end==true){
-                    break;
-                }
-            }
-            if(flag==true){
-                break;
-            }
-        }
-        for (int x = 0; x < sizeX; x++) {
-            delete[] map_flag[x];
-        }
-        delete[] map_flag;
-    }
-    for(int i=voronoi_nodes.size()-1;i>=0;i--){
-        VoronoiNode node = voronoi_nodes[i];
-        std::vector<std::pair<int, float>> adjacent = node.getAllAdjacent();
-        if(adjacent.size()==0){
-            voronoi_nodes.erase(voronoi_nodes.begin()+i);
-        }
-    }
-    //TEST
-    // int num=voronoi_nodes.size();
-    // for(int i=0;i<num;i++)
-    // {
-    //     std::cout<<voronoi_nodes[i].getId()<<std::endl;
-    //     std::cout<<"Position: ("<<voronoi_nodes[i].getPosition().x<<","<<voronoi_nodes[i].getPosition().y<<")"<<std::endl;
-    //     std::vector<std::pair<int, float>> adjacent = voronoi_nodes[i].getAllAdjacent();
-    //     for (const auto& pair : adjacent) {
-    //         std::cout << "Adjacent Node ID: " << pair.first << ", Probability: " << pair.second << std::endl;
-    //     }
-    //     std::cout << std::endl;
-    // }
-    //TEST
-}
+//                         if(start_id==target_id){
+//                             map_flag[end.x][end.y]=true;   // 防止重复访问要被删除的节点
+//                             is_end = true;
+//                             break;
+//                         }
+//                         if(k!=0){
+//                             VoronoiNode node3 = voronoi_nodes[k-1];
+//                             int last_id = node3.getId();
+//                             MapPoint last_position = node3.getPosition();
+//                             if(target_id==last_id){
+//                                 center_path.end_node_id = last_id;
+//                                 center_path.path_points.push_back(last_position);
+//                                 voronoi_nodes[j].addAdjacent(last_id);
+//                                 voronoi_nodes[j].addPath(center_path);
+//                                 is_end = true;
+//                                 break;
+//                             }
+
+//                         }
+//                         center_path.end_node_id = target_id;
+//                         voronoi_nodes[j].addAdjacent(target_id);
+//                         voronoi_nodes[j].addPath(center_path);
+//                         is_end = true;
+//                         break;
+//                     }
+//                 }
+//                 if(is_end==true){
+//                     break;
+//                 }
+//             }
+//             if(flag==true){
+//                 break;
+//             }
+//         }
+//         for (int x = 0; x < sizeX; x++) {
+//             delete[] map_flag[x];
+//         }
+//         delete[] map_flag;
+//     }
+//     for(int i=voronoi_nodes.size()-1;i>=0;i--){
+//         VoronoiNode node = voronoi_nodes[i];
+//         std::vector<std::pair<int, float>> adjacent = node.getAllAdjacent();
+//         if(adjacent.size()==0){
+//             voronoi_nodes.erase(voronoi_nodes.begin()+i);
+//         }
+//     }
+//     //TEST
+//     // int num=voronoi_nodes.size();
+//     // for(int i=0;i<num;i++)
+//     // {
+//     //     std::cout<<voronoi_nodes[i].getId()<<std::endl;
+//     //     std::cout<<"Position: ("<<voronoi_nodes[i].getPosition().x<<","<<voronoi_nodes[i].getPosition().y<<")"<<std::endl;
+//     //     std::vector<std::pair<int, float>> adjacent = voronoi_nodes[i].getAllAdjacent();
+//     //     for (const auto& pair : adjacent) {
+//     //         std::cout << "Adjacent Node ID: " << pair.first << ", Probability: " << pair.second << std::endl;
+//     //     }
+//     //     std::cout << std::endl;
+//     // }
+//     //TEST
+// }
 
 void VoronoiGraph::resetAllProbabilities()
 {
@@ -890,7 +912,7 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
         }
         for (int nid : to_remove) {
             node.removeAdjacent(nid);
-            LOGGER_INFO("VoronoiGraph", "Removed asymmetric adjacency: %d -> %d", node_id, nid);
+            // LOGGER_INFO("VoronoiGraph", "Removed asymmetric adjacency: %d -> %d", node_id, nid);
         }
     }
 
@@ -914,27 +936,29 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
 
     // 在函数结束前调用打印最小距离的函数
     // printMinDistOnAllPathsInModifiedGraph();
+    // 在函数结束前打印节点数量：
+    LOGGER_INFO("VoronoiGraph", "Modified Voronoi graph built with %zu nodes.", voronoi_nodes_modified.size());
 }
 
-void VoronoiGraph::printMinDistOnAllPathsInModifiedGraph() {
-    LOGGER_INFO("VoronoiGraph", "==== Min Distance to Obstacle on All Paths (Modified Graph) ====");
-    for (const auto& node : voronoi_nodes_modified) {
-        int from_id = node.getId();
-        const auto& adjacents = node.getAllAdjacent();
-        for (const auto& adj : adjacents) {
-            int to_id = adj.first;
-            // 获取路径点
-            const auto& path_points = node.getPathById(to_id);
-            float min_dist = std::numeric_limits<float>::max();
-            for (const auto& pt : path_points) {
-                float dist = voronoi_static->getDistance(pt.x, pt.y);
-                if (dist < min_dist) min_dist = dist;
-            }
-            LOGGER_INFO("VoronoiGraph", "From Node %d to Node %d: MinDist = %.3f (PathLen=%zu)",
-                from_id, to_id, min_dist, path_points.size());
-        }
-    }
-}
+// void VoronoiGraph::printMinDistOnAllPathsInModifiedGraph() {
+//     LOGGER_INFO("VoronoiGraph", "==== Min Distance to Obstacle on All Paths (Modified Graph) ====");
+//     for (const auto& node : voronoi_nodes_modified) {
+//         int from_id = node.getId();
+//         const auto& adjacents = node.getAllAdjacent();
+//         for (const auto& adj : adjacents) {
+//             int to_id = adj.first;
+//             // 获取路径点
+//             const auto& path_points = node.getPathById(to_id);
+//             float min_dist = std::numeric_limits<float>::max();
+//             for (const auto& pt : path_points) {
+//                 float dist = voronoi_static->getDistance(pt.x, pt.y);
+//                 if (dist < min_dist) min_dist = dist;
+//             }
+//             LOGGER_INFO("VoronoiGraph", "From Node %d to Node %d: MinDist = %.3f (PathLen=%zu)",
+//                 from_id, to_id, min_dist, path_points.size());
+//         }
+//     }
+// }
 
 void VoronoiGraph::pruneEdgesByObstacleClearance(float map_resolution, float robot_radius) {
     LOGGER_INFO("VoronoiGraph", "==== Pruning edges with clearance < robot radius ====");

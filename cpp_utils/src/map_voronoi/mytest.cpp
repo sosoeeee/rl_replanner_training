@@ -66,8 +66,9 @@ int main() {
     // voronoigraph.getVoronoiGraph(165, 195, 239, 207);
     voronoigraph.getVoronoiGraph(246, 727, 415, 617);
 
-    voronoigraph.visualizeVoronoi("modified_voronoi.ppm", 1);
-    voronoigraph.visualizeVoronoi("static_voronoi.ppm", 0);
+    // voronoigraph.visualizeVoronoi("modified_voronoi.ppm", 1);
+    // voronoigraph.visualizeVoronoi("static_voronoi.ppm", 0);
+    voronoigraph.visualizeVoronoi("modified_voronoi.ppm");
     std::cout << "Generated initial frame.\n";
 
     // voronoigraph.findAllPaths(0,3);
