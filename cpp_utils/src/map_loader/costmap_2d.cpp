@@ -246,7 +246,14 @@ std::vector<uint8_t> Costmap2D::getCharMapToPy() const
 
 unsigned char Costmap2D::getCost(unsigned int mx, unsigned int my) const
 {
-  return costmap_[getIndex(mx, my)];
+  if (mx >= size_x_ || my >= size_y_ || mx < 0 || my < 0) {
+    // std::cerr << "Costmap2D::getCost: Invalid coordinates (" << mx << ", " << my << ") for costmap of size (" << size_x_ << ", " << size_y_ << "). Returning NO_INFORMATION." << std::endl;
+    return NO_INFORMATION;
+  } 
+  else
+  {
+    return costmap_[getIndex(mx, my)];
+  }
 }
 
 unsigned char Costmap2D::getCost(unsigned int undex) const

@@ -52,13 +52,8 @@ public:
     }
 
 private:
-<<<<<<< HEAD
     void updateInitPlan(std::vector<int> passby_nodes);
-    void getNearestNode(Point p, int &node_id);
-=======
-    void updateInitPlan(std::vector<int> passby_nodes, const Point& start, const Point& end);
     // void getNearestNode(Point p, int &node_id);
->>>>>>> jfdev
     void updateCorridor();
     void updateViaPoints();
     void updateTrajectory();
