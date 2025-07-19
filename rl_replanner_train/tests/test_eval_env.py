@@ -27,7 +27,7 @@ speed_buffer_length = 4
 # 初始化 EvalEnv
 env = EvalEnv(
     reward_weight=reward_weight,
-    map_setting_file='./rl_replanner_train/maps/sim_maps/turtlebot3_world_3.yaml',
+    map_setting_file='./rl_replanner_train/maps/sim_maps/room.yaml',
     path_planner_setting_file='./cpp_utils/include/path_planner/planner_setting.yaml',
     render_mode='ros',
     render_real_time_factor=10,
@@ -49,13 +49,13 @@ step = 0
 total_reward = 0  # 累计奖励
 
 while True:
-    action = env.action_space.sample()
+    # action = env.action_space.sample()
 
-    # action = {
-    #     'id': 1,
-    #     'params0': [],
-    #     'params1': [1e-3, 1e-3],
-    # }
+    action = {
+        'id': 1,
+        'params0': [],
+        'params1': [1e-3, 1e-3],
+    }
 
     obs, reward, terminated, truncated, info = env.step(action)
     step += 1
