@@ -659,7 +659,7 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
     }
     delete[] visited;
     
-    LOGGER_INFO("VoronoiGraph", "Found %zu start neighbor nodes by diffusion", voronoi_nodes_startNeighbor.size());
+    // LOGGER_INFO("VoronoiGraph", "Found %zu start neighbor nodes by diffusion", voronoi_nodes_startNeighbor.size());
 
     // 获取终点的邻接节点
     voronoi_nodes_endNeighbor.clear();
@@ -710,7 +710,7 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
     }
     delete[] visited;
     
-    LOGGER_INFO("VoronoiGraph", "Found %zu end neighbor nodes by diffusion", voronoi_nodes_endNeighbor.size());
+    // LOGGER_INFO("VoronoiGraph", "Found %zu end neighbor nodes by diffusion", voronoi_nodes_endNeighbor.size());
 
     // step5: 添加起点作为节点
     start_point_node_id = id++;
@@ -937,7 +937,7 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
     // 在函数结束前调用打印最小距离的函数
     // printMinDistOnAllPathsInModifiedGraph();
     // 在函数结束前打印节点数量：
-    LOGGER_INFO("VoronoiGraph", "Modified Voronoi graph built with %zu nodes.", voronoi_nodes_modified.size());
+    // LOGGER_INFO("VoronoiGraph", "Modified Voronoi graph built with %zu nodes.", voronoi_nodes_modified.size());
 }
 
 // void VoronoiGraph::printMinDistOnAllPathsInModifiedGraph() {
@@ -961,7 +961,7 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
 // }
 
 void VoronoiGraph::pruneEdgesByObstacleClearance(float map_resolution, float robot_radius) {
-    LOGGER_INFO("VoronoiGraph", "==== Pruning edges with clearance < robot radius ====");
+    // LOGGER_INFO("VoronoiGraph", "==== Pruning edges with clearance < robot radius ====");
     for (auto& node : voronoi_nodes_modified) {
         int from_id = node.getId();
         std::vector<std::pair<int, float>> adjacents = node.getAllAdjacent();
@@ -976,7 +976,7 @@ void VoronoiGraph::pruneEdgesByObstacleClearance(float map_resolution, float rob
             }
             if (min_dist < (robot_radius*2)) {
                 to_remove.push_back(to_id);
-                LOGGER_INFO("VoronoiGraph", "Prune edge: Node %d -> Node %d, MinDist = %.3f < RobotRadius = %.3f", from_id, to_id, min_dist, robot_radius);
+                // LOGGER_INFO("VoronoiGraph", "Prune edge: Node %d -> Node %d, MinDist = %.3f < RobotRadius = %.3f", from_id, to_id, min_dist, robot_radius);
             }
         }
         for (int nid : to_remove) {
