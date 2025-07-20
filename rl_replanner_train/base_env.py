@@ -593,18 +593,24 @@ class BaseEnv(gym.Env):
         cos_0 = vector_0.dot(base_direction) / module_0
         cos_1 = vector_1.dot(base_direction) / module_1
 
+        cone_center_rename = {'x': self.cone_center[0], 'y': self.cone_center[1]}
+
         try:
             if cos_0 * cos_1 > 0:
                 # unilateral
                 if abs(cos_0) < abs(cos_1):
                     # the vertex 0 is close to global goal
-                    pred_position = self._avoidObstacles(vertices[0], vertices[1], vertices[0])
+                    # pred_position = self._avoidObstacles(vertices[0], vertices[1], vertices[0])
+                    pred_position = self._avoidObstacles_from_center(cone_center_rename, vertices[0], radius)
                 else:
                     # the vertex 1 is close to global goal
-                    pred_position = self._avoidObstacles(vertices[0], vertices[1], vertices[1])
+                    # pred_position = self._avoidObstacles(vertices[0], vertices[1], vertices[1])
+                    pred_position = self._avoidObstacles_from_center(cone_center_rename, vertices[1], radius)
             else:
                 # bilateral
-                pred_position = self._avoidObstacles(vertices[0], vertices[1], {'x':inter_x, 'y':inter_y})
+                # pred_position = self._avoidObstacles(vertices[0], vertices[1], {'x':inter_x, 'y':inter_y})
+                pred_position = self._avoidObstacles_from_center(cone_center_rename, {'x':inter_x, 'y':inter_y}, radius)
+
         except Exception as e:
             # print('[Predictor] Fail to get the predicted goal: %s' % str(e))
             return False
@@ -692,7 +698,51 @@ class BaseEnv(gym.Env):
                 else:
                     p_0 = [target['x'] + distance * dir_x, target['y'] + distance * dir_y]
                     p_1 = [target['x'] - distance * dir_x, target['y'] - distance * dir_y]
-    
+
+    # Return the collision-free point closest to the vertex_1 on the line segment from vertex_0 to vertex_1
+    def _avoidObstacles_from_center(self, vertex_0, vertex_1, max_distance):
+        module = ((vertex_1['x'] - vertex_0['x']) ** 2 + (vertex_1['y'] - vertex_0['y']) ** 2) ** 0.5
+        dir_x = (vertex_1['x'] - vertex_0['x']) / module
+        dir_y = (vertex_1['y'] - vertex_0['y']) / module
+        distance = 0
+        p_ = [vertex_0['x'] + distance * dir_x, vertex_0['y'] + distance * dir_y]
+
+        # if the vertex_0 is in the obstacles, get out of the obstacles first
+        while self._isCollided(p_):
+            distance += self.map_resolution
+            if distance > max_distance:
+
+                # search the another direction until the max_distance
+                dir_x = -dir_x
+                dir_y = -dir_y
+                distance = self.map_resolution
+                p_ = [vertex_0['x'] + distance * dir_x, vertex_0['y'] + distance * dir_y]
+
+                while distance < max_distance:
+                    if not self._isCollided(p_): # return the first free-occupiable point in the opposite direction
+                        return p_
+                    else:
+                        distance += self.map_resolution
+                        p_ = [vertex_0['x'] + distance * dir_x, vertex_0['y'] + distance * dir_y]
+                    
+                return None
+            else:
+                p_ = [vertex_0['x'] + distance * dir_x, vertex_0['y'] + distance * dir_y]
+
+        # then move along the line segment until the vertex_1
+        while distance < max_distance:
+            distance += self.map_resolution
+            p_ = [vertex_0['x'] + distance * dir_x, vertex_0['y'] + distance * dir_y]
+            if not self._isCollided(p_):
+                continue
+            else:
+                # if the point is in the obstacles, return the last point
+                return [vertex_0['x'] + (distance - self.map_resolution) * dir_x, 
+                        vertex_0['y'] + (distance - self.map_resolution) * dir_y]
+
+        return [vertex_0['x'] + max_distance * dir_x, 
+                vertex_0['y'] + max_distance * dir_y]
+
     def render(self):
         if self.render_mode == "ros":
             # observation
