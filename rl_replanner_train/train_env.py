@@ -42,9 +42,14 @@ class TrainEnv(BaseEnv):
             decision_interval=1,
             render_real_time_factor=1.0,
             use_generator = False,
+            map_setting_file_for_planner = None
         ):
         # addtional parameters
         self.traj_planner_setting_file = traj_planner_setting_file
+        if map_setting_file_for_planner is not None:
+            self.map_setting_file_for_planner = map_setting_file_for_planner
+        else:
+            self.map_setting_file_for_planner = None
 
         super().__init__(
             reward_weight=reward_weight,
@@ -69,12 +74,20 @@ class TrainEnv(BaseEnv):
         # TODO: initialize the human traj generator
         if self.use_generator:
             self.traj_generator = cpp_utils.TrajGenerator()
-            self.traj_generator.initialize(
-                map_file=self.map_setting_file,
-                planner_file=self.traj_planner_setting_file,
-                path_resolution=self.path_resolution,
-                time_resolution=self.time_resolution,
-            )
+            if self.map_setting_file_for_planner is not None:
+                self.traj_generator.initialize(
+                    map_file=self.map_setting_file_for_planner,
+                    planner_file=self.traj_planner_setting_file,
+                    path_resolution=self.path_resolution,
+                    time_resolution=self.time_resolution,
+                ) 
+            else:
+                self.traj_generator.initialize(
+                    map_file=self.map_setting_file,
+                    planner_file=self.traj_planner_setting_file,
+                    path_resolution=self.path_resolution,
+                    time_resolution=self.time_resolution,
+                )   
 
     def _reset_human_traj(self, seed=None, options=None):
         # load human trajectory

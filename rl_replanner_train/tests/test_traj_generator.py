@@ -20,15 +20,15 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(current_dir))
 # 构建地图文件的绝对路径
 # map_file = os.path.join(project_root, "rl_replanner_train", "maps", "sim_maps", "turtlebot3_world.yaml")
-map_file = os.path.join(project_root, "rl_replanner_train", "maps", "sim_maps", "room.yaml")
+map_file = os.path.join(project_root, "rl_replanner_train", "maps", "real", "phy1.yaml")
 planner_file = os.path.join(project_root, "cpp_utils", "include", "teb_local_planner", "teb_params.yaml")
 
 rclpy.init()
 
 render_node = rclpy.create_node("render_node")
 
-map_name = "turtlebot3_world_3"
-map_path = "./rl_replanner_train/maps/sim_maps/" + map_name + ".yaml"
+map_name = "phy1"
+map_path = "./rl_replanner_train/maps/real_maps/" + map_name + ".yaml"
 
 path_publisher = render_node.create_publisher(Path, "path", 10)
 init_path_publisher = render_node.create_publisher(Path, "init_path", 10)
@@ -56,14 +56,18 @@ print("Initialized trajectory generator")
 pyCostmap.loadCostmapFromCostmapCpp(traj_generator.getCostmap())
 # startPoint = cpp_utils.Point(-1.72, -0.217)
 # endPoint = cpp_utils.Point(1.96, 0.395)
-startPoint = cpp_utils.Point(-1.25, -1.53)
-endPoint = cpp_utils.Point(7.2, -7)
+# startPoint = cpp_utils.Point(-1.25, -1.53)
+# endPoint = cpp_utils.Point(7.2, -7)
+
+# phy1
+startPoint = cpp_utils.Point(-2.42, 4.77)
+endPoint = cpp_utils.Point(-5.57,  8.41)
 
 # World to Map
-startPoint_map = pyCostmap.worldToMap(-1.72, -0.217)
-endPoint_map = pyCostmap.worldToMap(1.96, 0.395)
-print("startPoint_map: ", startPoint_map)
-print("endPoint_map: ", endPoint_map)
+# startPoint_map = pyCostmap.worldToMap(-1.72, -0.217)
+# endPoint_map = pyCostmap.worldToMap(1.96, 0.395)
+# print("startPoint_map: ", startPoint_map)
+# print("endPoint_map: ", endPoint_map)
 
 
 while rclpy.ok():

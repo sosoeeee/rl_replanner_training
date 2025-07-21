@@ -456,6 +456,9 @@ std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajs(Point start, Point
         unsigned int end_mx, end_my;
         costmap_->worldToMap(start.x, start.y, start_mx, start_my);
         costmap_->worldToMap(end.x, end.y, end_mx, end_my);
+
+        LOGGER_INFO("teb_local_planner", "MAP points: start (%u, %u), end (%u, %u)", start_mx, start_my, end_mx, end_my);
+
         voronoi_graph_->getVoronoiGraph(start_mx, start_my, end_mx, end_my);
         voronoi_graph_->pruneEdgesByObstacleClearance(costmap_->getResolution(), robot_radius_);
         // LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", voronoi_graph_->getStartId(), voronoi_graph_->getEndId());

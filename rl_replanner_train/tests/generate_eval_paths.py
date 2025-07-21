@@ -22,16 +22,17 @@ costmap_publisher = render_node.create_publisher(OccupancyGrid, "costmap", 10)
 
 previous_marker_count = 0  # Add this line after creating render_node
 
-map_name = "room"
+map_name = "phy1"
+# map_name = "phy1NoBoundary"
 
-res_status, costmap_cpp = cpp_utils.loadMap("./rl_replanner_train/maps/sim_maps/" + map_name + ".yaml")
+res_status, costmap_cpp = cpp_utils.loadMap("./rl_replanner_train/maps/real_maps/" + map_name + ".yaml")
 pyCostmap = PyCostmap2D(render_node)
 
 
 # Initialize the trajectory generator
 traj_generator = cpp_utils.TrajGenerator()
 traj_generator.initialize(
-    map_file="./rl_replanner_train/maps/sim_maps/" + map_name + ".yaml",
+    map_file="./rl_replanner_train/maps/real_maps/" + map_name + ".yaml",
     planner_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     path_resolution=0.025,
     time_resolution=0.1,
@@ -40,12 +41,12 @@ pyCostmap.loadCostmapFromCostmapCpp(traj_generator.getCostmap())
 # startPoint = cpp_utils.Point(-1.72, -0.217)
 # endPoint = cpp_utils.Point(1.96, 0.395)
 
-startPoint = cpp_utils.Point(0.0, 2.0)
-endPoint = cpp_utils.Point(8.5, -3.0)
+# startPoint = cpp_utils.Point(0.0, 2.0)
+# endPoint = cpp_utils.Point(8.5, -3.0)
 
 # phy1
-# startPoint = cpp_utils.Point(-2.42, 4.77)
-# endPoint = cpp_utils.Point(-5.57,  8.41)
+startPoint = cpp_utils.Point(-2.42, 4.77)
+endPoint = cpp_utils.Point(-5.57,  8.41)
 
 root_dir = "rl_replanner_train/data/"
 # root_dir = "/home/rosdev/ros2_ws/data_collection/data/"
