@@ -43,6 +43,10 @@ pyCostmap.loadCostmapFromCostmapCpp(traj_generator.getCostmap())
 startPoint = cpp_utils.Point(0.0, 2.0)
 endPoint = cpp_utils.Point(8.5, -3.0)
 
+# phy1
+# startPoint = cpp_utils.Point(-2.42, 4.77)
+# endPoint = cpp_utils.Point(-5.57,  8.41)
+
 root_dir = "rl_replanner_train/data/"
 # root_dir = "/home/rosdev/ros2_ws/data_collection/data/"
 
