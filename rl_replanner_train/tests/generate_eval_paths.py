@@ -22,8 +22,14 @@ costmap_publisher = render_node.create_publisher(OccupancyGrid, "costmap", 10)
 
 previous_marker_count = 0  # Add this line after creating render_node
 
+# TODO: change the map name and start, end points
 map_name = "phy1"
-# map_name = "phy1NoBoundary"
+startPoint = cpp_utils.Point(-2.42, 4.77)
+endPoint = cpp_utils.Point(-5.57, 8.41)
+
+# TODO: gengerate paths to different directories
+root_dir = "rl_replanner_train/data/"                       # for training
+# root_dir = "/home/rosdev/ros2_ws/data_collection/data/"   # for human in the loop training and experiment
 
 res_status, costmap_cpp = cpp_utils.loadMap("./rl_replanner_train/maps/real_maps/" + map_name + ".yaml")
 pyCostmap = PyCostmap2D(render_node)
@@ -39,17 +45,14 @@ traj_generator.initialize(
 )
 pyCostmap.loadCostmapFromCostmapCpp(traj_generator.getCostmap())
 # startPoint = cpp_utils.Point(-1.72, -0.217)
-# endPoint = cpp_utils.Point(1.96, 0.395)
+#  = cpp_utils.Point(1.96, 0.395)
 
 # startPoint = cpp_utils.Point(0.0, 2.0)
 # endPoint = cpp_utils.Point(8.5, -3.0)
 
 # phy1
-startPoint = cpp_utils.Point(-2.42, 4.77)
-endPoint = cpp_utils.Point(-5.57,  8.41)
-
-root_dir = "rl_replanner_train/data/"
-# root_dir = "/home/rosdev/ros2_ws/data_collection/data/"
+# startPoint = cpp_utils.Point(-2.42, 4.77)
+# endPoint = cpp_utils.Point(-5.57,  8.41)
 
 # create map directory
 if not os.path.exists(root_dir + map_name):
