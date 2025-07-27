@@ -645,9 +645,33 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
                     for(const auto& node : voronoi_nodes_modified) {
                         if (node.getPosition().x == new_x && node.getPosition().y == new_y) {
                             voronoi_nodes_startNeighbor.push_back(node);
+                            visited[new_x][new_y] = true; // 标记为已访问
                             break; // 找到匹配的节点后跳出循环
                         }
                     }
+                    // 检查该点的周围是否有Voronoi节点
+                    for(int nnx = -1; nnx <= 1; nnx++) {
+                        for(int nny = -1; nny <= 1; nny++) {
+                            if (nnx == 0 && nny == 0) continue;
+                            if(nnx*nny == -1 || nnx*nny == 1) continue;
+                            int neighbor_x = new_x + nnx;
+                            int neighbor_y = new_y + nny;
+                            if (neighbor_x < 0 || neighbor_x >= sizeX || neighbor_y < 0 || neighbor_y >= sizeY) continue;
+                            if (visited[neighbor_x][neighbor_y]) continue;
+                            if (voronoi_modified->isVoronoiAlternative(neighbor_x, neighbor_y)) {
+                                // 检查是否是Voronoi节点
+                                for(const auto& node : voronoi_nodes_modified) {
+                                    if (node.getPosition().x == neighbor_x && node.getPosition().y == neighbor_y) {
+                                        // 如果是Voronoi节点，添加到起点邻接节点列表
+                                        voronoi_nodes_startNeighbor.push_back(node);
+                                        visited[neighbor_x][neighbor_y] = true; // 标记为已访问
+                                        break; // 找到匹配的节点后跳出循环
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                 }
             }
         }
@@ -696,7 +720,30 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
                     for(const auto& node : voronoi_nodes_modified) {
                         if (node.getPosition().x == new_x && node.getPosition().y == new_y) {
                             voronoi_nodes_endNeighbor.push_back(node);
+                            visited[new_x][new_y] = true; // 标记为已访问
                             break; // 找到匹配的节点后跳出循环
+                        }
+                    }
+                    // 检查该点的周围是否有Voronoi节点
+                    for(int nnx = -1; nnx <= 1; nnx++) {
+                        for(int nny = -1; nny <= 1; nny++) {
+                            if (nnx == 0 && nny == 0) continue;
+                            if(nnx*nny == -1 || nnx*nny == 1) continue;
+                            int neighbor_x = new_x + nnx;
+                            int neighbor_y = new_y + nny;
+                            if (neighbor_x < 0 || neighbor_x >= sizeX || neighbor_y < 0 || neighbor_y >= sizeY) continue;
+                            if (visited[neighbor_x][neighbor_y]) continue;
+                            if (voronoi_modified->isVoronoiAlternative(neighbor_x, neighbor_y)) {
+                                // 检查是否是Voronoi节点
+                                for(const auto& node : voronoi_nodes_modified) {
+                                    if (node.getPosition().x == neighbor_x && node.getPosition().y == neighbor_y) {
+                                        // 如果是Voronoi节点，添加到终点邻接节点列表
+                                        voronoi_nodes_endNeighbor.push_back(node);
+                                        visited[neighbor_x][neighbor_y] = true; // 标记为已访问
+                                        break; // 找到匹配的节点后跳出循环
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -976,7 +1023,7 @@ void VoronoiGraph::pruneEdgesByObstacleClearance(float map_resolution, float rob
             }
             if (min_dist < (robot_radius*2)) {
                 to_remove.push_back(to_id);
-                LOGGER_INFO("VoronoiGraph", "Prune edge: Node %d -> Node %d, MinDist = %.3f < RobotRadius = %.3f", from_id, to_id, min_dist, robot_radius);
+                LOGGER_INFO("VoronoiGraph", "Prune edge: Node %d -> Node %d, MinDist = %.3f < RobotRadius * 2 = %.3f", from_id, to_id, min_dist, robot_radius*2);
             }
         }
         for (int nid : to_remove) {

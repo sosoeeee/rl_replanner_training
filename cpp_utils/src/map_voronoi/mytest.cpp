@@ -52,7 +52,9 @@ loadMap(const std::string &yaml_file) {
 int main() {
     // Load the map from the YAML file
     // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml");
-    auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/room.yaml");
+    // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/room.yaml");
+    auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/square_map/square_map_2.yaml");
+    // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/circle_map/circle_map_1.yaml");
 
     // Get the map dimensions
     unsigned int sizeX = costmap->getSizeInCellsX();
@@ -63,8 +65,9 @@ int main() {
     // // Create and visualize Voronoi graph
     VoronoiGraph voronoigraph(costmap);
 
-    // voronoigraph.getVoronoiGraph(165, 195, 239, 207);
-    voronoigraph.getVoronoiGraph(246, 727, 415, 617);
+    // voronoigraph.getVoronoiGraph(165, 195, 239, 207); // Example coordinates for the turtlebot3 world map
+    // voronoigraph.getVoronoiGraph(246, 727, 415, 617); // Example coordinates for the room map
+    voronoigraph.getVoronoiGraph(40, 40, 400, 400); // Example coordinates for the square map / circle map
 
     // voronoigraph.visualizeVoronoi("modified_voronoi.ppm", 1);
     // voronoigraph.visualizeVoronoi("static_voronoi.ppm", 0);
