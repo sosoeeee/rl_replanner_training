@@ -24,14 +24,14 @@ costmap_publisher = render_node.create_publisher(OccupancyGrid, "costmap", 10)
 
 previous_marker_count = 0  # Add this line after creating render_node
 
-res_status, costmap_cpp = cpp_utils.loadMap("./rl_replanner_train/maps/circle_map/circle_map_1.yaml")
+res_status, costmap_cpp = cpp_utils.loadMap("./rl_replanner_train/maps/circle_map/circle_map_2.yaml")
 pyCostmap = PyCostmap2D(render_node)
 
 
 # Initialize the trajectory generator
 traj_generator = cpp_utils.TrajGenerator()
 traj_generator.initialize(
-    map_file="./rl_replanner_train/maps/circle_map/circle_map_1.yaml",
+    map_file="./rl_replanner_train/maps/circle_map/circle_map_2.yaml",
     planner_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     path_resolution=0.025,
     time_resolution=0.1,

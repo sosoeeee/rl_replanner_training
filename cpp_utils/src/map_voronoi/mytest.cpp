@@ -53,8 +53,8 @@ int main() {
     // Load the map from the YAML file
     // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml");
     // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/room.yaml");
-    auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/square_map/square_map_2.yaml");
-    // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/circle_map/circle_map_1.yaml");
+    // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/square_map/square_map_2.yaml");
+    auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/circle_map/circle_map_2.yaml");
 
     // Get the map dimensions
     unsigned int sizeX = costmap->getSizeInCellsX();
