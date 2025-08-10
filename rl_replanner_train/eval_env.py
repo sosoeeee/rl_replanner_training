@@ -146,6 +146,7 @@ class EvalEnv(BaseEnv):
         self.current_human_traj = np.loadtxt(traj_file)
 
         self.replan_num = 0
+        self.fail_num = 0
         self.current_step = 0
         self.total_reward_before_normalization = 0.0
         self.prediction_errors = []
@@ -205,11 +206,13 @@ class EvalEnv(BaseEnv):
                                             radius=self.current_action[1][1],
                                             is_enabled=True)
                 if not self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal):
-                    terminated = True
+                    # terminated = True
+                    self.fail_num += 1
                 # use point on robot path as the start point
                 # self._plan_robot_path([self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]], self.pred_goal)
             else:
-                terminated = True
+                # terminated = True
+                self.fail_num += 1
 
         if terminated:
             end_reward = -1
@@ -236,6 +239,7 @@ class EvalEnv(BaseEnv):
             self.info = {
                 'is_success': is_success,
                 'replan_freq': self.replan_num / self.current_step,  # replan frequency
+                'fail_rate': self.fail_num / self.current_step,  # fail rate
                 'cur_idx': self.traj_index,
                 'eval_traj_num': len(self.replay_traj_files),
                 'replan_heatmap': self.replan_heatmap.copy(),

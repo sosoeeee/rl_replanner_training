@@ -1,0 +1,223 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="default">
+    <include><uri>model://sun</uri></include>
+    <include><uri>model://ground_plane</uri></include>
+    
+    <model name='wall_north'>
+      <static>true</static>
+      <pose>0 5.0 0.5 0 0 0</pose>
+      <link name='link'><collision name='collision'><geometry><box><size>11.0 1.0 1.0</size></box></geometry></collision><visual name='visual'><geometry><box><size>11.0 1.0 1.0</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material></visual></link>
+    </model>
+    <model name='wall_south'>
+      <static>true</static>
+      <pose>0 -5.0 0.5 0 0 0</pose>
+      <link name='link'><collision name='collision'><geometry><box><size>11.0 1.0 1.0</size></box></geometry></collision><visual name='visual'><geometry><box><size>11.0 1.0 1.0</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material></visual></link>
+    </model>
+    <model name='wall_east'>
+      <static>true</static>
+      <pose>5.0 0 0.5 0 0 0</pose>
+      <link name='link'><collision name='collision'><geometry><box><size>1.0 9.0 1.0</size></box></geometry></collision><visual name='visual'><geometry><box><size>1.0 9.0 1.0</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material></visual></link>
+    </model>
+    <model name='wall_west'>
+      <static>true</static>
+      <pose>-5.0 0 0.5 0 0 0</pose>
+      <link name='link'><collision name='collision'><geometry><box><size>1.0 9.0 1.0</size></box></geometry></collision><visual name='visual'><geometry><box><size>1.0 9.0 1.0</size></box></geometry><material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material></visual></link>
+    </model>
+    <model name='obstacle_4'>
+      <static>true</static>
+      <pose>3.200000000000001 0.20000000000000018 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.4</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.4</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_5'>
+      <static>true</static>
+      <pose>0.20000000000000018 -1.5999999999999996 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.75</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.75</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_6'>
+      <static>true</static>
+      <pose>-1.1499999999999995 2.2 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.4</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.4</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_7'>
+      <static>true</static>
+      <pose>-0.25 3.5999999999999996 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.25</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.25</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_8'>
+      <static>true</static>
+      <pose>-2.6999999999999997 -0.1999999999999993 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.6000000000000001</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.6000000000000001</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_9'>
+      <static>true</static>
+      <pose>-0.8499999999999996 -3.5 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.30000000000000004</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.30000000000000004</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_10'>
+      <static>true</static>
+      <pose>1.1000000000000005 1.5 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.65</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.65</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_11'>
+      <static>true</static>
+      <pose>-2.9 -3.0 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.4</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.4</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_12'>
+      <static>true</static>
+      <pose>2.950000000000001 -2.1999999999999997 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.75</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.75</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_13'>
+      <static>true</static>
+      <pose>-3.15 3.1500000000000004 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.8</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.8</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_14'>
+      <static>true</static>
+      <pose>-3.95 -1.75 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.25</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.25</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_15'>
+      <static>true</static>
+      <pose>3.3499999999999996 2.5500000000000007 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.6000000000000001</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.6000000000000001</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_16'>
+      <static>true</static>
+      <pose>-1.6999999999999997 -1.6999999999999997 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.25</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.25</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_17'>
+      <static>true</static>
+      <pose>-0.5499999999999998 0.75 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.25</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.25</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <model name='obstacle_18'>
+      <static>true</static>
+      <pose>1.5500000000000007 3.6500000000000004 0.5 0 0 0</pose>
+      <link name='link'>
+        <visual name='visual'>
+          <geometry><cylinder><radius>0.5</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+        <collision name='collision'>
+          <geometry><cylinder><radius>0.5</radius><length>1.0</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+  </world>
+</sdf>

@@ -151,7 +151,7 @@ def generate_map_and_world(map_size_meters, cell_resolution_m, num_obstacles,
     
     existing_circles = []
     max_attempts = 1000
-    min_distance_pixels = int(robot_radius_m / cell_resolution_m)
+    min_distance_pixels = int(robot_radius_m / cell_resolution_m) * 6
     
     for _ in range(num_obstacles):
         attempts = 0
@@ -203,8 +203,8 @@ if __name__ == "__main__":
     parser.add_argument('--size', type=float, default=22.0, help='地图边长（米）')
     parser.add_argument('--resolution', type=float, default=0.05, help='栅格分辨率（米/像素）')
     parser.add_argument('--obstacles', type=int, default=10, help='障碍物数量')
-    parser.add_argument('--min_radius', type=float, default=1.0, help='障碍物最小半径（米）')
-    parser.add_argument('--max_radius', type=float, default=2.0, help='障碍物最大半径（米）')
+    parser.add_argument('--min_radius', type=float, default=0.3, help='障碍物最小半径（米）')
+    parser.add_argument('--max_radius', type=float, default=0.8, help='障碍物最大半径（米）')
     parser.add_argument('--robot_radius', type=float, default=0.18, help='用于计算障碍物最小间距的机器人半径（米）')
     parser.add_argument('--output', type=str, required=True, help='输出PGM/YAML文件的基本路径和名称 (例如: ./maps/my_map)')
     parser.add_argument('--world_output', type=str, help='输出.world文件的完整路径和名称 (可选, 默认基于--output生成)')
@@ -220,8 +220,8 @@ if __name__ == "__main__":
     # 示例：定义禁止区域（可根据需要修改）
     # 格式：[(x坐标(米), y坐标(米), 半径(米)), ...]，坐标相对于地图中心
     forbidden_zones = [
-        (-9, -9, 1.0),
-        (9, 9, 1.0)
+        (-4, -4, 0.5),
+        (4, 4, 0.5)
     ]
     
     generate_map_and_world(

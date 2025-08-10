@@ -27,7 +27,7 @@ speed_buffer_length = 4
 # 初始化 EvalEnv
 env = EvalEnv(
     reward_weight=reward_weight,
-    map_setting_file='./rl_replanner_train/maps/sim_maps/room.yaml',
+    map_setting_file='./rl_replanner_train/maps/sim_maps/circle_clutter.yaml',
     path_planner_setting_file='./cpp_utils/include/path_planner/planner_setting.yaml',
     render_mode='ros',
     render_real_time_factor=10,
