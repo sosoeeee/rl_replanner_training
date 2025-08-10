@@ -14,7 +14,7 @@ costmap_publisher = render_node.create_publisher(OccupancyGrid, "costmap", 10)
 partial_map_publisher = render_node.create_publisher(OccupancyGrid, "partial_map", 10)
 path_publisher = render_node.create_publisher(Path, "path", 10)
 
-res_status, costmap_cpp = cpp_utils.loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml")
+res_status, costmap_cpp = cpp_utils.loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/sim_maps/turtlebot3_world.yaml")
 
 if res_status == cpp_utils.LOAD_MAP_STATUS.LOAD_MAP_SUCCESS:
     pyCostmap = PyCostmap2D(render_node)

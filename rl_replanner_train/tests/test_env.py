@@ -15,27 +15,29 @@ print("=====================================")
 # run environment
 reward_weight = {
         'task': 1.0,
-        'reg_angle_factor_a': 0.2,
-        'reg_angle_factor_b': 0.07,
-        'reg_depth_factor_a': 0.2,
-        'reg_depth_factor_b': 0.02,
+        'replan_punishment': 0.3,
+        'reg_angle_factor_a': 0.0,
+        'reg_angle_factor_b': 3.0,
+        'reg_angle_factor_k': 0.02,
+        # 'reg_depth_factor_b': 3.0,
+        # 'reg_depth_init_portion': 2.0,
         'state': 2.0,
         'exp_factor': 1.0,
         'decay_factor': 0.98,
         'replan_punishment': 1.0   # 补充
     }
-obser_width=5                # unit: meter
+obser_width=12                # unit: meter
 human_history_length=20
 robot_prediction_length=100
 speed_buffer_length=4
 env = TrainEnv(
     reward_weight=reward_weight,
-    map_setting_file='./rl_replanner_train/maps/tb3_classic/turtlebot3_world.yaml',
-    # map_setting_file='./rl_replanner_train/maps/tb3_classic/room.yaml',
+    # map_setting_file='./rl_replanner_train/maps/sim_maps/turtlebot3_world.yaml',
+    map_setting_file='./rl_replanner_train/maps/sim_maps/room.yaml',
     path_planner_setting_file='./cpp_utils/include/path_planner/planner_setting.yaml',
     traj_planner_setting_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     render_mode='ros',
-    render_real_time_factor=8,
+    render_real_time_factor=10,
     obser_width=obser_width,
     replay_traj_path='./rl_replanner_train/data',
     human_history_length=human_history_length,

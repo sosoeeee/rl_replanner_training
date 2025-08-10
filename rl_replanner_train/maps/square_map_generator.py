@@ -133,7 +133,7 @@ def generate_map(map_size_meters, cell_resolution_m, num_obstacles,
         forbidden_zones: 禁止区域列表，每个元素为 (x_meters, y_meters, radius_meters)
     """
     # 保存路径
-    save_dir = "./square_map" # 在maps路径下运行
+    save_dir = "./sim_maps"
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     output_path = os.path.join(save_dir, output_filename)
