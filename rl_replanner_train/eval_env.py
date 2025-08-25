@@ -59,6 +59,7 @@ class EvalEnv(BaseEnv):
         self.prediction_errors = []
         self.visualize_cones = visualize_cones
         self.start_traj_idx = start_traj_idx
+        self.replan_angles = [] # Initialize list to store replan angles
         if self.visualize_cones:
             self.cone_history = []
 
@@ -150,6 +151,7 @@ class EvalEnv(BaseEnv):
         self.current_step = 0
         self.total_reward_before_normalization = 0.0
         self.prediction_errors = []
+        self.replan_angles = [] # Reset for each new trajectory
         # Reset heatmap for the new trajectory
         if hasattr(self, 'replan_heatmap'):
             self.replan_heatmap.fill(0)
@@ -178,12 +180,22 @@ class EvalEnv(BaseEnv):
             self.current_action[1][1] = self.current_action[1][1] * self.obser_width
 
             if self._get_predicted_goal(depth=self.current_action[1][0], radius=self.current_action[1][1]):
+                # Calculate and store the replan angle
+                p1 = np.array(self.cur_position)
+                center = np.array(self.cone_center)
+                radius = self.current_action[1][1]
+                dist_to_center = np.linalg.norm(center - p1)
+
+                if dist_to_center > radius:
+                    # Angle is 2 * arcsin(radius / dist_to_center)
+                    angle = 2 * np.arcsin(radius / dist_to_center)
+                    self.replan_angles.append(np.rad2deg(angle)) # Store angle in degrees
+                else:
+                    # If inside the circle, the angle is 180 degrees
+                    self.replan_angles.append(180.0)
+
                 if self.visualize_cones:
                     # Calculate triangle vertices for visualization
-                    p1 = np.array(self.cur_position)
-                    center = np.array(self.cone_center)
-                    radius = self.current_action[1][1]
-                    
                     vec_to_center = center - p1
                     dist_to_center = np.linalg.norm(vec_to_center)
 
@@ -246,6 +258,7 @@ class EvalEnv(BaseEnv):
                 'map_setting_file': self.map_setting_file,
                 'robot_path_history': copy.deepcopy(self.human_path_buffer),
                 'reference_traj': self.current_human_traj,
+                'replan_angles': self.replan_angles, # Add replan angles to info
             }
             if self.visualize_cones:
                 self.info['cone_history'] = self.cone_history
@@ -291,7 +304,7 @@ class EvalEnv(BaseEnv):
         else:
             self.reward = self.total_reward_before_normalization / (self.current_step + 1)
 
-            
+
 
 
 

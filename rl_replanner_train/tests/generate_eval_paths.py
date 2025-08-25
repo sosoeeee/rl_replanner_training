@@ -28,8 +28,8 @@ startPoint = cpp_utils.Point(-4.0, -4.0)
 endPoint = cpp_utils.Point(4.0, 4.0)
 
 # TODO: gengerate paths to different directories
-# root_dir = "rl_replanner_train/data/"                       # for training
-root_dir = "/home/rosdev/ros2_ws/data_collection/data/"   # for human in the loop training and experiment
+root_dir = "rl_replanner_train/data/"                       # for training
+# root_dir = "/home/rosdev/ros2_ws/data_collection/data/"   # for human in the loop training and experiment
 
 res_status, costmap_cpp = cpp_utils.loadMap("./rl_replanner_train/maps/sim_maps/" + map_name + ".yaml")
 pyCostmap = PyCostmap2D(render_node)
