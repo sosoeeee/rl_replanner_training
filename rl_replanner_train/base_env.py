@@ -248,7 +248,9 @@ class BaseEnv(gym.Env):
         self.time = 0
         self.current_action = (DO_NOTHING, [0, 0])
 
-        self.global_goal = [self.current_human_traj[-1][0], self.current_human_traj[-1][1]]
+        # initial global goal in _init_human_traj(); 
+        # cause, during training, the global goal is not [self.current_human_traj[-1][0], self.current_human_traj[-1][1]]
+        # self.global_goal = [self.current_human_traj[-1][0], self.current_human_traj[-1][1]]
 
         self.human_path_buffer = []
         self.future_human_path_buffer = []

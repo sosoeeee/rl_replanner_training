@@ -94,16 +94,19 @@ class TrainEnv(BaseEnv):
         traj_file = np.random.choice(self.replay_traj_files)
         self.current_human_traj = np.loadtxt(traj_file)
 
+        self.global_goal = [self.current_human_traj[-1][0], self.current_human_traj[-1][1]]
+
         # TODO: generate a human trajectory. Its start and end point are the same as the trajectory loaded from the file
         if self.use_generator:
             start_point = cpp_utils.Point(self.current_human_traj[0][0], self.current_human_traj[0][1])
             end_point = cpp_utils.Point(self.current_human_traj[-1][0], self.current_human_traj[-1][1])
 
             # random exchange the start and end point
-            if np.random.rand() > 0.5:
-                start_point, end_point = end_point, start_point
+            # if np.random.rand() > 0.5:
+            #     start_point, end_point = end_point, start_point
 
-            generated_traj = self.traj_generator.sampleTraj(start=start_point, end=end_point)
+            # generated_traj = self.traj_generator.sampleTraj(start=start_point, end=end_point)
+            generated_traj = self.traj_generator.sampleTrajLoop(start=start_point, end=end_point)
             if generated_traj:
                 traj_data = [[generated_traj[0].x, generated_traj[0].y, 0, 0, 0, 0, 0]]
                 for i in range(1, len(generated_traj)):

@@ -32,7 +32,9 @@ public:
     // initialize the static costmap and voronoi graph
     void initialize(const std::string &map_file, const std::string &planner_file, double path_resolution, double time_resolution);
     std::vector<Point> sampleTraj(Point start, Point end);
+    std::vector<Point> sampleTrajLoop(Point start, Point end);
     std::vector<Point> sampleDistinctHomotopyTrajs(Point start, Point end);
+    std::vector<Point> sampleDistinctHomotopyTrajsLoop(Point start, Point end);
 
     // for visualization
     std::vector<PoseSE2> getInitPlan() const {return init_plan_;}
@@ -67,6 +69,8 @@ private:
     std::unique_ptr<Point> last_end_point_;   // last end point
     std::vector<std::vector<int>> all_passby_nodes_; // all passby nodes
     int sample_count_ = 0; // sample count
+    int sample_count_s2e = 0; // sample count
+    int sample_count_e2s = 0; // sample count
 
     /* ========================= trajectory planning ========================= */ 
     // constraints

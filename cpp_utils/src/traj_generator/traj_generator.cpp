@@ -516,3 +516,194 @@ std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajs(Point start, Point
 
     return trajectory_;
 }
+
+std::vector<Point> TrajGenerator::sampleTrajLoop(Point start, Point end)
+{
+    // get the nearest voronoi node to the start Point and end Point
+    // int start_node_id, end_node_id;
+    // getNearestNode(start, start_node_id);
+    // getNearestNode(end, end_node_id);
+        // 检查 Voronoi 图是否初始化
+        if (!voronoi_graph_) {
+            LOGGER_ERROR("teb_local_planner", "Voronoi graph is not initialized");
+            return {};
+        }
+    
+
+    // TODO: Update the voronoi graph with "Bubble technique"
+    bool rebuild = false;
+    if (!last_start_point_ || !last_end_point_)
+    {
+        last_start_point_ = std::make_unique<Point>(start);
+        last_end_point_ = std::make_unique<Point>(end);
+        rebuild = true;
+    }
+    else if (std::abs(last_start_point_->x - start.x) > 1e-6 || std::abs(last_start_point_->y - start.y) > 1e-6 ||
+             std::abs(last_end_point_->x - end.x) > 1e-6 || std::abs(last_end_point_->y - end.y) > 1e-6)
+    {
+        last_start_point_ = std::make_unique<Point>(start);
+        last_end_point_ = std::make_unique<Point>(end);
+        rebuild = true;
+        LOGGER_INFO("teb_local_planner", "Start point or end point changed, rebuilding voronoi graph.");
+    }
+
+    if (rebuild)
+    {
+        unsigned int start_mx, start_my;
+        unsigned int end_mx, end_my;
+        costmap_->worldToMap(start.x, start.y, start_mx, start_my);
+        costmap_->worldToMap(end.x, end.y, end_mx, end_my);
+        voronoi_graph_->getVoronoiGraph(start_mx, start_my, end_mx, end_my);
+        voronoi_graph_->pruneEdgesByObstacleClearance(costmap_->getResolution(), robot_radius_);
+    }
+
+    // // debug
+    // LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
+    
+    // sample the passby voronoi nodes from start node to end node
+    // std::vector<int> passby_nodes = voronoi_graph_->getPassbyNodes(start_node_id, end_node_id);
+    std::vector<int> passby_nodes_e2s,passby_nodes_s2e, passby_nodes;
+    passby_nodes_e2s = voronoi_graph_->getPassbyNodes(voronoi_graph_->getEndId(), voronoi_graph_->getStartId());
+    passby_nodes_s2e = voronoi_graph_->getPassbyNodes(voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
+    passby_nodes_e2s.pop_back();
+    // combine the two paths to make a loop
+    passby_nodes.insert(passby_nodes.end(), passby_nodes_e2s.begin(), passby_nodes_e2s.end());
+    passby_nodes.insert(passby_nodes.end(), passby_nodes_s2e.begin(), passby_nodes_s2e.end());
+
+    // // debug
+    // LOGGER_INFO("teb_local_planner", "Passby nodes: ");
+    // for (const auto& node_id : passby_nodes) {
+    //     LOGGER_INFO("teb_local_planner", "%d", node_id);
+    // }
+
+    if (passby_nodes.empty()) {
+        LOGGER_ERROR("teb_local_planner", "No valid path found");
+        return {};
+    }
+    // get initial path from voronoi graph
+    // updateInitPlan(passby_nodes, start, end);
+
+    // TODO: Update the init plan with modified voronoi graph (Don't need to connect the start and end point to the voronoi graph)
+    updateInitPlan(passby_nodes);
+
+    // LOGGER_INFO("teb_local_planner", "Initial path: ");
+    // int idx = 0;
+    // for (const auto& pose : init_plan_) {
+    //     LOGGER_INFO("teb_local_planner", "Pose %d: (%f, %f)", idx++, pose.x(), pose.y());
+    // }
+
+    // create circular corridor
+    updateCorridor();
+
+    // sample via points from the corridor
+    updateViaPoints();
+
+    // plan trajectory
+    updateTrajectory();
+
+    return trajectory_;
+}
+
+std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajsLoop(Point start, Point end)
+{   
+    bool resample = false;
+    if (!last_start_point_ || !last_end_point_)
+    {
+        last_start_point_ = std::make_unique<Point>(start);
+        last_end_point_ = std::make_unique<Point>(end);
+        resample = true;
+    }
+    else if (std::abs(last_start_point_->x - start.x) > 1e-6 || std::abs(last_start_point_->y - start.y) > 1e-6 ||
+             std::abs(last_end_point_->x - end.x) > 1e-6 || std::abs(last_end_point_->y - end.y) > 1e-6)
+    {
+        last_start_point_ = std::make_unique<Point>(start);
+        last_end_point_ = std::make_unique<Point>(end);
+        resample = true;
+        LOGGER_INFO("teb_local_planner", "Start point or end point changed, resampling trajectories from distinct homotopies.");
+    }
+
+    if (resample)
+    {
+        all_passby_nodes_.clear();
+        // // get the nearest voronoi node to the start Point and end Point
+        // int start_node_id, end_node_id;
+        // getNearestNode(start, start_node_id);
+        // getNearestNode(end, end_node_id);
+
+        // TODO: Update the voronoi graph with "Bubble technique"
+        unsigned int start_mx, start_my;
+        unsigned int end_mx, end_my;
+        costmap_->worldToMap(start.x, start.y, start_mx, start_my);
+        costmap_->worldToMap(end.x, end.y, end_mx, end_my);
+
+        LOGGER_INFO("teb_local_planner", "MAP points: start (%u, %u), end (%u, %u)", start_mx, start_my, end_mx, end_my);
+
+        voronoi_graph_->getVoronoiGraph(start_mx, start_my, end_mx, end_my);
+        voronoi_graph_->pruneEdgesByObstacleClearance(costmap_->getResolution(), robot_radius_);
+        // LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
+
+        std::vector<std::vector<Point>> trajectories;
+        // all_passby_nodes_ = voronoi_graph_->findAllPaths(start_node_id, end_node_id);
+        all_passby_nodes_ = voronoi_graph_->findAllPaths(voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
+    }   
+
+    if (sample_count_e2s >= all_passby_nodes_.size())
+    {
+        LOGGER_INFO("teb_local_planner", "All distinct homotopy trajectories have been sampled.");
+        sample_count_s2e = 0;
+        sample_count_e2s = 0;
+        return {};
+    }
+
+    LOGGER_INFO("teb_local_planner", "Sampling combined distinct homotopy trajectory (%d, %d) with passby nodes: ", sample_count_e2s, sample_count_s2e);
+    std::vector<int> passby_nodes, nodes_e2s, nodes_s2e;
+    nodes_e2s = all_passby_nodes_[sample_count_e2s];
+    nodes_e2s.erase(nodes_e2s.begin());
+    passby_nodes.insert(passby_nodes.end(), nodes_e2s.rbegin(), nodes_e2s.rend());
+    nodes_s2e = all_passby_nodes_[sample_count_s2e];
+    passby_nodes.insert(passby_nodes.end(), nodes_s2e.begin(), nodes_s2e.end());
+
+    sample_count_s2e++;
+    if (sample_count_s2e >= all_passby_nodes_.size())
+    {
+        sample_count_s2e = 0;
+        sample_count_e2s++;
+    }
+
+    // get initial path from voronoi graph
+    // auto start_time = std::chrono::high_resolution_clock::now();
+
+    // updateInitPlan(passby_nodes, start, end);
+    // LOGGER_INFO("teb_local_planner", "Initial path size: %zu", init_plan_.size());
+    // TODO: Update the init plan with modified voronoi graph (Don't need to connect the start and end point to the voronoi graph)
+    updateInitPlan(passby_nodes);
+    
+    // auto init_plan_time = std::chrono::high_resolution_clock::now();
+    // auto init_plan_duration = std::chrono::duration_cast<std::chrono::milliseconds>(init_plan_time - start_time);
+    // LOGGER_INFO("teb_local_planner", "Init plan took %ld ms", init_plan_duration.count());
+
+    // create circular corridor
+    updateCorridor();
+    // LOGGER_INFO("teb_local_planner", "Corridor size: %zu", circles_.size());
+    // auto corridor_time = std::chrono::high_resolution_clock::now();
+    // auto corridor_duration = std::chrono::duration_cast<std::chrono::milliseconds>(corridor_time - init_plan_time);
+    // LOGGER_INFO("teb_local_planner", "Corridor creation took %ld ms", corridor_duration.count());
+
+    // sample via points from the corridor
+    updateViaPoints();
+    // LOGGER_INFO("teb_local_planner", "Via points size: %zu", via_points_.size());
+    // auto via_points_time = std::chrono::high_resolution_clock::now();
+    // auto via_points_duration = std::chrono::duration_cast<std::chrono::milliseconds>(via_points_time - corridor_time);
+    // LOGGER_INFO("teb_local_planner", "Via points sampling took %ld ms", via_points_duration.count());
+
+    // plan trajectory
+    updateTrajectory();
+    // LOGGER_INFO("teb_local_planner", "Trajectory size: %zu", trajectory_.size());
+    // auto end_time = std::chrono::high_resolution_clock::now();
+    // auto traj_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - via_points_time);
+    // auto total_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    // LOGGER_INFO("teb_local_planner", "Trajectory optimization took %ld ms", traj_duration.count());
+    // LOGGER_INFO("teb_local_planner", "Total planning took %ld ms", total_duration.count());
+
+    return trajectory_;
+}

@@ -71,7 +71,8 @@ endPoint = cpp_utils.Point(-5.57,  8.41)
 
 
 while rclpy.ok():
-    traj = traj_generator.sampleTraj(start = startPoint, end = endPoint)
+    # traj = traj_generator.sampleTraj(start = startPoint, end = endPoint)
+    traj = traj_generator.sampleTrajLoop(start = startPoint, end = endPoint)
 
     print("Finish sampling trajectory")
 

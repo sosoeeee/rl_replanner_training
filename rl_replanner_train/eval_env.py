@@ -79,6 +79,12 @@ class EvalEnv(BaseEnv):
 
         self.traj_index = -1
 
+        # in Loop training mode, the global goal is the last point of the trajectory in collected_paths
+        collected_traj_files = glob.glob(self.replay_traj_path + '/' + map_name + '/collected_paths/*.txt')
+        traj_file = collected_traj_files[0]
+        collected_human_traj = np.loadtxt(traj_file)
+        self.global_goal = [collected_human_traj[-1][0], collected_human_traj[-1][1]]
+
     def _reset_human_traj(self, seed=None, options=None):
         if self.render_mode == "ros":
             self.eval_ordered = True  # when rendering in ROS, always evaluate in order
