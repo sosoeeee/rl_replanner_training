@@ -14,7 +14,7 @@ static_layer:
   lethal_threshold: 100
 
 inflation_layer:
-  robot_radius: 0.1
+  robot_radius: 0.18
   inflation_radius: 0.55        # make sure this is larger than robot_radius
   cost_scaling_factor: 3.0
   inflate_unknown: false

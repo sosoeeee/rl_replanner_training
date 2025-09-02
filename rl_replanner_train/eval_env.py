@@ -87,7 +87,6 @@ class EvalEnv(BaseEnv):
         if self.eval_ordered:
             # evaluate in order
             self.traj_index = (self.traj_index + 1) % len(self.replay_traj_files)
-            print("\n\n ======================== Resetting trajectory: {} ======================== \n\n".format(self.traj_index))
         else:
             # Reset the trajectory index
             self.traj_index = np.random.randint(0, len(self.replay_traj_files))
@@ -95,10 +94,13 @@ class EvalEnv(BaseEnv):
         traj_file = self.replay_traj_files[self.traj_index]
         self.current_human_traj = np.loadtxt(traj_file)
 
+        # print("\n\n ======================== Testing trajectory: {} ======================== \n\n".format(traj_file))
+
         self.replan_num = 0
         self.fail_num = 0
         self.current_step = 0
         self.total_reward_before_normalization = 0.0
+        self.angles = []
 
     # when evaluating, if the robot action is invalid, current episode will be terminated
     def _interact(self):
@@ -115,6 +117,8 @@ class EvalEnv(BaseEnv):
             # rescale to the map size
             self.current_action[1][0] = self.current_action[1][0] * self.obser_width
             self.current_action[1][1] = self.current_action[1][1] * self.obser_width
+
+            self.angles.append(math.degrees(math.atan2(self.current_action[1][1], self.current_action[1][0])) * 2)
 
             if self._get_predicted_goal(depth=self.current_action[1][0], radius=self.current_action[1][1]):
                 self.path_planner.loadCone(cone_center=self.cone_center, 
@@ -156,6 +160,7 @@ class EvalEnv(BaseEnv):
                 'is_success': is_success,
                 'replan_freq': self.replan_num / self.current_step,  # replan frequency
                 'fail_rate': self.fail_num / self.current_step,  # fail rate
+                'avr_angle': np.mean(self.angles) if len(self.angles) > 0 else 0.0,
                 'cur_idx': self.traj_index,
                 'eval_traj_num': len(self.replay_traj_files),
             }

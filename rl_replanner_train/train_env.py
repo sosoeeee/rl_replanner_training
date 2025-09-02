@@ -201,7 +201,10 @@ class TrainEnv(BaseEnv):
         # radius / depth
         if self.current_action[0] == LOCAL_GOAL:
             if "reg_angle" in self.reward_weight.keys():
-                angle_reg_reward = -np.arctan(self.current_action[1][1] / self.current_action[1][0]) / (np.pi / 2) * self.reward_weight['reg_angle']
+                # angle_reg_reward = -np.arctan(self.current_action[1][1] / self.current_action[1][0]) / (np.pi / 2) * self.reward_weight['reg_angle']
+                norm_angle = np.arctan(self.current_action[1][1] / self.current_action[1][0]) / (np.pi / 2)
+                angle_reg_reward = self.reward_weight['reg_angle'] * (np.log(1 - norm_angle)) / (1 - norm_angle) 
+
                 # print("angle_reg_reward: ", angle_reg_reward)
             # change to the ln scale
             elif ("reg_angle_factor_a" in self.reward_weight.keys()) and ("reg_angle_factor_b" in self.reward_weight.keys()) and ("reg_angle_factor_k" in self.reward_weight.keys()):
