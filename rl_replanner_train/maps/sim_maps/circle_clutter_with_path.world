@@ -1,0 +1,5014 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<sdf version="1.6">
+  <world name="default">
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    <model name="wall_north">
+      <static>true</static>
+      <pose>0 5.0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>11.0 1.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>11.0 1.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_south">
+      <static>true</static>
+      <pose>0 -5.0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>11.0 1.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>11.0 1.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_east">
+      <static>true</static>
+      <pose>5.0 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>1.0 9.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>1.0 9.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_west">
+      <static>true</static>
+      <pose>-5.0 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>1.0 9.0 1.0</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>1.0 9.0 1.0</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="obstacle_4">
+      <static>true</static>
+      <pose>3.200000000000001 0.20000000000000018 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.4</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.4</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_5">
+      <static>true</static>
+      <pose>0.20000000000000018 -1.5999999999999996 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.75</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.75</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_6">
+      <static>true</static>
+      <pose>-1.1499999999999995 2.2 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.4</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.4</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_7">
+      <static>true</static>
+      <pose>-0.25 3.5999999999999996 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.25</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.25</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_8">
+      <static>true</static>
+      <pose>-2.6999999999999997 -0.1999999999999993 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.6000000000000001</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.6000000000000001</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_9">
+      <static>true</static>
+      <pose>-0.8499999999999996 -3.5 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.30000000000000004</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.30000000000000004</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_10">
+      <static>true</static>
+      <pose>1.1000000000000005 1.5 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.65</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.65</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_11">
+      <static>true</static>
+      <pose>-2.9 -3.0 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.4</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.4</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_12">
+      <static>true</static>
+      <pose>2.950000000000001 -2.1999999999999997 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.75</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.75</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_13">
+      <static>true</static>
+      <pose>-3.15 3.1500000000000004 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.8</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.8</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_14">
+      <static>true</static>
+      <pose>-3.95 -1.75 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.25</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.25</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_15">
+      <static>true</static>
+      <pose>3.3499999999999996 2.5500000000000007 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.6000000000000001</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.6000000000000001</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_16">
+      <static>true</static>
+      <pose>-1.6999999999999997 -1.6999999999999997 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.25</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.25</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_17">
+      <static>true</static>
+      <pose>-0.5499999999999998 0.75 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.25</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.25</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="obstacle_18">
+      <static>true</static>
+      <pose>1.5500000000000007 3.6500000000000004 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.5</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.5</radius>
+              <length>1.0</length>
+            </cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="yellow_dot_marker_0">
+      <static>true</static>
+      <pose>-4.0 -4.0 0.00015 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>0.0001</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="yellow_dot_marker_1">
+      <static>true</static>
+      <pose>-1.6 0.0 0.00015 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>0.0001</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="yellow_dot_marker_2">
+      <static>true</static>
+      <pose>-3.0 1.4 0.00015 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>0.0001</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="yellow_dot_marker_3">
+      <static>true</static>
+      <pose>-4.0 -0.4 0.00015 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>0.0001</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="yellow_dot_marker_4">
+      <static>true</static>
+      <pose>3.4 -3.8 0.00015 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>0.0001</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="yellow_dot_marker_5">
+      <static>true</static>
+      <pose>4.0 -2.0 0.00015 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>0.0001</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="yellow_dot_marker_6">
+      <static>true</static>
+      <pose>-0.4 1.6 0.00015 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>0.0001</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="yellow_dot_marker_7">
+      <static>true</static>
+      <pose>4.0 4.0 0.00015 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>0.0001</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>1 1 0 1</ambient>
+            <diffuse>1 1 0 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_8">
+      <static>true</static>
+      <pose>-3.964486265182495 -3.9446245193481446 0.0001 0 0 1.000543018363821</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.14472705004822853 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_9">
+      <static>true</static>
+      <pose>-3.9241006851196287 -3.826993465423584 0.0001 0 0 1.4926999184052112</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13738099502224588 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_10">
+      <static>true</static>
+      <pose>-3.917337036132812 -3.702267074584961 0.0001 0 0 1.540522579244965</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749880264479333 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_11">
+      <static>true</static>
+      <pose>-3.91410608291626 -3.577310848236084 0.0001 0 0 1.549368212107302</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749946552374812 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_12">
+      <static>true</static>
+      <pose>-3.9118096351623537 -3.452332782745361 0.0001 0 0 1.5554789525571024</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749997469804387 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_13">
+      <static>true</static>
+      <pose>-3.9103771686553954 -3.3273425102233887 0.0001 0 0 1.5631934916063137</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749872869869983 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_14">
+      <static>true</static>
+      <pose>-3.918515920639038 -3.203924369812012 0.0001 0 0 1.7112611970181686</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1353582952865057 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_15">
+      <static>true</static>
+      <pose>-3.9284414291381835 -3.0937914848327637 0.0001 0 0 1.5974416221149716</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.10830563753813792 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_16">
+      <static>true</static>
+      <pose>-3.9214930057525637 -2.982635116577148 0.0001 0 0 1.4382319367178795</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13748306607247074 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_17">
+      <static>true</static>
+      <pose>-3.8974846839904784 -2.8612313270568848 0.0001 0 0 1.311884678244083</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13532190708098543 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_18">
+      <static>true</static>
+      <pose>-3.8555225372314452 -2.746577262878418 0.0001 0 0 1.127398954808289</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1344265540606072 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_19">
+      <static>true</static>
+      <pose>-3.7889992713928224 -2.647426414489746 0.0001 0 0 0.8286524071926276</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13120984737172997 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_20">
+      <static>true</static>
+      <pose>-3.700034809112549 -2.5648658752441404 0.0001 0 0 0.67071707286733</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13664070550553534 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_21">
+      <static>true</static>
+      <pose>-3.6029921531677247 -2.486802291870117 0.0001 0 0 0.6841148006691818</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13736217332315934 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_22">
+      <static>true</static>
+      <pose>-3.506577968597412 -2.4073508262634276 0.0001 0 0 0.6943660819577947</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.137493824871798 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_23">
+      <static>true</static>
+      <pose>-3.410227584838867 -2.327775478363037 0.0001 0 0 0.6862972166660504</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13742596565833706 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_24">
+      <static>true</static>
+      <pose>-3.314275932312012 -2.2477664947509766 0.0001 0 0 0.7037846491571043</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13743628358883664 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_25">
+      <static>true</static>
+      <pose>-3.2299831390380858 -2.1578964233398437 0.0001 0 0 0.9327338741590482</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13542221461259812 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_26">
+      <static>true</static>
+      <pose>-3.145399188995361 -2.06917667388916 0.0001 0 0 0.6865880051060689</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13630714739083225 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_27">
+      <static>true</static>
+      <pose>-3.0542016983032223 -1.9848188400268554 0.0001 0 0 0.8058133577791681</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374863680467112 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_28">
+      <static>true</static>
+      <pose>-2.9675513267517086 -1.8947366714477538 0.0001 0 0 0.8038142172156121</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374969078860268 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_29">
+      <static>true</static>
+      <pose>-2.8804348945617675 -1.8050996780395507 0.0001 0 0 0.795500835259482</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749722510626963 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_30">
+      <static>true</static>
+      <pose>-2.792827701568603 -1.7159399032592773 0.0001 0 0 0.7928614763536536</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374984885028695 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_31">
+      <static>true</static>
+      <pose>-2.7049795150756832 -1.627016258239746 0.0001 0 0 0.7901024674757571</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749929607095207 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_32">
+      <static>true</static>
+      <pose>-2.6153587341308593 -1.5402891159057615 0.0001 0 0 0.7477919500363458</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13693202775980676 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_33">
+      <static>true</static>
+      <pose>-2.5246813774108885 -1.457575988769531 0.0001 0 0 0.7309650699523313</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13309420641056458 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_34">
+      <static>true</static>
+      <pose>-2.4319962501525874 -1.385039710998535 0.0001 0 0 0.5936041954478224</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12644563473085496 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_35">
+      <static>true</static>
+      <pose>-2.3338808059692377 -1.3161333084106444 0.0001 0 0 0.6294469245757159</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13736493770954472 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_36">
+      <static>true</static>
+      <pose>-2.2324062347412106 -1.243286323547363 0.0001 0 0 0.6158138653526317</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13745457545146364 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_37">
+      <static>true</static>
+      <pose>-2.129111862182617 -1.1730400085449215 0.0001 0 0 0.5786147985799008</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13741050154686377 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_38">
+      <static>true</static>
+      <pose>-2.02307014465332 -1.1070499420166011 0.0001 0 0 0.534703493436777</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13743155399654844 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_39">
+      <static>true</static>
+      <pose>-1.9158472061157226 -1.0431093215942377 0.0001 0 0 0.5407394113139087</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13721889412033317 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_40">
+      <static>true</static>
+      <pose>-1.8144014358520506 -0.9864919662475584 0.0001 0 0 0.47234532752772107</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.11851613684986471 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_41">
+      <static>true</static>
+      <pose>-1.7423629760742185 -0.9108085632324219 0.0001 0 0 1.1312007621630067</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1244098952750536 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_42">
+      <static>true</static>
+      <pose>-1.6804426193237303 -0.8166542053222656 0.0001 0 0 0.8487357690553756</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12600263950079482 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_43">
+      <static>true</static>
+      <pose>-1.6135547637939451 -0.7209470748901365 0.0001 0 0 1.067454307052295</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13242104696125248 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_44">
+      <static>true</static>
+      <pose>-1.5815156936645507 -0.6100149154663081 0.0001 0 0 1.519208116874947</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12822375513555426 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_45">
+      <static>true</static>
+      <pose>-1.5586912155151367 -0.49556388854980415 0.0001 0 0 1.2320116501793648</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1311963893132032 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_46">
+      <static>true</static>
+      <pose>-1.51235294342041 -0.38382892608642516 0.0001 0 0 1.1249761540294048</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13530267455555228 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_47">
+      <static>true</static>
+      <pose>-1.487717247009277 -0.26712265014648384 0.0001 0 0 1.6015546556333662</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1347397115117593 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_48">
+      <static>true</static>
+      <pose>-1.5018064498901365 -0.1449600219726559 0.0001 0 0 1.768451265345716</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1367442436472601 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_49">
+      <static>true</static>
+      <pose>-1.5444555282592771 -0.026333618164062322 0.0001 0 0 2.0564332196138073</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1434865049321786 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_50">
+      <static>true</static>
+      <pose>-1.5796058654785154 0.09241905212402379 0.0001 0 0 1.647715809810503</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13475804729867824 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_51">
+      <static>true</static>
+      <pose>-1.5958833694458006 0.21488056182861381 0.0001 0 0 1.757090134175228</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13743368782012505 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_52">
+      <static>true</static>
+      <pose>-1.6326030731201169 0.33318176269531286 0.0001 0 0 1.986888610771055</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1368867167070153 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_53">
+      <static>true</static>
+      <pose>-1.6941318511962888 0.440851402282715 0.0001 0 0 2.1926659216044437</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13738628304145326 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_54">
+      <static>true</static>
+      <pose>-1.771834564208984 0.5384740829467778 0.0001 0 0 2.2934321959818234</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374595404934196 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_55">
+      <static>true</static>
+      <pose>-1.857036781311035 0.6298322677612309 0.0001 0 0 2.3492491382213068</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13747794674516553 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_56">
+      <static>true</static>
+      <pose>-1.9476573944091795 0.7157869338989262 0.0001 0 0 2.415981856648868</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13745763920879167 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_57">
+      <static>true</static>
+      <pose>-2.044946479797363 0.7939910888671879 0.0001 0 0 2.513048597013236</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374791227922528 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_58">
+      <static>true</static>
+      <pose>-2.148054695129394 0.8645126342773439 0.0001 0 0 2.5703874220535017</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13745421292264054 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_59">
+      <static>true</static>
+      <pose>-2.2540351867675783 0.9307331085205082 0.0001 0 0 2.5958304582091345</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374977656919588 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_60">
+      <static>true</static>
+      <pose>-2.360984897613525 0.9954353332519537 0.0001 0 0 2.599211281156006</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749927029825523 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_61">
+      <static>true</static>
+      <pose>-2.4680415153503414 1.0599624633789069 0.0001 0 0 2.5991128911920143</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749958536040596 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_62">
+      <static>true</static>
+      <pose>-2.575103378295898 1.124481582641602 0.0001 0 0 2.5993643789582817</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1375000581941438 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_63">
+      <static>true</static>
+      <pose>-2.6822025299072263 1.188938903808594 0.0001 0 0 2.60026771770656</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749974570190332 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_64">
+      <static>true</static>
+      <pose>-2.7893298149108885 1.2533493041992192 0.0001 0 0 2.600239717989911</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374998571872407 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_65">
+      <static>true</static>
+      <pose>-2.8964465141296385 1.3177776336669926 0.0001 0 0 2.599934593885252</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13750011864094236 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_66">
+      <static>true</static>
+      <pose>-3.000932216644287 1.3275234222412116 0.0001 0 0 -2.7259940275624173</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12247673347142243 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_67">
+      <static>true</static>
+      <pose>-3.0898439407348635 1.2554111480712895 0.0001 0 0 -2.2239327235139417</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749815804348647 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_68">
+      <static>true</static>
+      <pose>-3.1662339210510253 1.1564712524414067 0.0001 0 0 -2.232632159662296</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1375003253653485 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_69">
+      <static>true</static>
+      <pose>-3.2431792259216308 1.0579605102539067 0.0001 0 0 -2.2351620742395</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749942180816302 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_70">
+      <static>true</static>
+      <pose>-3.320301055908203 0.9595878601074221 0.0001 0 0 -2.2362181013011453</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1375002201506849 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_71">
+      <static>true</static>
+      <pose>-3.3974737167358398 0.8612546920776372 0.0001 0 0 -2.2361918758784474</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13750005719594152 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_72">
+      <static>true</static>
+      <pose>-3.474318790435791 0.7626668930053717 0.0001 0 0 -2.229579516160374</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749897718001125 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_73">
+      <static>true</static>
+      <pose>-3.549797248840332 0.6630388259887701 0.0001 0 0 -2.20871070375758</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374961871734009 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_74">
+      <static>true</static>
+      <pose>-3.6226661682128904 0.5615005493164067 0.0001 0 0 -2.177828416432309</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749172020151776 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_75">
+      <static>true</static>
+      <pose>-3.69121732711792 0.45704421997070366 0.0001 0 0 -2.1252963066167423</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13747449255446223 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_76">
+      <static>true</static>
+      <pose>-3.7518153190612793 0.34790363311767614 0.0001 0 0 -2.0299938936758446</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13747466588905022 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_77">
+      <static>true</static>
+      <pose>-3.80313720703125 0.23414478302001962 0.0001 0 0 -1.9591563304931516</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13725739493104538 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_78">
+      <static>true</static>
+      <pose>-3.8406675338745115 0.11567478179931667 0.0001 0 0 -1.7958961002360092</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13705564578308566 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_79">
+      <static>true</static>
+      <pose>-3.8691859245300293 -0.005457878112792525 0.0001 0 0 -1.8081520987450592</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13672727389543135 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_80">
+      <static>true</static>
+      <pose>-3.894353675842285 -0.12717571258544869 0.0001 0 0 -1.7412709821862498</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13686937860288445 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_81">
+      <static>true</static>
+      <pose>-3.912142515182495 -0.2501052856445307 0.0001 0 0 -1.6876674105770146</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13649078545131607 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_82">
+      <static>true</static>
+      <pose>-3.9423916816711424 -0.3634778976440427 0.0001 0 0 -1.9892271702426616</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12461049337819104 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_83">
+      <static>true</static>
+      <pose>-3.9358972549438476 -0.4702466964721679 0.0001 0 0 -1.0784597783919676</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13734347676761852 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_84">
+      <static>true</static>
+      <pose>-3.884522008895874 -0.5837629318237303 0.0001 0 0 -1.2131090559994806</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374006330326099 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_85">
+      <static>true</static>
+      <pose>-3.836015510559082 -0.698649978637695 0.0001 0 0 -1.129410343397971</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13719588011905115 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_86">
+      <static>true</static>
+      <pose>-3.778283882141113 -0.8089277267456052 0.0001 0 0 -1.0475295453049243</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1368796361090615 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_87">
+      <static>true</static>
+      <pose>-3.706760597229004 -0.9098531723022458 0.0001 0 0 -0.8607207537318294</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13645035209816728 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_88">
+      <static>true</static>
+      <pose>-3.6177886962890624 -0.9958560943603514 0.0001 0 0 -0.6764770715293759</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1369450261816509 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_89">
+      <static>true</static>
+      <pose>-3.5219431877136227 -1.0727100372314453 0.0001 0 0 -0.6752452250215507</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13333189762801448 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_90">
+      <static>true</static>
+      <pose>-3.4351902961730953 -1.1522031784057618 0.0001 0 0 -0.812067870492605</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12613917802761432 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_91">
+      <static>true</static>
+      <pose>-3.3464598655700684 -1.2301725387573241 0.0001 0 0 -0.6356308383481913</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13473797568691515 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_92">
+      <static>true</static>
+      <pose>-3.2542526245117185 -1.3099613189697261 0.0001 0 0 -0.7912447583066778</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13433561775874922 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_93">
+      <static>true</static>
+      <pose>-3.1685808181762694 -1.3987916946411127 0.0001 0 0 -0.8154935622736861</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13719049020365154 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_94">
+      <static>true</static>
+      <pose>-3.08198127746582 -1.4887250900268552 0.0001 0 0 -0.7930935728368844</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.137496504967735 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_95">
+      <static>true</static>
+      <pose>-2.994722270965576 -1.5782238006591796 0.0001 0 0 -0.8030433716510008</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749944804583875 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_96">
+      <static>true</static>
+      <pose>-2.907950973510742 -1.66819953918457 0.0001 0 0 -0.8040091782272839</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374996299664169 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_97">
+      <static>true</static>
+      <pose>-2.8212288856506342 -1.7582227706909177 0.0001 0 0 -0.8041376128427552</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749951465550317 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_98">
+      <static>true</static>
+      <pose>-2.734579277038574 -1.8483160018920897 0.0001 0 0 -0.8056213861549986</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1375000768552203 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_99">
+      <static>true</static>
+      <pose>-2.6481071472167965 -1.9385797500610351 0.0001 0 0 -0.8080755331788435</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749989671058335 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_100">
+      <static>true</static>
+      <pose>-2.565417385101318 -2.032062530517578 0.0001 0 0 -0.8851578971607041</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13727814629784146 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_101">
+      <static>true</static>
+      <pose>-2.4880416870117186 -2.12998104095459 0.0001 0 0 -0.918949905968808</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13732098966548503 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_102">
+      <static>true</static>
+      <pose>-2.4028700828552245 -2.219728469848633 0.0001 0 0 -0.7034812084079431</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13646960617091836 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_103">
+      <static>true</static>
+      <pose>-2.311265087127685 -2.3033745765686033 0.0001 0 0 -0.7765088040023569</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1366201521774356 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_104">
+      <static>true</static>
+      <pose>-2.217587471008301 -2.38446044921875 0.0001 0 0 -0.6503781735110065</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13649572800824086 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_105">
+      <static>true</static>
+      <pose>-2.125547409057617 -2.4639842033386232 0.0001 0 0 -0.7770640932359372</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1316418034014257 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_106">
+      <static>true</static>
+      <pose>-2.027380561828613 -2.527922821044922 0.0001 0 0 -0.3770795284607537</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13133693434118282 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_107">
+      <static>true</static>
+      <pose>-1.9120828628540039 -2.5646106719970705 0.0001 0 0 -0.24116743340213173</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13546562006770607 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_108">
+      <static>true</static>
+      <pose>-1.7954614639282225 -2.595866584777832 0.0001 0 0 -0.28338253413638304</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13021548191509372 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_109">
+      <static>true</static>
+      <pose>-1.6761705398559568 -2.6102993011474607 0.0001 0 0 0.033875611033313574</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749706005788387 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_110">
+      <static>true</static>
+      <pose>-1.5512229919433593 -2.606821250915527 0.0001 0 0 0.021782268640905593</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374990487705488 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_111">
+      <static>true</static>
+      <pose>-1.426243209838867 -2.6046902656555173 0.0001 0 0 0.012315723192886398</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749951759377857 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_112">
+      <static>true</static>
+      <pose>-1.301249504089355 -2.603524875640869 0.0001 0 0 0.006330922243232914</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749981820988985 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_113">
+      <static>true</static>
+      <pose>-1.176250839233398 -2.6030396461486816 0.0001 0 0 0.00143279931249533</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13750014113794928 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_114">
+      <static>true</static>
+      <pose>-1.0512517929077143 -2.6032402992248533 0.0001 0 0 -0.004643286992941639</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749938416504634 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_115">
+      <static>true</static>
+      <pose>-0.9263353347778316 -2.6055779457092285 0.0001 0 0 -0.03279068219478601</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13739216335921708 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_116">
+      <static>true</static>
+      <pose>-0.8040637969970699 -2.622592735290527 0.0001 0 0 -0.24503864645142623</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13573372162586964 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_117">
+      <static>true</static>
+      <pose>-0.691549491882324 -2.6679493904113767 0.0001 0 0 -0.5233985109407026</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13375935888797305 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_118">
+      <static>true</static>
+      <pose>-0.5816646575927731 -2.7231714248657224 0.0001 0 0 -0.40942815982470404</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13723707591125028 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_119">
+      <static>true</static>
+      <pose>-0.4673843383789058 -2.773114490509033 0.0001 0 0 -0.41459274197206014</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1371409837910566 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_120">
+      <static>true</static>
+      <pose>-0.36245727539062456 -2.8354238510131835 0.0001 0 0 -0.6605967090200694</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13337585872791097 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_121">
+      <static>true</static>
+      <pose>-0.25864715576171804 -2.898458480834961 0.0001 0 0 -0.4326691607373632</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13555676624187546 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_122">
+      <static>true</static>
+      <pose>-0.14772167205810494 -2.9460824012756346 0.0001 0 0 -0.377266397360261</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13012167026387456 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_123">
+      <static>true</static>
+      <pose>-0.03077812194824192 -2.9748073577880856 0.0001 0 0 -0.11149509957731828</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13715655622651257 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_124">
+      <static>true</static>
+      <pose>0.08680362701416033 -2.999121856689453 0.0001 0 0 -0.3028038407496096</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.128207841653458 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_125">
+      <static>true</static>
+      <pose>0.2048583984375001 -3.013742351531982 0.0001 0 0 0.04413865250843836</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13747947949405256 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_126">
+      <static>true</static>
+      <pose>0.32977294921875 -3.01177806854248 0.0001 0 0 -0.012691626203786052</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13747750277312112 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_127">
+      <static>true</static>
+      <pose>0.45431575775146493 -3.0195061683654782 0.0001 0 0 -0.11128883522409475</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1373775952661571 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_128">
+      <static>true</static>
+      <pose>0.5755434036254887 -3.0462284088134766 0.0001 0 0 -0.32272406624446964</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1372590728521774 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_129">
+      <static>true</static>
+      <pose>0.6930213928222662 -3.088491916656494 0.0001 0 0 -0.36792032400811264</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13747895650764969 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_130">
+      <static>true</static>
+      <pose>0.8119588851928716 -3.125939655303955 0.0001 0 0 -0.24209195636669206</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13739048044023874 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_131">
+      <static>true</static>
+      <pose>0.9344198226928717 -3.150005054473877 0.0001 0 0 -0.14602859814575406</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749345888679373 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_132">
+      <static>true</static>
+      <pose>1.0580783843994146 -3.1682463645935055 0.0001 0 0 -0.14688598930015895</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749939673708372 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_133">
+      <static>true</static>
+      <pose>1.1816928863525393 -3.186802101135254 0.0001 0 0 -0.15110847718758344</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749998811952432 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_134">
+      <static>true</static>
+      <pose>1.305022430419922 -3.207076644897461 0.0001 0 0 -0.17476448936830208</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13748610054181679 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_135">
+      <static>true</static>
+      <pose>1.4277626037597662 -3.230628490447998 0.0001 0 0 -0.20439303569941225</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749865791039953 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_136">
+      <static>true</static>
+      <pose>1.5495876312255863 -3.2583814620971676 0.0001 0 0 -0.24359095582439516</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374358886155643 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_137">
+      <static>true</static>
+      <pose>1.6674617767333988 -3.298322868347168 0.0001 0 0 -0.40989048072234174</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13731953110125558 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_138">
+      <static>true</static>
+      <pose>1.7826084136962894 -3.3465879440307615 0.0001 0 0 -0.38394583419775563</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13738012844605657 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_139">
+      <static>true</static>
+      <pose>1.9010898590087892 -3.385178565979004 0.0001 0 0 -0.24581854223561372</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374119901006366 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_140">
+      <static>true</static>
+      <pose>2.022653198242188 -3.4140583038330075 0.0001 0 0 -0.22067993992228305</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749252574896842 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_141">
+      <static>true</static>
+      <pose>2.144299697875977 -3.442769432067871 0.0001 0 0 -0.2428780840043174</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749976890840698 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_142">
+      <static>true</static>
+      <pose>2.2650981903076177 -3.4744935035705566 0.0001 0 0 -0.2707834136206825</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13729537512326215 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_143">
+      <static>true</static>
+      <pose>2.384866333007813 -3.508872699737549 0.0001 0 0 -0.28830975819350024</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13684554270368265 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_144">
+      <static>true</static>
+      <pose>2.506839370727539 -3.530913734436035 0.0001 0 0 -0.06974563611766521</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13747756691447224 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_145">
+      <static>true</static>
+      <pose>2.6262985229492184 -3.5560991287231443 0.0001 0 0 -0.34968547209018624</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13376201716421757 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_146">
+      <static>true</static>
+      <pose>2.745829010009766 -3.579149627685547 0.0001 0 0 -0.03555608969993305</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13738709812655972 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_147">
+      <static>true</static>
+      <pose>2.863410568237305 -3.6034188270568848 0.0001 0 0 -0.38019848084945806</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13071326998004826 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_148">
+      <static>true</static>
+      <pose>2.9785003662109375 -3.642458152770996 0.0001 0 0 -0.27630524316068766</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1370153914844416 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_149">
+      <static>true</static>
+      <pose>3.097379684448242 -3.6801683425903318 0.0001 0 0 -0.33793507522709837</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374925105119346 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_150">
+      <static>true</static>
+      <pose>3.21641845703125 -3.7180100440979 0.0001 0 0 -0.27763428278717817</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374319354689526 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_151">
+      <static>true</static>
+      <pose>3.3382477283477785 -3.7675657987594606 0.0001 0 0 -0.48362675299970326</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.15345420516711636 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_152">
+      <static>true</static>
+      <pose>3.4304401874542236 -3.74545476436615 0.0001 0 0 1.0617776330392261</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374212479796205 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_153">
+      <static>true</static>
+      <pose>3.4988243103027346 -3.641246223449707 0.0001 0 0 0.9183796353862327</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749908652708887 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_154">
+      <static>true</static>
+      <pose>3.5756668090820316 -3.542680644989013 0.0001 0 0 0.8988460495027994</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13746952173665292 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_155">
+      <static>true</static>
+      <pose>3.6569862365722656 -3.4483513832092285 0.0001 0 0 0.8196038876574219</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13673939663739212 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_156">
+      <static>true</static>
+      <pose>3.7475223541259766 -3.3641283988952635 0.0001 0 0 0.6785793846139078</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13597697988889132 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_157">
+      <static>true</static>
+      <pose>3.8236957550048833 -3.278035545349121 0.0001 0 0 1.0353649541633985</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1209852443091256 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_158">
+      <static>true</static>
+      <pose>3.873707580566407 -3.176659107208252 0.0001 0 0 1.1851712420652873</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12840455335146236 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_159">
+      <static>true</static>
+      <pose>3.9157733917236337 -3.064021873474121 0.0001 0 0 1.2399596212686896</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13621369049126594 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_160">
+      <static>true</static>
+      <pose>3.955908966064454 -2.9462936401367186 0.0001 0 0 1.2444921507147195</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13742669875897073 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_161">
+      <static>true</static>
+      <pose>3.9910907745361337 -2.826532173156738 0.0001 0 0 1.325651016506802</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13740827975170075 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_162">
+      <static>true</static>
+      <pose>4.0205120086669925 -2.7051215171813965 0.0001 0 0 1.3404497270480624</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374333703803593 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_163">
+      <static>true</static>
+      <pose>4.041719818115235 -2.5822309494018554 0.0001 0 0 1.4593708820416305</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13740798356767975 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_164">
+      <static>true</static>
+      <pose>4.057594680786133 -2.4586437225341795 0.0001 0 0 1.426641498889631</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13675449900746303 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_165">
+      <static>true</static>
+      <pose>4.077852249145508 -2.3356692314147947 0.0001 0 0 1.3885255281303561</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374853411948237 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_166">
+      <static>true</static>
+      <pose>4.094589996337891 -2.187105560302734 0.0001 0 0 1.508767411791081</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1920014853909791 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_167">
+      <static>true</static>
+      <pose>4.056175613403322 -2.0236549377441406 0.0001 0 0 2.0919016208918686</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1936643067126805 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_168">
+      <static>true</static>
+      <pose>4.014986419677735 -1.8848735809326171 0.0001 0 0 1.5286152553238572</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13748213693952382 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_169">
+      <static>true</static>
+      <pose>4.01487922668457 -1.7600246429443358 0.0001 0 0 1.61470767005086</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13744030087242048 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_170">
+      <static>true</static>
+      <pose>4.003948211669922 -1.6356658935546873 0.0001 0 0 1.7022239068660836</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13746697298811622 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_171">
+      <static>true</static>
+      <pose>3.982340240478516 -1.5127124786376953 0.0001 0 0 1.787311204228545</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374246599369026 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_172">
+      <static>true</static>
+      <pose>3.9325477600097667 -1.4021791458129882 0.0001 0 0 2.204254538349424</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13518516204244918 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_173">
+      <static>true</static>
+      <pose>3.873289108276368 -1.2958097457885738 0.0001 0 0 1.9535476739434638</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1348102150479234 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_174">
+      <static>true</static>
+      <pose>3.802470779418946 -1.199006080627441 0.0001 0 0 2.446654015100045</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1372909203057117 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_175">
+      <static>true</static>
+      <pose>3.7019687652587896 -1.1252954483032225 0.0001 0 0 2.570849545098964</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374358562129533 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_176">
+      <static>true</static>
+      <pose>3.594034957885743 -1.0625881195068358 0.0001 0 0 2.659696433542934</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13745593858066893 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_177">
+      <static>true</static>
+      <pose>3.481626129150391 -1.0080978393554685 0.0001 0 0 2.720731953073271</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374954621024399 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_178">
+      <static>true</static>
+      <pose>3.366352844238282 -0.9600109100341796 0.0001 0 0 2.772059600170628</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13737745713032162 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_179">
+      <static>true</static>
+      <pose>3.248858261108399 -0.9180824279785158 0.0001 0 0 2.8256287559057025</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13717465500089096 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_180">
+      <static>true</static>
+      <pose>3.128489303588868 -0.8857725143432615 0.0001 0 0 2.9329811520695377</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13740662205148613 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_181">
+      <static>true</static>
+      <pose>3.007417297363282 -0.8555736541748042 0.0001 0 0 2.861291217152002</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1372889477283859 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_182">
+      <static>true</static>
+      <pose>2.888466262817383 -0.8180929183959957 0.0001 0 0 2.811380538692966</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13717235924318916 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_183">
+      <static>true</static>
+      <pose>2.7706554412841804 -0.7770893096923825 0.0001 0 0 2.8019415640641063</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13726414674515777 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_184">
+      <static>true</static>
+      <pose>2.653340530395508 -0.734797096252441 0.0001 0 0 2.7892366964488495</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13709311754241774 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_185">
+      <static>true</static>
+      <pose>2.539958190917969 -0.6834293365478512 0.0001 0 0 2.643382993706666</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374832562127621 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_186">
+      <static>true</static>
+      <pose>2.429678344726563 -0.6246084213256835 0.0001 0 0 2.659816365007977</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749561648830977 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_187">
+      <static>true</static>
+      <pose>2.3196800231933596 -0.565262413024902 0.0001 0 0 2.633850031962914</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374974573980508 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_188">
+      <static>true</static>
+      <pose>2.211021423339844 -0.5034845352172845 0.0001 0 0 2.6153880619429697</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374983964838535 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_189">
+      <static>true</static>
+      <pose>2.1024814605712896 -0.44149398803710893 0.0001 0 0 2.6299536114041135</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749790882847748 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_190">
+      <static>true</static>
+      <pose>1.9934570312500006 -0.3803524017333979 0.0001 0 0 2.631027858912166</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374987847478912 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_191">
+      <static>true</static>
+      <pose>1.8844226837158207 -0.31922626495361284 0.0001 0 0 2.630246844917501</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1375002993690666 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_192">
+      <static>true</static>
+      <pose>1.7755008697509767 -0.2578990936279295 0.0001 0 0 2.6273416363745246</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749984556590866 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_193">
+      <static>true</static>
+      <pose>1.6667449951171878 -0.19627838134765607 0.0001 0 0 2.6248516838596334</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749994910763516 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_194">
+      <static>true</static>
+      <pose>1.5580718994140628 -0.1345119476318355 0.0001 0 0 2.6246601578311224</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749947191300987 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_195">
+      <static>true</static>
+      <pose>1.4493991851806642 -0.07274513244628844 0.0001 0 0 2.6248433617966516</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749963407705232 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_196">
+      <static>true</static>
+      <pose>1.3406650543212892 -0.011085700988769265 0.0001 0 0 2.6266394479931714</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13750044778655715 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_197">
+      <static>true</static>
+      <pose>1.2316673278808596 0.05010414123535156 0.0001 0 0 2.6334596567910373</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749852136821747 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_198">
+      <static>true</static>
+      <pose>1.119032669067383 0.10329322814941433 0.0001 0 0 2.767527727764969</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13715432065770777 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_199">
+      <static>true</static>
+      <pose>1.0015056610107425 0.14344844818115288 0.0001 0 0 2.857454128069355</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1363567875674779 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_200">
+      <static>true</static>
+      <pose>0.8822828292846685 0.1785896301269534 0.0001 0 0 2.8524739556626515</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13709075254626807 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_201">
+      <static>true</static>
+      <pose>0.7618185043334966 0.21097373962402344 0.0001 0 0 2.9054075847928127</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13743618497774499 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_202">
+      <static>true</static>
+      <pose>0.6436151504516605 0.24992160797119167 0.0001 0 0 2.7410994175869527</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13729071284340474 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_203">
+      <static>true</static>
+      <pose>0.5327476501464847 0.3065156936645512 0.0001 0 0 2.598099250155734</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13725990719335388 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_204">
+      <static>true</static>
+      <pose>0.42819709777832093 0.3744260787963869 0.0001 0 0 2.5329504252256347</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13715993267848003 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_205">
+      <static>true</static>
+      <pose>0.3361993789672857 0.4550514221191406 0.0001 0 0 2.308098466820891</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13367015345441421 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_206">
+      <static>true</static>
+      <pose>0.27442798614502006 0.5585460662841797 0.0001 0 0 1.9141993276189713</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13671648787230492 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_207">
+      <static>true</static>
+      <pose>0.23633041381835973 0.6771053314208988 0.0001 0 0 1.8493854519910848</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13739346573222783 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_208">
+      <static>true</static>
+      <pose>0.1942216873168947 0.7944501876831058 0.0001 0 0 1.9812324167647852</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13748070558143974 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_209">
+      <static>true</static>
+      <pose>0.14343147277832058 0.9086511611938479 0.0001 0 0 1.9973083954494173</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374974482674287 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_210">
+      <static>true</static>
+      <pose>0.092081642150879 1.0226146697998053 0.0001 0 0 1.9909588342081692</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374994178862448 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_211">
+      <static>true</static>
+      <pose>0.03987464904785165 1.1361759185791023 0.0001 0 0 2.012458924735598</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13748767039197352 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_212">
+      <static>true</static>
+      <pose>-0.017744064331054243 1.246773529052735 0.0001 0 0 2.0898254919254464</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1370723501929551 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_213">
+      <static>true</static>
+      <pose>-0.09223728179931578 1.3438625335693364 0.0001 0 0 2.3631054570541457</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13468428672603353 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_214">
+      <static>true</static>
+      <pose>-0.179001426696777 1.429199600219727 0.0001 0 0 2.365884260669711</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13305183001862803 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_215">
+      <static>true</static>
+      <pose>-0.2752159118652342 1.5046073913574225 0.0001 0 0 2.5841986948053384</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749445379958106 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_216">
+      <static>true</static>
+      <pose>-0.34095554351806623 1.5702953338623051 0.0001 0 0 1.9420396256749521</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.07702963806321712 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_217">
+      <static>true</static>
+      <pose>-0.30510768890380824 1.6409530639648442 0.0001 0 0 0.6644796951616997</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13567649155358724 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_218">
+      <static>true</static>
+      <pose>-0.21463108062744096 1.7252922058105473 0.0001 0 0 0.8350295594709818</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13743290021556356 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_219">
+      <static>true</static>
+      <pose>-0.13999481201171848 1.8245300292968754 0.0001 0 0 1.0172479396336516</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13688353133179232 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_220">
+      <static>true</static>
+      <pose>-0.07708187103271458 1.9300189971923833 0.0001 0 0 1.049234124848869</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13336584381131192 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_221">
+      <static>true</static>
+      <pose>-0.016045379638671697 2.0364860534667972 0.0001 0 0 1.0512380195831141</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13662267438516162 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_222">
+      <static>true</static>
+      <pose>0.04854621887207067 2.142024993896485 0.0001 0 0 0.9917395748012117</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13571653741917822 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_223">
+      <static>true</static>
+      <pose>0.12364654541015696 2.2358695983886725 0.0001 0 0 0.7958118379245537</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12998609465919114 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_224">
+      <static>true</static>
+      <pose>0.21065502166748118 2.315568161010743 0.0001 0 0 0.6873406333307692</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1299806438175292 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_225">
+      <static>true</static>
+      <pose>0.29775085449218786 2.398632431030274 0.0001 0 0 0.833042092176407</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13550451819751413 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_226">
+      <static>true</static>
+      <pose>0.389577102661133 2.467446517944336 0.0001 0 0 0.43201938356665204</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12209112082747244 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_227">
+      <static>true</static>
+      <pose>0.48860912322998074 2.5216728210449224 0.0001 0 0 0.5673194986413692</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1268720098907927 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_228">
+      <static>true</static>
+      <pose>0.5881061553955083 2.575407791137696 0.0001 0 0 0.4205163154885513</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12257566999707163 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_229">
+      <static>true</static>
+      <pose>0.6948038101196294 2.6234706878662113 0.0001 0 0 0.42570649269183297</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13487625586305743 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_230">
+      <static>true</static>
+      <pose>0.8095149993896489 2.6628696441650392 0.0001 0 0 0.23475845221471023</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13317948268790053 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_231">
+      <static>true</static>
+      <pose>0.929285049438477 2.6710056304931644 0.0001 0 0 -0.09732297050482859</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13460463505872183 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_232">
+      <static>true</static>
+      <pose>1.0516281127929692 2.656015014648438 0.0001 0 0 -0.14615308727511364</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13664388296978672 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_233">
+      <static>true</static>
+      <pose>1.1754653930664065 2.644652938842774 0.0001 0 0 -0.03711577678082776</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13734953803679867 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_234">
+      <static>true</static>
+      <pose>1.2999191284179688 2.6352188110351564 0.0001 0 0 -0.11417854707535681</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374381739889848 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_235">
+      <static>true</static>
+      <pose>1.4233001708984379 2.6160324096679686 0.0001 0 0 -0.19434762826457275</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374832981692923 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_236">
+      <static>true</static>
+      <pose>1.5427467346191412 2.581398773193359 0.0001 0 0 -0.3702685481496986</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13718437842927025 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_237">
+      <static>true</static>
+      <pose>1.6413669586181645 2.5258735656738285 0.0001 0 0 -0.6832490346825034</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.11486025302455823 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_238">
+      <static>true</static>
+      <pose>1.7367710113525394 2.518693923950196 0.0001 0 0 0.4389292322502921</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13346318976218768 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_239">
+      <static>true</static>
+      <pose>1.8537742614746096 2.5411006927490245 0.0001 0 0 -0.05428975093703568</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13679685283915854 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_240">
+      <static>true</static>
+      <pose>1.9730140686035158 2.560760498046876 0.0001 0 0 0.38312060297059897</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13556001519487892 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_241">
+      <static>true</static>
+      <pose>2.07922477722168 2.6174564361572275 0.0001 0 0 0.6013663934781893</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13089508948318523 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_242">
+      <static>true</static>
+      <pose>2.158468627929688 2.697191238403321 0.0001 0 0 0.9908153267760816</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12117556050812436 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_243">
+      <static>true</static>
+      <pose>2.218408584594727 2.792551040649415 0.0001 0 0 1.0276428169913951</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12665998721943267 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_244">
+      <static>true</static>
+      <pose>2.2818725585937503 2.8944126129150396 0.0001 0 0 1.0006673887452595</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13739566819332902 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_245">
+      <static>true</static>
+      <pose>2.3472419738769537 3.0008411407470703 0.0001 0 0 1.039314987371183</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13743724557879286 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_246">
+      <static>true</static>
+      <pose>2.4083084106445316 3.109783935546875 0.0001 0 0 1.0804925933440086</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13738014596670184 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_247">
+      <static>true</static>
+      <pose>2.4694900512695312 3.213134384155273 0.0001 0 0 0.9885247392451264</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1271235981713274 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_248">
+      <static>true</static>
+      <pose>2.533791732788086 3.300394439697266 0.0001 0 0 0.8756560142769293</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.11171946425708365 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_249">
+      <static>true</static>
+      <pose>2.5964302062988285 3.3890087127685558 0.0001 0 0 1.0252987826000828</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12768606671818752 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_250">
+      <static>true</static>
+      <pose>2.6727939605712896 3.4750820159912115 0.0001 0 0 0.6675412616687555</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.12956220208532201 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_251">
+      <static>true</static>
+      <pose>2.7688339233398445 3.5479099273681642 0.0001 0 0 0.6308945665009819</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13564919135049874 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_252">
+      <static>true</static>
+      <pose>2.8735420227050783 3.6140712738037113 0.0001 0 0 0.4970316448004369</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13745259179007263 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_253">
+      <static>true</static>
+      <pose>2.9856727600097654 3.669016265869141 0.0001 0 0 0.4142257440810386</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749472007355817 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_254">
+      <static>true</static>
+      <pose>3.099749755859375 3.720104598999024 0.0001 0 0 0.4278878016116596</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749918875487593 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_255">
+      <static>true</static>
+      <pose>3.213223266601563 3.7725288391113283 0.0001 0 0 0.43768098102006486</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13750004758591924 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_256">
+      <static>true</static>
+      <pose>3.3320877075195323 3.804524230957031 0.0001 0 0 0.08820193384756644</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749737999327266 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_257">
+      <static>true</static>
+      <pose>3.4567211151123054 3.813912200927734 0.0001 0 0 0.06216333518768016</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13749618243132294 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_258">
+      <static>true</static>
+      <pose>3.5815708160400392 3.8193412780761724 0.0001 0 0 0.024749627305878836</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374808403481097 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_259">
+      <static>true</static>
+      <pose>3.7064544677734377 3.8239482879638675 0.0001 0 0 0.04899869346338834</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1374702891186736 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_260">
+      <static>true</static>
+      <pose>3.82195053100586 3.8554325103759766 0.0001 0 0 0.49159737281087296</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.13247356503724939 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_261">
+      <static>true</static>
+      <pose>3.9375175476074222 3.9419281005859377 0.0001 0 0 0.7488288762595033</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.1876640280271394 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="painted_floor_segment_262">
+      <static>true</static>
+      <pose>4.0 4.0 0.0001 0 0 0.0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.0 0.1 0.0001</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0 0.5 1 1.0</ambient>
+            <diffuse>0 0.5 1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+  </world>
+</sdf>
