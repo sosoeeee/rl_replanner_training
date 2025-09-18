@@ -122,10 +122,15 @@ def generate_map(map_size_meters, cell_resolution_m, num_obstacles,
     if boundary_margin > 0:
         boundary_pixels = int(boundary_margin / cell_resolution_m)
         
-        map_image[0:boundary_pixels, :] = 0
-        map_image[-boundary_pixels:, :] = 0
-        map_image[:, 0:boundary_pixels] = 0
-        map_image[:, -boundary_pixels:] = 0
+        map_image[0:boundary_pixels, :] = 205
+        map_image[-boundary_pixels:, :] = 205
+        map_image[:, 0:boundary_pixels] = 205
+        map_image[:, -boundary_pixels:] = 205
+        
+        map_image[boundary_pixels-1, boundary_pixels-1:map_size_pixels-boundary_pixels+1] = 0
+        map_image[map_size_pixels-boundary_pixels, boundary_pixels-1:map_size_pixels-boundary_pixels+1] = 0
+        map_image[boundary_pixels-1:map_size_pixels-boundary_pixels+1, boundary_pixels-1] = 0
+        map_image[boundary_pixels-1:map_size_pixels-boundary_pixels+1, map_size_pixels-boundary_pixels] = 0
         
         print(f"已添加边界障碍物，宽度为 {boundary_margin} 米 ({boundary_pixels} 像素)")
     
@@ -149,7 +154,9 @@ def generate_map(map_size_meters, cell_resolution_m, num_obstacles,
                 not is_circle_overlapping(center_x, center_y, radius, existing_circles, min_distance) and
                 not is_in_forbidden_zones(center_x, center_y, radius, forbidden_zones, 
                                           cell_resolution_m, map_size_pixels)):
-                cv2.circle(map_image, (center_x, center_y), radius, 0, -1)
+
+                cv2.circle(map_image, (center_x, center_y), radius, 205, -1)
+                cv2.circle(map_image, (center_x, center_y), radius, 0, 1)
                 existing_circles.append((center_x, center_y, radius))
                 break
             

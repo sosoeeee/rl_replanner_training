@@ -4,8 +4,8 @@
 示例：
 python3 circle_map_to_gazebo_generator.py \
     --size 22 --obstacles 10 --boundary 1.0 \
-    --output ./circle_map/circle_map_2 \
-    --world_output ./gazebo_map/circle_map_2.world
+    --output test/circle_map_test \
+    --world_output test/circle_map_test.world
 '''
 
 import numpy as np
@@ -143,10 +143,16 @@ def generate_map_and_world(map_size_meters, cell_resolution_m, num_obstacles,
     
     boundary_pixels = int(boundary_margin / cell_resolution_m)
     if boundary_margin > 0:
-        map_image[0:boundary_pixels, :] = 0
-        map_image[-boundary_pixels:, :] = 0
-        map_image[:, 0:boundary_pixels] = 0
-        map_image[:, -boundary_pixels:] = 0
+        map_image[0:boundary_pixels, :] = 205
+        map_image[-boundary_pixels:, :] = 205
+        map_image[:, 0:boundary_pixels] = 205
+        map_image[:, -boundary_pixels:] = 205
+        
+        map_image[boundary_pixels-1, boundary_pixels-1:map_size_pixels-boundary_pixels+1] = 0
+        map_image[map_size_pixels-boundary_pixels, boundary_pixels-1:map_size_pixels-boundary_pixels+1] = 0
+        map_image[boundary_pixels-1:map_size_pixels-boundary_pixels+1, boundary_pixels-1] = 0
+        map_image[boundary_pixels-1:map_size_pixels-boundary_pixels+1, map_size_pixels-boundary_pixels] = 0
+
         print(f"已添加边界障碍物，宽度为 {boundary_margin} 米 ({boundary_pixels} 像素)")
     
     existing_circles = []
@@ -166,7 +172,9 @@ def generate_map_and_world(map_size_meters, cell_resolution_m, num_obstacles,
             if (not is_circle_overlapping(center_x, center_y, radius_pixels, existing_circles, min_distance_pixels) and
                 not is_in_forbidden_zones(center_x, center_y, radius_pixels, forbidden_zones, 
                                           cell_resolution_m, map_size_pixels)):
-                cv2.circle(map_image, (center_x, center_y), radius_pixels, 0, -1)
+                
+                cv2.circle(map_image, (center_x, center_y), radius_pixels, 205, -1)
+                cv2.circle(map_image, (center_x, center_y), radius_pixels, 0, 1)
                 existing_circles.append((center_x, center_y, radius_pixels))
                 break
             attempts += 1

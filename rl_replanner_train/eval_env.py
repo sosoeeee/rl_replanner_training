@@ -51,6 +51,7 @@ class EvalEnv(BaseEnv):
             use_generator = False,
             eval_ordered=False,  # if True, the evaluation will be in order of the eval_path_directory
             visualize_cones=False,
+            visualize_heatmap=True, # if True, replan heatmap will be generated
             start_traj_idx=0,
         ):
         # addtional parameters
@@ -58,6 +59,7 @@ class EvalEnv(BaseEnv):
         self.eval_ordered = eval_ordered
         self.prediction_errors = []
         self.visualize_cones = visualize_cones
+        self.visualize_heatmap = visualize_heatmap
         self.start_traj_idx = start_traj_idx
         self.replan_angles = [] # Initialize list to store replan angles
         if self.visualize_cones:
@@ -78,33 +80,38 @@ class EvalEnv(BaseEnv):
             render_mode=render_mode,
             render_real_time_factor=render_real_time_factor,
         )
-        # Initialize replan heatmap and store map metadata by reading the map file
-        try:
-            with open(map_setting_file, 'r') as f:
-                map_config = yaml.safe_load(f)
-            
-            map_image_path_str = map_config['image']
-            
-            map_setting_path = Path(map_setting_file)
-            if not Path(map_image_path_str).is_absolute():
-                map_image_path = map_setting_path.parent / map_image_path_str
-            else:
-                map_image_path = Path(map_image_path_str)
+        
+        self.replan_heatmap = None
+        self.map_meta_data = None
 
-            with Image.open(map_image_path) as img:
-                width, height = img.size
+        if self.visualize_heatmap:
+            # Initialize replan heatmap and store map metadata by reading the map file
+            try:
+                with open(map_setting_file, 'r') as f:
+                    map_config = yaml.safe_load(f)
+                
+                map_image_path_str = map_config['image']
+                
+                map_setting_path = Path(map_setting_file)
+                if not Path(map_image_path_str).is_absolute():
+                    map_image_path = map_setting_path.parent / map_image_path_str
+                else:
+                    map_image_path = Path(map_image_path_str)
 
-            self.replan_heatmap = np.zeros((height, width), dtype=np.int32)
-            
-            # Store metadata needed for coordinate conversion
-            self.map_meta_data = {
-                'resolution': map_config['resolution'],
-                'origin': map_config['origin'], # [x, y, yaw]
-                'height': height,
-                'width': width
-            }
-        except Exception as e:
-            raise RuntimeError(f"Failed to load map for heatmap initialization: {e}")
+                with Image.open(map_image_path) as img:
+                    width, height = img.size
+
+                self.replan_heatmap = np.zeros((height, width), dtype=np.int32)
+                
+                # Store metadata needed for coordinate conversion
+                self.map_meta_data = {
+                    'resolution': map_config['resolution'],
+                    'origin': map_config['origin'], # [x, y, yaw]
+                    'height': height,
+                    'width': width
+                }
+            except Exception as e:
+                raise RuntimeError(f"Failed to load map for heatmap initialization: {e}")
 
     def _world_to_map(self, world_x, world_y):
         """Converts world coordinates to map pixel coordinates."""
@@ -171,9 +178,10 @@ class EvalEnv(BaseEnv):
 
         if self.current_action[0] == LOCAL_GOAL:
             # Record replan event position
-            map_x, map_y = self._world_to_map(self.cur_position[0], self.cur_position[1])
-            if 0 <= map_y < self.replan_heatmap.shape[0] and 0 <= map_x < self.replan_heatmap.shape[1]:
-                self.replan_heatmap[map_y, map_x] += 1
+            if self.visualize_heatmap and self.replan_heatmap is not None:
+                map_x, map_y = self._world_to_map(self.cur_position[0], self.cur_position[1])
+                if 0 <= map_y < self.replan_heatmap.shape[0] and 0 <= map_x < self.replan_heatmap.shape[1]:
+                    self.replan_heatmap[map_y, map_x] += 1
 
             # rescale to the map size
             self.current_action[1][0] = self.current_action[1][0] * self.obser_width
@@ -186,13 +194,8 @@ class EvalEnv(BaseEnv):
                 radius = self.current_action[1][1]
                 dist_to_center = np.linalg.norm(center - p1)
 
-                if dist_to_center > radius:
-                    # Angle is 2 * arcsin(radius / dist_to_center)
-                    angle = 2 * np.arcsin(radius / dist_to_center)
-                    self.replan_angles.append(np.rad2deg(angle)) # Store angle in degrees
-                else:
-                    # If inside the circle, the angle is 180 degrees
-                    self.replan_angles.append(180.0)
+                angle = 2 * np.arctan(radius / dist_to_center)
+                self.replan_angles.append(np.rad2deg(angle)) # Store angle in degrees
 
                 if self.visualize_cones:
                     # Calculate triangle vertices for visualization
@@ -254,12 +257,14 @@ class EvalEnv(BaseEnv):
                 'fail_rate': self.fail_num / self.current_step,  # fail rate
                 'cur_idx': self.traj_index,
                 'eval_traj_num': len(self.replay_traj_files),
-                'replan_heatmap': self.replan_heatmap.copy(),
-                'map_setting_file': self.map_setting_file,
                 'robot_path_history': copy.deepcopy(self.human_path_buffer),
                 'reference_traj': self.current_human_traj,
                 'replan_angles': self.replan_angles, # Add replan angles to info
             }
+            if self.visualize_heatmap:
+                self.info['replan_heatmap'] = self.replan_heatmap.copy()
+                self.info['map_setting_file'] = self.map_setting_file
+
             if self.visualize_cones:
                 self.info['cone_history'] = self.cone_history
             avg_prediction_error = np.mean(self.prediction_errors) if self.prediction_errors else 0.0
