@@ -663,12 +663,17 @@ std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajsLoop(Point start, P
     nodes_s2e = all_passby_nodes_[sample_count_s2e];
     passby_nodes.insert(passby_nodes.end(), nodes_s2e.begin(), nodes_s2e.end());
 
+    // multiply
+    // sample_count_s2e++;
+    // if (sample_count_s2e >= all_passby_nodes_.size())
+    // {
+    //     sample_count_s2e = 0;
+    //     sample_count_e2s++;
+    // }
+
+    // add 
     sample_count_s2e++;
-    if (sample_count_s2e >= all_passby_nodes_.size())
-    {
-        sample_count_s2e = 0;
-        sample_count_e2s++;
-    }
+    sample_count_e2s++;
 
     // get initial path from voronoi graph
     // auto start_time = std::chrono::high_resolution_clock::now();
