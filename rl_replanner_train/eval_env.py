@@ -6,6 +6,9 @@ import math
 import copy
 import gymnasium as gym
 from gymnasium import spaces
+import yaml
+from PIL import Image
+from pathlib import Path
 
 from rl_replanner_train.action_converter import ActionConverter
 import cpp_utils
@@ -47,27 +50,84 @@ class EvalEnv(BaseEnv):
             render_real_time_factor=1.0,
             use_generator = False,
             eval_ordered=False,  # if True, the evaluation will be in order of the eval_path_directory
+            visualize_cones=False,
+            visualize_heatmap=True, # if True, replan heatmap will be generated
+            start_traj_idx=0,
         ):
         # addtional parameters
+        self.map_setting_file = map_setting_file
+        self.replay_traj_path = replay_traj_path
         self.eval_path_directory = eval_path_directory
         self.eval_ordered = eval_ordered
+        self.prediction_errors = []
+        self.visualize_cones = visualize_cones
+        self.visualize_heatmap = visualize_heatmap
+        self.start_traj_idx = start_traj_idx
+        self.replan_angles = [] # Initialize list to store replan angles
+        if self.visualize_cones:
+            self.cone_history = []
 
         super().__init__(
             reward_weight=reward_weight,
-            map_setting_file=map_setting_file,
+            map_setting_file=self.map_setting_file,
             path_planner_setting_file=path_planner_setting_file,
             obser_width=obser_width,
             map_resolution=map_resolution,
             human_history_length=human_history_length,
             robot_prediction_length=robot_prediction_length,
             speed_buffer_length=speed_buffer_length,
-            replay_traj_path=replay_traj_path,
+            replay_traj_path=self.replay_traj_path,
             decision_interval=decision_interval,
             use_generator = use_generator,
             render_mode=render_mode,
             render_real_time_factor=render_real_time_factor,
         )
-    
+        
+        self.replan_heatmap = None
+        self.map_meta_data = None
+
+        if self.visualize_heatmap:
+            # Initialize replan heatmap and store map metadata by reading the map file
+            try:
+                with open(map_setting_file, 'r') as f:
+                    map_config = yaml.safe_load(f)
+                
+                map_image_path_str = map_config['image']
+                
+                map_setting_path = Path(map_setting_file)
+                if not Path(map_image_path_str).is_absolute():
+                    map_image_path = map_setting_path.parent / map_image_path_str
+                else:
+                    map_image_path = Path(map_image_path_str)
+
+                with Image.open(map_image_path) as img:
+                    width, height = img.size
+
+                self.replan_heatmap = np.zeros((height, width), dtype=np.int32)
+                
+                # Store metadata needed for coordinate conversion
+                self.map_meta_data = {
+                    'resolution': map_config['resolution'],
+                    'origin': map_config['origin'], # [x, y, yaw]
+                    'height': height,
+                    'width': width
+                }
+            except Exception as e:
+                raise RuntimeError(f"Failed to load map for heatmap initialization: {e}")
+
+    def _world_to_map(self, world_x, world_y):
+        """Converts world coordinates to map pixel coordinates."""
+        meta = self.map_meta_data
+        origin_x = meta['origin'][0]
+        origin_y = meta['origin'][1]
+        resolution = meta['resolution']
+        height = meta['height']
+
+        map_x = int((world_x - origin_x) / resolution)
+        map_y = int(height - (world_y - origin_y) / resolution)
+        
+        return map_x, map_y
+
     def _init_human_traj(self):
         # human path
         map_name = self.map_setting_file.split('/')[-1].split('.')[0]
@@ -77,16 +137,7 @@ class EvalEnv(BaseEnv):
         else:
             self.replay_traj_files = glob.glob(self.replay_traj_path + '/' + map_name + '/collected_paths/*.txt')
 
-        self.traj_index = -1
-
-        # in Loop training mode, the global goal is the last point of the trajectory in collected_paths
-        try:
-            collected_traj_files = glob.glob(self.replay_traj_path + '/' + map_name + '/collected_paths/*.txt')
-            traj_file = collected_traj_files[0]
-            collected_human_traj = np.loadtxt(traj_file)
-            self.global_goal = [collected_human_traj[-1][0], collected_human_traj[-1][1]]
-        except Exception as e:
-            print(f"Warning ({e}): self.global_goal is not set. This should only happen in rosToModel node during experiment")
+        self.traj_index = self.start_traj_idx -1
 
     def _reset_human_traj(self, seed=None, options=None):
         if self.render_mode == "ros":
@@ -96,20 +147,26 @@ class EvalEnv(BaseEnv):
         if self.eval_ordered:
             # evaluate in order
             self.traj_index = (self.traj_index + 1) % len(self.replay_traj_files)
+            print("\n\n ======================== Resetting trajectory: {} ======================== \n\n".format(self.traj_index))
         else:
             # Reset the trajectory index
             self.traj_index = np.random.randint(0, len(self.replay_traj_files))
 
         traj_file = self.replay_traj_files[self.traj_index]
         self.current_human_traj = np.loadtxt(traj_file)
-
-        # print("\n\n ======================== Testing trajectory: {} ======================== \n\n".format(traj_file))
+        self.global_goal = [self.current_human_traj[-1][0], self.current_human_traj[-1][1]]
 
         self.replan_num = 0
         self.fail_num = 0
         self.current_step = 0
         self.total_reward_before_normalization = 0.0
-        self.angles = []
+        self.prediction_errors = []
+        self.replan_angles = [] # Reset for each new trajectory
+        # Reset heatmap for the new trajectory
+        if hasattr(self, 'replan_heatmap'):
+            self.replan_heatmap.fill(0)
+        if self.visualize_cones:
+            self.cone_history = []
 
     # when evaluating, if the robot action is invalid, current episode will be terminated
     def _interact(self):
@@ -123,13 +180,45 @@ class EvalEnv(BaseEnv):
         self._get_robot_direction()
 
         if self.current_action[0] == LOCAL_GOAL:
+            # Record replan event position
+            if self.visualize_heatmap and self.replan_heatmap is not None:
+                map_x, map_y = self._world_to_map(self.cur_position[0], self.cur_position[1])
+                if 0 <= map_y < self.replan_heatmap.shape[0] and 0 <= map_x < self.replan_heatmap.shape[1]:
+                    self.replan_heatmap[map_y, map_x] += 1
+
             # rescale to the map size
             self.current_action[1][0] = self.current_action[1][0] * self.obser_width
             self.current_action[1][1] = self.current_action[1][1] * self.obser_width
 
-            self.angles.append(math.degrees(math.atan2(self.current_action[1][1], self.current_action[1][0])) * 2)
-
             if self._get_predicted_goal(depth=self.current_action[1][0], radius=self.current_action[1][1]):
+                # Calculate and store the replan angle
+                p1 = np.array(self.cur_position)
+                center = np.array(self.cone_center)
+                radius = self.current_action[1][1]
+                dist_to_center = np.linalg.norm(center - p1)
+
+                angle = 2 * np.arctan(radius / dist_to_center)
+                self.replan_angles.append(np.rad2deg(angle)) # Store angle in degrees
+
+                if self.visualize_cones:
+                    # Calculate triangle vertices for visualization
+                    vec_to_center = center - p1
+                    dist_to_center = np.linalg.norm(vec_to_center)
+
+                    if dist_to_center > radius:
+                        angle_p1_center = np.arctan2(vec_to_center[1], vec_to_center[0])
+                        angle_offset = np.arcsin(radius / dist_to_center)
+                        
+                        angle1 = angle_p1_center - angle_offset
+                        angle2 = angle_p1_center + angle_offset
+
+                        tangent_len = np.sqrt(dist_to_center**2 - radius**2)
+
+                        p2 = p1 + tangent_len * np.array([np.cos(angle1), np.sin(angle1)])
+                        p3 = p1 + tangent_len * np.array([np.cos(angle2), np.sin(angle2)])
+                        
+                        self.cone_history.append([p1.tolist(), p2.tolist(), p3.tolist()])
+
                 self.path_planner.loadCone(cone_center=self.cone_center, 
                                             current_pos=self.cur_position,
                                             radius=self.current_action[1][1],
@@ -169,10 +258,20 @@ class EvalEnv(BaseEnv):
                 'is_success': is_success,
                 'replan_freq': self.replan_num / self.current_step,  # replan frequency
                 'fail_rate': self.fail_num / self.current_step,  # fail rate
-                'avr_angle': np.mean(self.angles) if len(self.angles) > 0 else 0.0,
                 'cur_idx': self.traj_index,
                 'eval_traj_num': len(self.replay_traj_files),
+                'robot_path_history': copy.deepcopy(self.human_path_buffer),
+                'reference_traj': self.current_human_traj,
+                'replan_angles': self.replan_angles, # Add replan angles to info
             }
+            if self.visualize_heatmap:
+                self.info['replan_heatmap'] = self.replan_heatmap.copy()
+                self.info['map_setting_file'] = self.map_setting_file
+
+            if self.visualize_cones:
+                self.info['cone_history'] = self.cone_history
+            avg_prediction_error = np.mean(self.prediction_errors) if self.prediction_errors else 0.0
+            self.info['prediction_error'] = avg_prediction_error
         else:
             self.info = {}
 
@@ -182,10 +281,23 @@ class EvalEnv(BaseEnv):
             eval_length = min(self.robot_prediction_length, len(self.current_robot_path) - self.robot_closest_idx)
             h_p = self._get_future_human_path(eval_length)
             r_p = self.future_robot_path_buffer[:eval_length]
-            exp_error = np.exp(- self.exp_factor * np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1))
-            decay_weight = [self.decay_factor ** i for i in range(eval_length)] 
-            decay_weight = np.array(decay_weight) * (1 - self.decay_factor) / (1 - self.decay_factor ** (eval_length))
-            task_reward = decay_weight.dot(exp_error)
+
+            # Calculate prediction error (mean distance)
+            if len(h_p) > 0 and len(r_p) > 0:
+                distance_error_per_step = np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1)
+                mean_distance_error = np.mean(distance_error_per_step)
+                self.prediction_errors.append(mean_distance_error)
+                exp_error = np.exp(- self.exp_factor * distance_error_per_step)
+            else:
+                distance_error_per_step = []
+                exp_error = []
+                
+            if len(exp_error) > 0:
+                decay_weight = [self.decay_factor ** i for i in range(eval_length)] 
+                decay_weight = np.array(decay_weight) * (1 - self.decay_factor) / (1 - self.decay_factor ** (eval_length))
+                task_reward = decay_weight.dot(exp_error)
+            else:
+                task_reward = 0.0
         else:
             task_reward = 0.0
 
@@ -200,7 +312,7 @@ class EvalEnv(BaseEnv):
         else:
             self.reward = self.total_reward_before_normalization / (self.current_step + 1)
 
-            
+
 
 
 
