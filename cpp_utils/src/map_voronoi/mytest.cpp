@@ -53,7 +53,8 @@ int main() {
     // Load the map from the YAML file
     // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/sim_maps/turtlebot3_world.yaml");
     // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/rl_replanner_train/maps/sim_maps/room.yaml");
-    auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/train_env/rl_replanner_training/rl_replanner_train/maps/sim_maps/circle_clutter.yaml");
+    // auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/train_env/rl_replanner_training/rl_replanner_train/maps/sim_maps/circle_clutter.yaml");
+    auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/train_env/rl_replanner_training/rl_replanner_train/maps/real_maps/phy1.yaml");
 
     // Get the map dimensions
     unsigned int sizeX = costmap->getSizeInCellsX();
@@ -66,8 +67,8 @@ int main() {
 
     // voronoigraph.getVoronoiGraph(165, 195, 239, 207);
     // voronoigraph.getVoronoiGraph(246, 727, 415, 617);
-    // voronoigraph.getVoronoiGraph(173, 110, 110, 183); // phy1
-    voronoigraph.getVoronoiGraph(30, 30, 190, 190); // phy1
+    voronoigraph.getVoronoiGraph(173, 110, 110, 183); // phy1
+    // voronoigraph.getVoronoiGraph(30, 30, 190, 190); // circle_clutter
 
     // voronoigraph.visualizeVoronoi("modified_voronoi.ppm", 1);
     // voronoigraph.visualizeVoronoi("static_voronoi.ppm", 0);
