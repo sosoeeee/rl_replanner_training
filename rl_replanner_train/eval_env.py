@@ -263,7 +263,11 @@ class EvalEnv(BaseEnv):
         # task reward
         if not is_terminal:
             eval_length = min(self.robot_prediction_length, len(self.current_robot_path) - self.robot_closest_idx)
-            h_p = self._get_future_human_path(eval_length)
+            # h_p = self._get_future_human_path(eval_length)
+
+            # ==================== try new reward ====================
+            h_p = self.future_human_path_without_noise_buffer[:eval_length]
+
             r_p = self.robot_path_buffer[:eval_length]
             exp_error = np.exp(- self.exp_factor * np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1))
             decay_weight = [self.decay_factor ** i for i in range(eval_length)] 
