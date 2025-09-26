@@ -860,3 +860,148 @@ std::vector<Point> TrajGenerator::sampleDistinctHomotopyTrajsLoop(Point start, P
 
     return trajectory_;
 }
+
+std::pair<std::vector<Point>, std::vector<Point>> TrajGenerator::sampleDistinctHomotopyTrajsLoopWithInit(Point start, Point end)
+{
+    bool resample = false;
+    if (!last_start_point_ || !last_end_point_)
+    {
+        last_start_point_ = std::make_unique<Point>(start);
+        last_end_point_ = std::make_unique<Point>(end);
+        resample = true;
+    }
+    else if (std::abs(last_start_point_->x - start.x) > 1e-6 || std::abs(last_start_point_->y - start.y) > 1e-6 ||
+             std::abs(last_end_point_->x - end.x) > 1e-6 || std::abs(last_end_point_->y - end.y) > 1e-6)
+    {
+        last_start_point_ = std::make_unique<Point>(start);
+        last_end_point_ = std::make_unique<Point>(end);
+        resample = true;
+        LOGGER_INFO("teb_local_planner", "Start point or end point changed, resampling trajectories from distinct homotopies.");
+    }
+
+    if (resample)
+    {
+        all_passby_nodes_.clear();
+        // // get the nearest voronoi node to the start Point and end Point
+        // int start_node_id, end_node_id;
+        // getNearestNode(start, start_node_id);
+        // getNearestNode(end, end_node_id);
+
+        // TODO: Update the voronoi graph with "Bubble technique"
+        unsigned int start_mx, start_my;
+        unsigned int end_mx, end_my;
+        costmap_->worldToMap(start.x, start.y, start_mx, start_my);
+        costmap_->worldToMap(end.x, end.y, end_mx, end_my);
+
+        LOGGER_INFO("teb_local_planner", "MAP points: start (%u, %u), end (%u, %u)", start_mx, start_my, end_mx, end_my);
+
+        voronoi_graph_->getVoronoiGraph(start_mx, start_my, end_mx, end_my);
+        voronoi_graph_->pruneEdgesByObstacleClearance(costmap_->getResolution(), robot_radius_);
+        // LOGGER_INFO("teb_local_planner", "Start node ID: %d, End node ID: %d", voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
+
+        std::vector<std::vector<Point>> trajectories;
+        // all_passby_nodes_ = voronoi_graph_->findAllPaths(start_node_id, end_node_id);
+        all_passby_nodes_ = voronoi_graph_->findAllPaths(voronoi_graph_->getStartId(), voronoi_graph_->getEndId());
+    }   
+
+    if (sample_count_e2s >= all_passby_nodes_.size())
+    {
+        LOGGER_INFO("teb_local_planner", "All distinct homotopy trajectories have been sampled.");
+        sample_count_s2e = 0;
+        sample_count_e2s = 0;
+        return {};
+    }
+
+    LOGGER_INFO("teb_local_planner", "Sampling combined distinct homotopy trajectory (%d, %d) with passby nodes: ", sample_count_e2s, sample_count_s2e);
+    std::vector<int> nodes_e2s, nodes_s2e;
+    std::vector<Point> init_traj, noise_traj;
+    nodes_e2s = all_passby_nodes_[sample_count_e2s];
+    // reverse the order
+    std::reverse(nodes_e2s.begin(), nodes_e2s.end());
+    nodes_s2e = all_passby_nodes_[sample_count_s2e];
+
+    // TODO: Update the init plan with modified voronoi graph (Don't need to connect the start and end point to the voronoi graph)
+    updateInitPlan(nodes_e2s);
+
+    // create circular corridor
+    updateCorridor();
+
+    // sample via points from the corridor
+    updateViaPoints();
+
+    // plan trajectory
+    updateTrajectory();
+
+    noise_traj = trajectory_;
+    noise_traj.pop_back(); // remove the last point to avoid duplication
+
+    updateViaPointsNoSample();
+    
+    try
+    {
+        updateTrajectory();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        // print the via points
+        LOGGER_ERROR("teb_local_planner", "[1] Exception caught in updateTrajectory()");
+        LOGGER_ERROR("teb_local_planner", "[1] Via points: ");
+        for (const auto& via_point : via_points_) {
+            LOGGER_ERROR("teb_local_planner", "(%f, %f)", via_point.x(), via_point.y());
+        }
+        throw std::runtime_error("Exception caught in updateTrajectory()");
+    }
+
+    init_traj = trajectory_;
+    init_traj.pop_back(); // remove the last point to avoid duplication
+
+    updateInitPlan(nodes_s2e);
+
+    // create circular corridor
+    updateCorridor();
+
+    // sample via points from the corridor
+    updateViaPoints();
+
+    // plan trajectory
+    updateTrajectory();
+
+    noise_traj.insert(noise_traj.end(), trajectory_.begin(), trajectory_.end());
+
+    updateViaPointsNoSample();
+
+    try
+    {
+        updateTrajectory();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        // print the via points
+        LOGGER_ERROR("teb_local_planner", "[2] Exception caught in updateTrajectory()");
+        LOGGER_ERROR("teb_local_planner", "[2] Via points: ");
+        for (const auto& via_point : via_points_) {
+            LOGGER_ERROR("teb_local_planner", "(%f, %f)", via_point.x(), via_point.y());
+        }
+        throw std::runtime_error("Exception caught in updateTrajectory()");
+    }
+
+    init_traj.insert(init_traj.end(), trajectory_.begin(), trajectory_.end());
+
+
+    // multiply
+    // sample_count_s2e++;
+    // if (sample_count_s2e >= all_passby_nodes_.size())
+    // {
+    //     sample_count_s2e = 0;
+    //     sample_count_e2s++;
+    // }
+
+    // add 
+    sample_count_s2e++;
+    sample_count_e2s++;
+
+    return std::make_pair(noise_traj, init_traj);
+
+}

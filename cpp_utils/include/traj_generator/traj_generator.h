@@ -36,6 +36,7 @@ public:
     std::vector<Point> sampleDistinctHomotopyTrajs(Point start, Point end);
     std::vector<Point> sampleDistinctHomotopyTrajsLoop(Point start, Point end);
     std::pair<std::vector<Point>, std::vector<Point>> sampleTrajLoopWithInit(Point start, Point end);
+    std::pair<std::vector<Point>, std::vector<Point>> sampleDistinctHomotopyTrajsLoopWithInit(Point start, Point end);
 
     // for visualization
     std::vector<PoseSE2> getInitPlan() const {return init_plan_;}

@@ -19,8 +19,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # 获取项目根目录
 project_root = os.path.dirname(os.path.dirname(current_dir))
 # 构建地图文件的绝对路径
-# map_file = os.path.join(project_root, "rl_replanner_train", "maps", "sim_maps", "circle_clutter.yaml")
-map_file = os.path.join(project_root, "rl_replanner_train", "maps", "real_maps", "phy1.yaml")
+map_file = os.path.join(project_root, "rl_replanner_train", "maps", "sim_maps", "circle_clutter.yaml")
+# map_file = os.path.join(project_root, "rl_replanner_train", "maps", "real_maps", "phy1.yaml")
 planner_file = os.path.join(project_root, "cpp_utils", "include", "teb_local_planner", "teb_params.yaml")
 
 rclpy.init()
@@ -55,12 +55,12 @@ pyCostmap.loadCostmapFromCostmapCpp(traj_generator.getCostmap())
 # startPoint = cpp_utils.Point(-1.72, -0.217)
 # endPoint = cpp_utils.Point(1.96, 0.395)
 
-# startPoint = cpp_utils.Point(-4.0, -4.0)
-# endPoint = cpp_utils.Point(4.0, 4.0)
+startPoint = cpp_utils.Point(-4.0, -4.0)
+endPoint = cpp_utils.Point(4.0, 4.0)
 
 # phy1
-startPoint = cpp_utils.Point(-2.42, 4.77)
-endPoint = cpp_utils.Point(-5.57,  8.41)
+# startPoint = cpp_utils.Point(-2.42, 4.77)
+# endPoint = cpp_utils.Point(-5.57,  8.41)
 
 # World to Map
 # startPoint_map = pyCostmap.worldToMap(-1.72, -0.217)

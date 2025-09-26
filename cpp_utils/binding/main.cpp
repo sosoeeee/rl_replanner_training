@@ -148,6 +148,8 @@ PYBIND11_MODULE(cpp_utils, m) {
             "Sample a trajectory between two points", py::arg("start"), py::arg("end"))
         .def("sampleTrajLoopWithInit", &TrajGenerator::sampleTrajLoopWithInit, 
             "Sample a trajectory with init trajectory using circle centers", py::arg("start"), py::arg("end"))
+        .def("sampleDistinctHomotopyTrajsLoopWithInit", &TrajGenerator::sampleDistinctHomotopyTrajsLoopWithInit, 
+            "Sample a trajectory with init trajectory using circle centers", py::arg("start"), py::arg("end"))
         .def("getInitPlan", &TrajGenerator::getInitPlan,
             "Get the initial plan of the trajectory generator")
         .def("getCircles", &TrajGenerator::getCircles,
