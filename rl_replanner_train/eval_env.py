@@ -174,18 +174,18 @@ class EvalEnv(BaseEnv):
         self.current_human_traj = self.replay_trajectories[self.traj_index]
         
         # Optional: print current trajectory file name for debugging
-        if hasattr(self, 'replay_traj_files') and self.traj_index < len(self.replay_traj_files):
-            current_file = self.replay_traj_files[self.traj_index]
-            print(f"\n\n ======================== Testing trajectory: {current_file} ======================== \n\n")
-            pass
+        # if hasattr(self, 'replay_traj_files') and self.traj_index < len(self.replay_traj_files):
+            # current_file = self.replay_traj_files[self.traj_index]
+            # print(f"\n\n ======================== Testing trajectory: {current_file} ======================== \n\n")
+            # pass
     
         # ==================== try new reward ====================
         self.current_human_traj_without_noise = self.replay_trajectories_without_noise[self.traj_index]
         self.without_noised_idx = 0
-        if hasattr(self, 'eval_path_without_noise_files') and self.traj_index < len(self.eval_path_without_noise_files):
-            current_file = self.eval_path_without_noise_files[self.traj_index]
-            print(f"\n\n ======================== Testing trajectory without noise: {current_file} ======================== \n\n")
-            pass
+        # if hasattr(self, 'eval_path_without_noise_files') and self.traj_index < len(self.eval_path_without_noise_files):
+        #     current_file = self.eval_path_without_noise_files[self.traj_index]
+        #     print(f"\n\n ======================== Testing trajectory without noise: {current_file} ======================== \n\n")
+        #     pass
         # =========================================================
 
         self.replan_num = 0
