@@ -67,11 +67,17 @@ if not os.path.exists(data_dir):
     print("data_dir not exists")
     os.makedirs(data_dir)
 
+data_without_noise_dir = root_dir + map_name + "/eval_paths_without_noise"
+if not os.path.exists(data_without_noise_dir):
+    print("data_without_noise_dir not exists")
+    os.makedirs(data_without_noise_dir)
+
 path_index = 0  # 文件名索引
 
 while rclpy.ok():
     start_time = time.time()
-    traj = traj_generator.sampleDistinctHomotopyTrajsLoop(start=startPoint, end=endPoint)
+    # traj = traj_generator.sampleDistinctHomotopyTrajsLoop(start=startPoint, end=endPoint)
+    traj, traj_without_noise = traj_generator.sampleDistinctHomotopyTrajsLoopWithInit(start=startPoint, end=endPoint)
     end_time = time.time()
 
     if len(traj) == 0:
@@ -91,11 +97,29 @@ while rclpy.ok():
         dtheta = 0
         t = i * 0.1
         path_data.append([x, y, theta, dx, dy, dtheta, t])
+    
 
     # 保存
     file_path = os.path.join(data_dir, f"path_{path_index}.txt")
     np.savetxt(file_path, path_data, fmt='%.18e', delimiter=' ')
     print(f"Path saved to {file_path}")
+
+    # for path without noise
+    path_without_noise_data = [[traj_without_noise[0].x, traj_without_noise[0].y, 0, 0, 0, 0, 0]]
+    for i in range(1, len(traj_without_noise)):
+        x, y = traj_without_noise[i].x, traj_without_noise[i].y
+        last_x, last_y = traj_without_noise[i - 1].x, traj_without_noise[i - 1].y
+        dx = -(last_x - x) / 0.1
+        dy = -(last_y - y) / 0.1
+        theta = 0
+        dtheta = 0
+        t = i * 0.1
+        path_without_noise_data.append([x, y, theta, dx, dy, dtheta, t])
+
+    # 保存
+    file_path = os.path.join(data_without_noise_dir, f"path_{path_index}.txt")
+    np.savetxt(file_path, path_without_noise_data, fmt='%.18e', delimiter=' ')
+    print(f"Path without noise saved to {file_path}")
     path_index += 1
 
     path_msg = Path()

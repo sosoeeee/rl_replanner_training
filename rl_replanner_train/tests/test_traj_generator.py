@@ -19,33 +19,31 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # 获取项目根目录
 project_root = os.path.dirname(os.path.dirname(current_dir))
 # 构建地图文件的绝对路径
-# map_file = os.path.join(project_root, "rl_replanner_train", "maps", "sim_maps", "turtlebot3_world.yaml")
-map_file = os.path.join(project_root, "rl_replanner_train", "maps", "real", "phy1.yaml")
+map_file = os.path.join(project_root, "rl_replanner_train", "maps", "sim_maps", "circle_clutter.yaml")
+# map_file = os.path.join(project_root, "rl_replanner_train", "maps", "real_maps", "phy1.yaml")
 planner_file = os.path.join(project_root, "cpp_utils", "include", "teb_local_planner", "teb_params.yaml")
 
 rclpy.init()
 
 render_node = rclpy.create_node("render_node")
 
-map_name = "phy1"
-map_path = "./rl_replanner_train/maps/real_maps/" + map_name + ".yaml"
-
 path_publisher = render_node.create_publisher(Path, "path", 10)
 init_path_publisher = render_node.create_publisher(Path, "init_path", 10)
 raw_traj_publisher = render_node.create_publisher(Path, "raw_traj", 10)
+circle_centers_publisher = render_node.create_publisher(Path, "circle_centers_path", 10)
 marker_publisher = render_node.create_publisher(MarkerArray, "obstacles", 10)
 costmap_publisher = render_node.create_publisher(OccupancyGrid, "costmap", 10)
 
 previous_marker_count = 0  # Add this line after creating render_node
 
-res_status, costmap_cpp = cpp_utils.loadMap(map_path)
+res_status, costmap_cpp = cpp_utils.loadMap(map_file)
 pyCostmap = PyCostmap2D(render_node)
 
 
 # Initialize the trajectory generator
 traj_generator = cpp_utils.TrajGenerator()
 traj_generator.initialize(
-    map_file=map_path,
+    map_file=map_file,
     planner_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     path_resolution=0.025,
     time_resolution=0.1,
@@ -56,12 +54,13 @@ print("Initialized trajectory generator")
 pyCostmap.loadCostmapFromCostmapCpp(traj_generator.getCostmap())
 # startPoint = cpp_utils.Point(-1.72, -0.217)
 # endPoint = cpp_utils.Point(1.96, 0.395)
-# startPoint = cpp_utils.Point(-1.25, -1.53)
-# endPoint = cpp_utils.Point(7.2, -7)
+
+startPoint = cpp_utils.Point(-4.0, -4.0)
+endPoint = cpp_utils.Point(4.0, 4.0)
 
 # phy1
-startPoint = cpp_utils.Point(-2.42, 4.77)
-endPoint = cpp_utils.Point(-5.57,  8.41)
+# startPoint = cpp_utils.Point(-2.42, 4.77)
+# endPoint = cpp_utils.Point(-5.57,  8.41)
 
 # World to Map
 # startPoint_map = pyCostmap.worldToMap(-1.72, -0.217)
@@ -71,10 +70,100 @@ endPoint = cpp_utils.Point(-5.57,  8.41)
 
 
 while rclpy.ok():
-    # traj = traj_generator.sampleTraj(start = startPoint, end = endPoint)
-    traj = traj_generator.sampleTrajLoop(start = startPoint, end = endPoint)
+    # Use the new function that returns two trajectories
+    try:
+        traj, circle_centers_traj = traj_generator.sampleTrajLoopWithInit(start = startPoint, end = endPoint)
+    except Exception as e:
+        print("Error in sampling trajectory: ", e)
+        corridor = traj_generator.getCircles()
+        viaPoints = traj_generator.getViaPoints()
 
-    print("Finish sampling trajectory")
+        print("Number of circles: ", len(corridor))
+        print("Number of via points: ", len(viaPoints))
+
+        # First, delete all previous markers
+        markers = MarkerArray()
+        for i in range(previous_marker_count):
+            marker = Marker()
+            marker.header.frame_id = "map"
+            marker.header.stamp = render_node.get_clock().now().to_msg()
+            marker.id = i
+            marker.action = Marker.DELETE
+            markers.markers.append(marker)
+        
+        if len(markers.markers) > 0:
+            marker_publisher.publish(markers)
+            time.sleep(0.1)  # Give time for deletion to process
+
+        # Now create new markers
+        markers = MarkerArray()
+        marker_id = 0
+
+        # Add corridor circles
+        for circle in corridor:
+            marker = Marker()
+            marker.header.frame_id = "map"
+            marker.header.stamp = render_node.get_clock().now().to_msg()
+            marker.id = marker_id
+            marker_id += 1
+            marker.type = Marker.SPHERE
+            marker.action = Marker.ADD
+            marker.pose.position.x = circle.x
+            marker.pose.position.y = circle.y
+            marker.pose.position.z = 0.0
+            marker.scale.x = circle.radius * 2
+            marker.scale.y = circle.radius * 2
+            marker.scale.z = 0.1
+            marker.color.r = 1.0
+            marker.color.g = 0.0
+            marker.color.b = 0.0
+            marker.color.a = 0.2
+            markers.markers.append(marker)
+
+        # Add via points
+        for point in viaPoints:
+            marker = Marker()
+            marker.header.frame_id = "map"
+            marker.header.stamp = render_node.get_clock().now().to_msg()
+            marker.id = marker_id
+            marker_id += 1
+            marker.type = Marker.CUBE
+            marker.action = Marker.ADD
+            marker.pose.position.x = point.x
+            marker.pose.position.y = point.y
+            marker.pose.position.z = 0.0
+            marker.scale.x = 0.1
+            marker.scale.y = 0.1
+            marker.scale.z = 0.1
+            marker.color.r = 0.0
+            marker.color.g = 0.0
+            marker.color.b = 1.0
+            marker.color.a = 0.5
+            markers.markers.append(marker)
+        
+        # Publish new markers
+        marker_publisher.publish(markers)
+
+        init_path = traj_generator.getInitPlan()
+        init_path_msg = Path()
+        init_path_msg.header.frame_id = "map"
+        init_path_msg.header.stamp = render_node.get_clock().now().to_msg()
+
+        for point in init_path:
+            pose = PoseStamped()
+            pose.pose.position.x = point.x
+            pose.pose.position.y = point.y
+            pose.pose.position.z = 0.0
+            init_path_msg.poses.append(pose)
+        
+        init_path_publisher.publish(init_path_msg)
+
+        # stop here
+        raise e
+
+    print("Finish sampling trajectory with init")
+    print(f"Main trajectory points: {len(traj)}")
+    print(f"Circle centers trajectory points: {len(circle_centers_traj)}")
 
     init_path = traj_generator.getInitPlan()
     corridor = traj_generator.getCircles()
@@ -141,6 +230,18 @@ while rclpy.ok():
         omage_vels.append(point.velocity.omega)
         time_stamps.append(point.time_from_start)
         raw_traj_msg.poses.append(pose)
+
+    # Create circle centers trajectory message
+    circle_centers_msg = Path()
+    circle_centers_msg.header.frame_id = "map"
+    circle_centers_msg.header.stamp = render_node.get_clock().now().to_msg()
+
+    for point in circle_centers_traj:
+        pose = PoseStamped()
+        pose.pose.position.x = point.x
+        pose.pose.position.y = point.y
+        pose.pose.position.z = 0.0
+        circle_centers_msg.poses.append(pose)
 
     # First, delete all previous markers
     markers = MarkerArray()
@@ -212,6 +313,7 @@ while rclpy.ok():
     path_publisher.publish(path_msg)
     init_path_publisher.publish(init_path_msg)
     raw_traj_publisher.publish(raw_traj_msg)
+    circle_centers_publisher.publish(circle_centers_msg)
 
     rclpy.spin_once(render_node, timeout_sec=0.1)
 
@@ -228,6 +330,6 @@ while rclpy.ok():
     # plt.pause(1.0)
     
     # sleep for 1 second
-    time.sleep(1.0)
+    # time.sleep(1.0)
 
 # rclpy.shutdown()

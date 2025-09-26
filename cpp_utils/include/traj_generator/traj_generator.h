@@ -35,6 +35,8 @@ public:
     std::vector<Point> sampleTrajLoop(Point start, Point end);
     std::vector<Point> sampleDistinctHomotopyTrajs(Point start, Point end);
     std::vector<Point> sampleDistinctHomotopyTrajsLoop(Point start, Point end);
+    std::pair<std::vector<Point>, std::vector<Point>> sampleTrajLoopWithInit(Point start, Point end);
+    std::pair<std::vector<Point>, std::vector<Point>> sampleDistinctHomotopyTrajsLoopWithInit(Point start, Point end);
 
     // for visualization
     std::vector<PoseSE2> getInitPlan() const {return init_plan_;}
@@ -58,6 +60,7 @@ private:
     // void getNearestNode(Point p, int &node_id);
     void updateCorridor();
     void updateViaPoints();
+    void updateViaPointsNoSample();
     void updateTrajectory();
 
     std::shared_ptr<Costmap2D> costmap_;
