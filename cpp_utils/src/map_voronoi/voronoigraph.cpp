@@ -628,7 +628,6 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
         for(int nx = -1; nx <= 1; nx++) {
             for(int ny = -1; ny <= 1; ny++) {
                 if (nx == 0 && ny == 0) continue;
-                if(nx*ny == -1 || nx*ny == 1) continue;
                 
                 int new_x = current.x + nx;
                 int new_y = current.y + ny;
@@ -636,9 +635,9 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
                 if (new_x < 0 || new_x >= sizeX || new_y < 0 || new_y >= sizeY) continue;
                 if (visited[new_x][new_y]) continue;
                 
+                visited[new_x][new_y] = true;
                 if (!voronoi_modified->isVoronoiAlternative(new_x, new_y)) {
                     q.push(MapPoint{new_x, new_y});
-                    visited[new_x][new_y] = true;
                 }
                 else{
                     // 找到Voronoi点，检查是否是节点
@@ -679,17 +678,16 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
         for(int nx = -1; nx <= 1; nx++) {
             for(int ny = -1; ny <= 1; ny++) {
                 if (nx == 0 && ny == 0) continue;
-                if(nx*ny == -1 || nx*ny == 1) continue;
                 
                 int new_x = current.x + nx;
                 int new_y = current.y + ny;
                 
                 if (new_x < 0 || new_x >= sizeX || new_y < 0 || new_y >= sizeY) continue;
                 if (visited[new_x][new_y]) continue;
-                
+
+                visited[new_x][new_y] = true;
                 if (!voronoi_modified->isVoronoiAlternative(new_x, new_y)) {
                     q.push(MapPoint{new_x, new_y});
-                    visited[new_x][new_y] = true;
                 }
                 else{
                     // 找到Voronoi点，检查是否是节点
