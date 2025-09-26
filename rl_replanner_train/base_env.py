@@ -131,7 +131,6 @@ class BaseEnv(gym.Env):
         # robot path
         self.current_robot_path = None
         self.robot_path_buffer = []
-        self.future_robot_path_buffer = []
 
         # global goal
         self.global_goal = None
@@ -317,8 +316,8 @@ class BaseEnv(gym.Env):
     def _get_obs(self, is_terminal=False):
         self.structure_obs = {}
         if not is_terminal:
-            self.future_robot_path_buffer = self._get_robot_path()                              # for reward calculation
-            self.structure_obs["robot_path"] = copy.deepcopy(self.future_robot_path_buffer)
+            self._get_robot_path()                              # for reward calculation
+            self.structure_obs["robot_path"] = copy.deepcopy(self.robot_path_buffer)
             self.structure_obs["human_path"] = self.human_path_buffer
             self.structure_obs["partial_map"] = self._get_partial_map()
             self.structure_obs["d_goal"] = self.global_goal
@@ -485,7 +484,7 @@ class BaseEnv(gym.Env):
                 self.robot_path_buffer.append(self.current_robot_path[-1])
                 # self.robot_path_buffer.append([0.0, 0.0])              
         
-        return self.robot_path_buffer
+        # return self.robot_path_buffer
 
     def _get_partial_map(self):
         # Extract the partial map

@@ -77,6 +77,26 @@ class EvalEnv(BaseEnv):
         else:
             self.replay_traj_files = glob.glob(self.replay_traj_path + '/' + map_name + '/collected_paths/*.txt')
 
+        # Pre-load all trajectory data to avoid repeated file I/O operations
+        self.replay_trajectories = []
+        print(f"Loading {len(self.replay_traj_files)} trajectory files...")
+        
+        for i, traj_file in enumerate(self.replay_traj_files):
+            try:
+                traj_data = np.loadtxt(traj_file)
+                self.replay_trajectories.append(traj_data)
+                if (i + 1) % 100 == 0:  # Progress indicator for large datasets
+                    print(f"Loaded {i + 1}/{len(self.replay_traj_files)} trajectories")
+            except Exception as e:
+                print(f"Error loading trajectory file {traj_file}: {e}")
+                # Skip the problematic file
+                continue
+        
+        print(f"Successfully loaded {len(self.replay_trajectories)} trajectories")
+
+        # Ensure we have valid trajectories
+        if len(self.replay_trajectories) == 0:
+            raise RuntimeError("No valid trajectory files found!")
         self.traj_index = -1
 
         # in Loop training mode, the global goal is the last point of the trajectory in collected_paths
@@ -95,15 +115,19 @@ class EvalEnv(BaseEnv):
 
         if self.eval_ordered:
             # evaluate in order
-            self.traj_index = (self.traj_index + 1) % len(self.replay_traj_files)
+            self.traj_index = (self.traj_index + 1) % len(self.replay_trajectories)
         else:
             # Reset the trajectory index
-            self.traj_index = np.random.randint(0, len(self.replay_traj_files))
+            self.traj_index = np.random.randint(0, len(self.replay_trajectories))
 
-        traj_file = self.replay_traj_files[self.traj_index]
-        self.current_human_traj = np.loadtxt(traj_file)
-
-        # print("\n\n ======================== Testing trajectory: {} ======================== \n\n".format(traj_file))
+        # Use pre-loaded trajectory data instead of reading from file
+        self.current_human_traj = self.replay_trajectories[self.traj_index]
+        
+        # Optional: print current trajectory file name for debugging
+        # if hasattr(self, 'replay_traj_files') and self.traj_index < len(self.replay_traj_files):
+        #     current_file = self.replay_traj_files[self.traj_index]
+        #     print(f"\n\n ======================== Testing trajectory: {current_file} ======================== \n\n")
+        #     pass
 
         self.replan_num = 0
         self.fail_num = 0
@@ -181,7 +205,7 @@ class EvalEnv(BaseEnv):
         if not is_terminal:
             eval_length = min(self.robot_prediction_length, len(self.current_robot_path) - self.robot_closest_idx)
             h_p = self._get_future_human_path(eval_length)
-            r_p = self.future_robot_path_buffer[:eval_length]
+            r_p = self.robot_path_buffer[:eval_length]
             exp_error = np.exp(- self.exp_factor * np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1))
             decay_weight = [self.decay_factor ** i for i in range(eval_length)] 
             decay_weight = np.array(decay_weight) * (1 - self.decay_factor) / (1 - self.decay_factor ** (eval_length))
