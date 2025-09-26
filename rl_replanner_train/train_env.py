@@ -106,7 +106,11 @@ class TrainEnv(BaseEnv):
             #     start_point, end_point = end_point, start_point
 
             # generated_traj = self.traj_generator.sampleTraj(start=start_point, end=end_point)
-            generated_traj = self.traj_generator.sampleTrajLoop(start=start_point, end=end_point)
+            # generated_traj = self.traj_generator.sampleTrajLoop(start=start_point, end=end_point)
+
+            # ==================== try new reward ====================
+            generated_traj, none_noised_traj = self.traj_generator.sampleTrajLoopWithInit(start=start_point, end=end_point)
+
             if generated_traj:
                 traj_data = [[generated_traj[0].x, generated_traj[0].y, 0, 0, 0, 0, 0]]
                 for i in range(1, len(generated_traj)):
@@ -121,6 +125,26 @@ class TrainEnv(BaseEnv):
                 self.current_human_traj = np.array(traj_data)
             else:
                 raise ValueError("[SimulationWorld] Failed to generate human trajectory.")
+            
+            # ==================== try new reward ====================
+            if none_noised_traj:
+                # resample the trajecory with the same path_resolution
+                self.current_human_traj_without_noise = [[none_noised_traj[0].x, none_noised_traj[0].y]]
+                i = 0
+                while i < len(none_noised_traj) - 1:
+                    x = none_noised_traj[i].x
+                    y = none_noised_traj[i].y
+                    distance = ((x - self.current_human_traj_without_noise[-1][0]) ** 2 + (y - self.current_human_traj_without_noise[-1][1]) ** 2) ** 0.5
+                    while distance >= self.path_resolution:
+                        ratio = self.path_resolution / distance
+                        new_x = self.current_human_traj_without_noise[-1][0] + (x - self.current_human_traj_without_noise[-1][0]) * ratio
+                        new_y = self.current_human_traj_without_noise[-1][1] + (y - self.current_human_traj_without_noise[-1][1]) * ratio
+                        self.current_human_traj_without_noise.append([new_x, new_y])
+                        distance = ((x - new_x) ** 2 + (y - new_y) ** 2) ** 0.5
+                    i += 1
+                self.without_noised_idx = 0
+            else:
+                raise ValueError("[SimulationWorld] Failed to generate human trajectory without noise.")
     
     # When trianing, allow robot change its aciton when current one is invalid
     def _interact(self):
@@ -184,7 +208,7 @@ class TrainEnv(BaseEnv):
 
             eval_length = min(self.robot_prediction_length, len(self.current_robot_path) - self.robot_closest_idx)
             h_p = self._get_future_human_path(eval_length)
-            r_p = self.future_robot_path_buffer[:eval_length]
+            r_p = self.robot_path_buffer[:eval_length]
             exp_error = np.exp(- self.exp_factor * np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1))
             decay_weight = [self.decay_factor ** i for i in range(eval_length)] 
             decay_weight = np.array(decay_weight) * (1 - self.decay_factor) / (1 - self.decay_factor ** (eval_length))

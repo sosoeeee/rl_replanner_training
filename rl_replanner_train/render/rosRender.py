@@ -100,6 +100,7 @@ class rosRender():
         self.human_future_path_pub = self.node.create_publisher(Path, 'rew_human_furture_path', 10)
         self.robot_local_path_pub = self.node.create_publisher(Path, 'obs_robot_path', 10)
         self.global_goal_pub = self.node.create_publisher(PoseStamped, 'obs_global_goal', 10)
+        self.human_path_without_noise_path_pub = self.node.create_publisher(Path, 'human_path_without_noise', 10)
 
         self.executor = rclpy.executors.SingleThreadedExecutor()
         self.executor.add_node(self.node)
@@ -199,6 +200,9 @@ class rosRender():
 
     def pub_local_robot_path(self, robot_local_path: list[list[float]]):
         self.robot_local_path_pub.publish(self._get_path_msg(robot_local_path))
+
+    def pub_human_path_without_noise_path(self, human_path_without_noise_path: list[list[float]]):
+        self.human_path_without_noise_path_pub.publish(self._get_path_msg(human_path_without_noise_path))
 
     def pub_global_goal(self, goal: list[float]):
         goal_pose = PoseStamped()

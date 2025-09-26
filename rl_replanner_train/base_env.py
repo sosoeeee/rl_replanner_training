@@ -128,6 +128,11 @@ class BaseEnv(gym.Env):
         self.human_path_buffer = []
         self.future_human_path_buffer = []
 
+        # ==================== try new reward ====================
+        self.current_human_traj_without_noise = None
+        self.future_human_path_without_noise_buffer = []
+        self.without_noised_idx = 0
+        
         # robot path
         self.current_robot_path = None
         self.robot_path_buffer = []
@@ -317,6 +322,10 @@ class BaseEnv(gym.Env):
         self.structure_obs = {}
         if not is_terminal:
             self._get_robot_path()                              # for reward calculation
+
+            # ==================== try new reward ====================
+            self._get_future_human_path_without_noise()  # for reward calculation without noise
+
             self.structure_obs["robot_path"] = copy.deepcopy(self.robot_path_buffer)
             self.structure_obs["human_path"] = self.human_path_buffer
             self.structure_obs["partial_map"] = self._get_partial_map()
@@ -431,7 +440,58 @@ class BaseEnv(gym.Env):
     
     def _get_future_human_path(self, furture_len):
         return self.future_human_path_buffer[:furture_len]
+    
+    def _get_future_human_path_without_noise(self):
+        # TIRCK: Window search
+        k = 100 # TODO: The parameter k should be set according to the human average velocity
+        cur_length = len(self.current_human_traj_without_noise)
+        start_idx = max(0, self.without_noised_idx - k)
+        end_idx = min(cur_length, self.without_noised_idx + k)
+        min_d = np.inf
+        idx_ = start_idx
+        cur_robot_pose = self.human_path_buffer[-1]
 
+        # find the nearest point on the robot path
+        for i in range(start_idx, end_idx):
+            pose = self.current_human_traj_without_noise[i]
+            d_ = ((pose[0] - cur_robot_pose[0]) ** 2 + (pose[1] - cur_robot_pose[1]) ** 2) ** 0.5
+            if d_ < min_d:
+                min_d = d_
+                idx_ = i
+        
+        # No TRICK:
+        # min_d = np.inf
+        # idx_ = 0
+        # cur_robot_pose = self.human_path_buffer[-1]
+        # cur_robot_path_length = len(self.current_human_traj_without_noise)
+
+        # # find the nearest point on the robot path
+        # for i in range(len(self.current_human_traj_without_noise)):
+        #     robot_pose = self.current_human_traj_without_noise[i]
+        #     d_ = ((robot_pose[0] - cur_robot_pose[0]) ** 2 + (robot_pose[1] - cur_robot_pose[1]) ** 2) ** 0.5
+        #     if d_ < min_d:
+        #         min_d = d_
+        #         idx_ = i
+
+        idx_ += 1
+        idx_ = max(idx_, self.without_noised_idx) # ensure that the index is not less than the previous closest index
+
+        self.without_noised_idx = min(idx_, cur_length - 1)
+
+        if self.render_mode == "ros":
+            print("robot starting idx: ", start_idx)
+            print("robot ending idx: ", end_idx)
+            print("robot closest idx: ", self.without_noised_idx)
+
+        self.future_human_path_without_noise_buffer = self.current_human_traj_without_noise[self.without_noised_idx: self.without_noised_idx + self.robot_prediction_length]
+
+        if cur_length < self.without_noised_idx + self.robot_prediction_length:
+            # append the terminal poses repeatedly
+            for i in range(cur_length, self.without_noised_idx + self.robot_prediction_length):
+                self.future_human_path_without_noise_buffer.append(self.current_human_traj_without_noise[-1])
+        
+        # return self.future_human_path_without_noise_buffer
+    
     def _get_robot_path(self):
         # TIRCK: Window search
         k = 100 # TODO: The parameter k should be set according to the human average velocity
@@ -750,6 +810,10 @@ class BaseEnv(gym.Env):
             self.render_ros.pub_partial_map(self.partial_map)
             self.render_ros.pub_local_human_path(self.human_path_buffer, self.future_human_path_buffer, self.robot_direction)
             self.render_ros.pub_local_robot_path(self.robot_path_buffer)
+
+            # ==================== try new reward ====================
+            self.render_ros.pub_human_path_without_noise_path(self.future_human_path_without_noise_buffer)
+
             self.render_ros.pub_global_goal(self.global_goal)
 
             # simulation setup

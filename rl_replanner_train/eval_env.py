@@ -97,6 +97,56 @@ class EvalEnv(BaseEnv):
         # Ensure we have valid trajectories
         if len(self.replay_trajectories) == 0:
             raise RuntimeError("No valid trajectory files found!")
+
+        # ==================== try new reward ==================== (can not run without using generator)
+        if self.use_generator:
+            self.eval_path_without_noise_files = glob.glob(self.replay_traj_path + '/' + map_name + '/eval_paths_without_noise/*.txt')
+
+            # pre-load all trajectory data to avoid repeated file I/O operations
+            self.replay_trajectories_without_noise = []
+            print(f"Loading {len(self.eval_path_without_noise_files)} trajectory files without noise...")
+            for i, traj_file in enumerate(self.eval_path_without_noise_files):
+                try:
+                    traj_data = np.loadtxt(traj_file)
+
+                    # convert to list and only keep x, y
+                    traj_data = traj_data[:, :2]
+                    traj_data_list = [[point[0], point[1]] for point in traj_data]
+
+                    # resample the trajecory with the same path_resolution
+                    traj_data_list_resampled = [traj_data_list[0]]
+                    i = 0
+                    while i < len(traj_data) - 1:
+                        x = traj_data_list[i][0]
+                        y = traj_data_list[i][1]
+                        distance = ((x - traj_data_list_resampled[-1][0]) ** 2 + (y - traj_data_list_resampled[-1][1]) ** 2) ** 0.5
+                        while distance >= self.path_resolution:
+                            ratio = self.path_resolution / distance
+                            new_x = traj_data_list_resampled[-1][0] + (x - traj_data_list_resampled[-1][0]) * ratio
+                            new_y = traj_data_list_resampled[-1][1] + (y - traj_data_list_resampled[-1][1]) * ratio
+                            traj_data_list_resampled.append([new_x, new_y])
+                            distance = ((x - new_x) ** 2 + (y - new_y) ** 2) ** 0.5
+                        i += 1
+                    # debug
+                    # print(f"Before resampling trajectory length: {len(traj_data)}")
+                    # print(f"Resampled trajectory length: {len(traj_data_list_resampled)}")
+
+                    self.replay_trajectories_without_noise.append(traj_data_list_resampled)      
+                    
+                    if (i + 1) % 100 == 0:  # Progress indicator for large datasets
+                        print(f"Loaded {i + 1}/{len(self.eval_path_without_noise_files)} trajectories without noise")
+                except Exception as e:
+                    print(f"Error loading trajectory file {traj_file}: {e}")
+                    # Skip the problematic file
+                    continue
+            print(f"Successfully loaded {len(self.replay_trajectories_without_noise)} trajectories without noise")
+
+            if len(self.replay_trajectories_without_noise) != len(self.replay_trajectories):
+                raise RuntimeError("The number of trajectories with and without noise do not match!")
+        else:
+            raise NotImplementedError("EvalEnv currently requires use_generator to be True.")
+        # =========================================================
+
         self.traj_index = -1
 
         # in Loop training mode, the global goal is the last point of the trajectory in collected_paths
@@ -124,10 +174,19 @@ class EvalEnv(BaseEnv):
         self.current_human_traj = self.replay_trajectories[self.traj_index]
         
         # Optional: print current trajectory file name for debugging
-        # if hasattr(self, 'replay_traj_files') and self.traj_index < len(self.replay_traj_files):
-        #     current_file = self.replay_traj_files[self.traj_index]
-        #     print(f"\n\n ======================== Testing trajectory: {current_file} ======================== \n\n")
-        #     pass
+        if hasattr(self, 'replay_traj_files') and self.traj_index < len(self.replay_traj_files):
+            current_file = self.replay_traj_files[self.traj_index]
+            print(f"\n\n ======================== Testing trajectory: {current_file} ======================== \n\n")
+            pass
+    
+        # ==================== try new reward ====================
+        self.current_human_traj_without_noise = self.replay_trajectories_without_noise[self.traj_index]
+        self.without_noised_idx = 0
+        if hasattr(self, 'eval_path_without_noise_files') and self.traj_index < len(self.eval_path_without_noise_files):
+            current_file = self.eval_path_without_noise_files[self.traj_index]
+            print(f"\n\n ======================== Testing trajectory without noise: {current_file} ======================== \n\n")
+            pass
+        # =========================================================
 
         self.replan_num = 0
         self.fail_num = 0
