@@ -115,10 +115,10 @@ class EvalEnv(BaseEnv):
 
                     # resample the trajecory with the same path_resolution
                     traj_data_list_resampled = [traj_data_list[0]]
-                    i = 0
-                    while i < len(traj_data) - 1:
-                        x = traj_data_list[i][0]
-                        y = traj_data_list[i][1]
+                    idx = 0
+                    while idx < len(traj_data) - 1:
+                        x = traj_data_list[idx][0]
+                        y = traj_data_list[idx][1]
                         distance = ((x - traj_data_list_resampled[-1][0]) ** 2 + (y - traj_data_list_resampled[-1][1]) ** 2) ** 0.5
                         while distance >= self.path_resolution:
                             ratio = self.path_resolution / distance
@@ -126,7 +126,7 @@ class EvalEnv(BaseEnv):
                             new_y = traj_data_list_resampled[-1][1] + (y - traj_data_list_resampled[-1][1]) * ratio
                             traj_data_list_resampled.append([new_x, new_y])
                             distance = ((x - new_x) ** 2 + (y - new_y) ** 2) ** 0.5
-                        i += 1
+                        idx += 1
                     # debug
                     # print(f"Before resampling trajectory length: {len(traj_data)}")
                     # print(f"Resampled trajectory length: {len(traj_data_list_resampled)}")

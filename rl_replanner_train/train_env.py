@@ -130,10 +130,10 @@ class TrainEnv(BaseEnv):
             if none_noised_traj:
                 # resample the trajecory with the same path_resolution
                 self.current_human_traj_without_noise = [[none_noised_traj[0].x, none_noised_traj[0].y]]
-                i = 0
-                while i < len(none_noised_traj) - 1:
-                    x = none_noised_traj[i].x
-                    y = none_noised_traj[i].y
+                idx = 0
+                while idx < len(none_noised_traj) - 1:
+                    x = none_noised_traj[idx].x
+                    y = none_noised_traj[idx].y
                     distance = ((x - self.current_human_traj_without_noise[-1][0]) ** 2 + (y - self.current_human_traj_without_noise[-1][1]) ** 2) ** 0.5
                     while distance >= self.path_resolution:
                         ratio = self.path_resolution / distance
@@ -141,7 +141,7 @@ class TrainEnv(BaseEnv):
                         new_y = self.current_human_traj_without_noise[-1][1] + (y - self.current_human_traj_without_noise[-1][1]) * ratio
                         self.current_human_traj_without_noise.append([new_x, new_y])
                         distance = ((x - new_x) ** 2 + (y - new_y) ** 2) ** 0.5
-                    i += 1
+                    idx += 1
                 self.without_noised_idx = 0
             else:
                 raise ValueError("[SimulationWorld] Failed to generate human trajectory without noise.")
