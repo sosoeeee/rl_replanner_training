@@ -38,6 +38,9 @@ public:
 
     // void visualizeVoronoi(const std::string& filename, int type=0); // 0: original, 1: modified
     void visualizeVoronoi(const std::string& filename); // visualize the modified voronoi graph
+    // visualizePaths for voronoi_modified
+    void visualizePaths(const std::string& filename);
+    void visualizePathsOnMap(const std::string& filename);
 
     // get distance to the nearest obstacle (used by the bubble corridor during traj generation)
     float getDistance(int x, int y) { return voronoi_static->getDistance(x, y); }

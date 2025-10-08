@@ -47,10 +47,12 @@ class EvalEnv(BaseEnv):
             render_real_time_factor=1.0,
             use_generator = False,
             eval_ordered=False,  # if True, the evaluation will be in order of the eval_path_directory
+            record_heatmap=False, # if True, record replan positions for heatmap generation
         ):
         # addtional parameters
         self.eval_path_directory = eval_path_directory
         self.eval_ordered = eval_ordered
+        self.record_heatmap = record_heatmap
 
         super().__init__(
             reward_weight=reward_weight,
@@ -75,7 +77,7 @@ class EvalEnv(BaseEnv):
         if self.use_generator:
             self.replay_traj_files = glob.glob(self.replay_traj_path + '/' + self.eval_path_directory + '/*.txt')
         else:
-            self.replay_traj_files = glob.glob(self.replay_traj_path + '/' + map_name + '/collected_paths/*.txt')
+            self.replay_traj_files = glob.glob(self.replay_traj_path + '/' + map_name + '/eval_paths/*.txt')
 
         # Pre-load all trajectory data to avoid repeated file I/O operations
         self.replay_trajectories = []
@@ -99,9 +101,9 @@ class EvalEnv(BaseEnv):
             raise RuntimeError("No valid trajectory files found!")
         self.traj_index = -1
 
-        # in Loop training mode, the global goal is the last point of the trajectory in collected_paths
+        # in Loop training mode, the global goal is the last point of the trajectory in eval_paths
         try:
-            collected_traj_files = glob.glob(self.replay_traj_path + '/' + map_name + '/collected_paths/*.txt')
+            collected_traj_files = glob.glob(self.replay_traj_path + '/' + map_name + '/eval_paths/*.txt')
             traj_file = collected_traj_files[0]
             collected_human_traj = np.loadtxt(traj_file)
             self.global_goal = [collected_human_traj[-1][0], collected_human_traj[-1][1]]
@@ -130,9 +132,12 @@ class EvalEnv(BaseEnv):
         #     pass
 
         self.replan_num = 0
+        if self.record_heatmap:
+            self.replan_positions = [] # a list of replan positions
         self.fail_num = 0
         self.current_step = 0
         self.total_reward_before_normalization = 0.0
+        self.total_prediction_error = 0.0
         self.angles = []
 
     # when evaluating, if the robot action is invalid, current episode will be terminated
@@ -182,6 +187,8 @@ class EvalEnv(BaseEnv):
         self.current_step += 1
         if self.current_action[0] == LOCAL_GOAL:
             self.replan_num += 1
+            if self.record_heatmap:
+                self.replan_positions.append(self.cur_position)
 
         if is_terminal:
             if end_reward > 0:
@@ -194,9 +201,12 @@ class EvalEnv(BaseEnv):
                 'replan_freq': self.replan_num / self.current_step,  # replan frequency
                 'fail_rate': self.fail_num / self.current_step,  # fail rate
                 'avr_angle': np.mean(self.angles) if len(self.angles) > 0 else 0.0,
+                'prediction_error': self.total_prediction_error / self.current_step if self.current_step > 0 else 0.0,
                 'cur_idx': self.traj_index,
                 'eval_traj_num': len(self.replay_traj_files),
             }
+            if self.record_heatmap:
+                self.info['replan_positions'] = self.replan_positions
         else:
             self.info = {}
 
@@ -206,7 +216,13 @@ class EvalEnv(BaseEnv):
             eval_length = min(self.robot_prediction_length, len(self.current_robot_path) - self.robot_closest_idx)
             h_p = self._get_future_human_path(eval_length)
             r_p = self.robot_path_buffer[:eval_length]
-            exp_error = np.exp(- self.exp_factor * np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1))
+
+            # Calculate prediction error
+            path_error = np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1)
+            step_prediction_error = np.mean(path_error) if len(path_error) > 0 else 0.0
+            self.total_prediction_error += step_prediction_error
+
+            exp_error = np.exp(- self.exp_factor * path_error)
             decay_weight = [self.decay_factor ** i for i in range(eval_length)] 
             decay_weight = np.array(decay_weight) * (1 - self.decay_factor) / (1 - self.decay_factor ** (eval_length))
             task_reward = decay_weight.dot(exp_error)
@@ -224,7 +240,7 @@ class EvalEnv(BaseEnv):
         else:
             self.reward = self.total_reward_before_normalization / (self.current_step + 1)
 
-            
+
 
 
 

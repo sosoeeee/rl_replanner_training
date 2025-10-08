@@ -81,6 +81,11 @@ set(voronoi_executable_name my_test)
 add_executable(${voronoi_executable_name} src/${map_voronoi_name}/mytest.cpp)
 target_link_libraries(${voronoi_executable_name} PRIVATE ${map_voronoi_name} ${map_library_name})
 
+# add_exe for safety_analysis
+set(safety_analysis_executable_name safety_analysis_test)
+add_executable(${safety_analysis_executable_name} src/${map_voronoi_name}/safety_analysis.cpp)
+target_link_libraries(${safety_analysis_executable_name} PRIVATE ${map_voronoi_name} ${map_library_name})
+
 set(traj_generator_name traj_generator)
 
 add_library(${traj_generator_name} SHARED

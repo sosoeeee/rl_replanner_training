@@ -1,6 +1,11 @@
 #include "map_voronoi/voronoigraph.h"
 #include <unordered_map>
 #include <unordered_set>
+#include <fstream>
+#include <filesystem>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb/stb_image_write.h"
 
 // void VoronoiGraph::visualizeVoronoi(const std::string& filename, int type) {
 //     switch (type) {
@@ -958,7 +963,8 @@ void VoronoiGraph::getVoronoiGraph(unsigned int start_mx, unsigned int start_my,
 //     }
 // }
 
-void VoronoiGraph::pruneEdgesByObstacleClearance(float map_resolution, float robot_radius) {
+void VoronoiGraph::pruneEdgesByObstacleClearance(float map_resolution, float robot_radius)
+{
     // LOGGER_INFO("VoronoiGraph", "==== Pruning edges with clearance < robot radius ====");
     for (auto& node : voronoi_nodes_modified) {
         int from_id = node.getId();
@@ -980,5 +986,83 @@ void VoronoiGraph::pruneEdgesByObstacleClearance(float map_resolution, float rob
         for (int nid : to_remove) {
             node.removeAdjacent(nid);
         }
+    }
+}
+
+void VoronoiGraph::visualizePathsOnMap(const std::string& filename)
+{
+    // Create a file to save all path points
+    std::ofstream path_points_file("voronoi_path_points.txt");
+    if (!path_points_file.is_open()) {
+        LOGGER_ERROR("VoronoiGraph", "Failed to open voronoi_path_points.txt for writing.");
+    }
+
+    int sizeX = costmap->getSizeInCellsX();
+    int sizeY = costmap->getSizeInCellsY();
+    std::vector<unsigned char> image(sizeX * sizeY * 3);
+
+    // 1. Draw the base map from the costmap
+    for (int y = 0; y < sizeY; ++y) {
+        for (int x = 0; x < sizeX; ++x) {
+            unsigned char cost = costmap->getCost(x, y);
+            unsigned char r, g, b;
+            if (cost >= LETHAL_OBSTACLE) { // Obstacle
+                r = 0; g = 0; b = 0;
+            } else { // Free space or unknown
+                r = 255; g = 255; b = 255;
+            }
+            int index = (y * sizeX + x) * 3;
+            image[index + 0] = r;
+            image[index + 1] = g;
+            image[index + 2] = b;
+        }
+    }
+
+    // 2. Draw all paths from the modified graph with alpha blending
+    unsigned char path_r = 0;
+    unsigned char path_g = 255;
+    unsigned char path_b = 0;
+    unsigned char path_a = 128; // Low opacity green
+
+    // Draw the paths
+    for (const auto& node : voronoi_nodes_modified) {
+        int from_id = node.getId();
+        const auto& adjacents = node.getAllAdjacent();
+        for (const auto& adj : adjacents) {
+            int to_id = adj.first;
+
+            // To avoid drawing edges twice, only process if from_id < to_id
+            if (from_id < to_id) {
+                const auto& path_points = node.getPathById(to_id);
+                for (size_t i = 0; i < path_points.size(); ++i) {
+                    int x = path_points[i].x;
+                    int y = path_points[i].y;
+                    
+                    // Save the point to the file
+                    if (path_points_file.is_open()) {
+                        path_points_file << x << " " << y << "\n";
+                    }
+
+                    // Draw the point on the image
+                    if (x >= 0 && x < sizeX && y >= 0 && y < sizeY) {
+                        int flipped_y = sizeY - 1 - y; // Flip Y for image coordinates
+                        int idx = (flipped_y * sizeX + x) * 3;
+                        image[idx + 0] = static_cast<unsigned char>(path_r);
+                        image[idx + 1] = static_cast<unsigned char>(path_g);
+                        image[idx + 2] = static_cast<unsigned char>(path_b);
+                    }
+                }
+            }
+        }
+    }
+
+    if (path_points_file.is_open()) {
+        path_points_file.close();
+        LOGGER_INFO("VoronoiGraph", "All Voronoi path points saved to voronoi_path_points.txt");
+    }
+
+    // Save the image
+    if (!stbi_write_png(filename.c_str(), sizeX, sizeY, 3, image.data(), sizeX * 3)) {
+        LOGGER_ERROR("VoronoiGraph::visualizePathsOnMap", "Could not write PNG file: %s", filename.c_str());
     }
 }

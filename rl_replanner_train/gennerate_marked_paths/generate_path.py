@@ -25,12 +25,12 @@ def get_map_and_config_paths(base_path):
 def main():
     waypoints = [
         cpp_utils.Point(-4.0, -4.0),
-        cpp_utils.Point(-1.6, 0.0),
-        cpp_utils.Point(-3.0, 1.4),
-        cpp_utils.Point(-4.0, -0.4),
-        cpp_utils.Point(3.4, -3.8),
-        cpp_utils.Point(4.0, -2.0),
-        cpp_utils.Point(-0.4, 1.6),
+        # cpp_utils.Point(-1.6, 0.0),
+        # cpp_utils.Point(-3.0, 1.4),
+        # cpp_utils.Point(-4.0, -0.4),
+        # cpp_utils.Point(3.4, -3.8),
+        # cpp_utils.Point(4.0, -2.0),
+        # cpp_utils.Point(-0.4, 1.6),
         cpp_utils.Point(4.0, 4.0),
     ]
 

@@ -75,6 +75,10 @@ int main() {
     voronoigraph.visualizeVoronoi("modified_voronoi.ppm");
     std::cout << "Generated initial frame.\n";
 
+    // 调用新的路径可视化函数
+    voronoigraph.visualizePathsOnMap("./paths_on_map.png");
+    std::cout << "Paths on map visualization generated.\n";
+
     // voronoigraph.findAllPaths(0,3);
 
     return 0;

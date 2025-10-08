@@ -25,6 +25,7 @@ mkdir -p build
 cd build || exit  
 cmake .. 
 sudo make install # run it twice to install the library and the headers. Otherwise, the lib will not be found!
+sudo make install
 
 # cd to the root directory
 cd ../../../ || exit
