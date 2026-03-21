@@ -276,61 +276,68 @@ class PyCostmap2D:
             pass
             # print("[Path Planner] The edge of cone is out of range.")
 
-    def load_cone_to_map(self, cur_x: float, cur_y: float, cone_center: list[float], radius: float, inflated_distance: float):
+    def load_domain_to_map(
+        self,
+        intention_domain_obj,
+        inflated_distance: float
+    ):
         """
-        Inflate the cone and set the cost in the costmap.
+        Load intention domain as obstacles onto the costmap using bounding box scan.
+
+        This method implements the "Bounding Box Scan" algorithm to ensure perfect
+        alignment between Python and C++ rendering:
+        1. Get physical bounding box from intention domain
+        2. Convert to grid index bounds
+        3. Scan all cells within bounding box
+        4. Query spatial predicate is_restricted_area() for each cell
+        5. Mark restricted cells as LETHAL_OBSTACLE (254)
+
+        This approach eliminates diagonal gaps present in line-drawing methods and
+        supports arbitrary curved shapes (e.g., ellipses).
 
         Args
         ----
-            cur_x (float): Robot's x position
-            cur_y (float): Robot's y position
-            cone_center (list[float]): Center of the cone
-            radius (float): Radius of the cone
-            inflated_distance (float): Distance to inflate the cone
+            intention_domain_obj: Instance of BaseIntentionDomain (e.g., ConeIntentionDomain)
+            action_params (list[float]): Shape-specific parameters (e.g., [depth, radius] for cone)
+            cur_pos (list[float]): Robot's current position [x, y]
+            robot_direction (np.ndarray): Normalized direction vector [dx, dy]
+            inflated_distance (float): Inflation margin for robot safety
+
+        Returns
+        -------
+            PyCostmap2D: Deep copy of costmap with domain obstacles marked
 
         """
-        # 创建 base_map 的深拷贝
-        map_with_cone = copy.deepcopy(self)
+        # Step 1: Deep copy the base costmap
+        map_with_domain = copy.deepcopy(self)
 
-        # Inflate the cone to make sure the goal is not in the cone edge
-        height = math.sqrt((cone_center[0] - cur_x) ** 2 + (cone_center[1] - cur_y) ** 2)
-        height_dirc = [(cone_center[0] - cur_x) / height, (cone_center[1] - cur_y) / height]
-        inflated_center = [cone_center[0] + height_dirc[0] * inflated_distance,
-                           cone_center[1] + height_dirc[1] * inflated_distance]
+        # Step 2: Get physical bounding box in world coordinates
+        min_x, max_x, min_y, max_y = intention_domain_obj.get_bounding_box(
+            inflated_distance=inflated_distance
+        )
 
-        # The bottom edge of the cone after inflation
-        phi = math.atan(height / radius)
-        inflated_radius = radius + inflated_distance / math.tan(phi / 2)
-        # Calculate the bottom vertex of the cone
-        inflated_vertices = []
-        for i in range(2):
-            vertex = {
-                'x': inflated_center[0] + inflated_radius * height_dirc[1] * math.cos(i * math.pi),
-                'y': inflated_center[1] - inflated_radius * height_dirc[0] * math.cos(i * math.pi)
-            }
-            inflated_vertices.append(vertex)
+        # Step 3: Convert world bounding box to grid index bounds (with clipping)
+        min_mx, min_my, _ = map_with_domain.worldToMap(min_x, min_y)
+        max_mx, max_my, _ = map_with_domain.worldToMap(max_x, max_y)
 
-        # The upper vertex of the cone after inflation
-        inflated_robot_x = cur_x - height_dirc[0] * inflated_distance
-        inflated_robot_y = cur_y - height_dirc[1] * inflated_distance
-        inflated_robot_vertices = []
-        for i in range(2):
-            vertex = {
-                'x': inflated_robot_x + inflated_distance * math.tan(phi / 2) * height_dirc[1] * math.cos(i * math.pi),
-                'y': inflated_robot_y - inflated_distance * math.tan(phi / 2) * height_dirc[0] * math.cos(i * math.pi)
-            }
-            inflated_robot_vertices.append(vertex)
+        # Clamp to valid map range
+        min_mx = max(0, min(min_mx, self.size_x - 1))
+        max_mx = max(0, min(max_mx, self.size_x - 1))
+        min_my = max(0, min(min_my, self.size_y - 1))
+        max_my = max(0, min(max_my, self.size_y - 1))
 
-        # Base edge
-        map_with_cone.set_edge_cost(inflated_vertices[0]['x'], inflated_vertices[0]['y'],
-                                    inflated_vertices[1]['x'], inflated_vertices[1]['y'], 254)
-        # Side edges
-        map_with_cone.set_edge_cost(inflated_vertices[0]['x'], inflated_vertices[0]['y'],
-                                    inflated_robot_vertices[0]['x'], inflated_robot_vertices[0]['y'], 254)
-        map_with_cone.set_edge_cost(inflated_vertices[1]['x'], inflated_vertices[1]['y'],
-                                    inflated_robot_vertices[1]['x'], inflated_robot_vertices[1]['y'], 254)
-        # Top edge
-        map_with_cone.set_edge_cost(inflated_robot_vertices[0]['x'], inflated_robot_vertices[0]['y'],
-                                    inflated_robot_vertices[1]['x'], inflated_robot_vertices[1]['y'], 254)
+        # Step 4: Bounding box scan - iterate over all cells in the box
+        for mx in range(min_mx, max_mx + 1):
+            for my in range(min_my, max_my + 1):
+                # Step 5: Convert grid cell center back to world coordinates
+                wx, wy = map_with_domain.mapToWorld(mx, my)
 
-        return map_with_cone
+                # Step 6: Query spatial predicate
+                if intention_domain_obj.is_restricted_area(
+                    wx=wx,
+                    wy=wy,
+                ):
+                    # Mark as LETHAL_OBSTACLE (same as C++ LETHAL_OBSTACLE = 254)
+                    map_with_domain.setCost(mx, my, 254)
+
+        return map_with_domain

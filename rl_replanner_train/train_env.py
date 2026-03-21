@@ -29,7 +29,8 @@ class TrainEnv(BaseEnv):
             decision_interval=1,
             render_real_time_factor=1.0,
             use_generator = False,
-            map_setting_file_for_planner = None
+            map_setting_file_for_planner = None,
+            intention_domain_type='cone',
         ):
         # addtional parameters
         self.traj_planner_setting_file = traj_planner_setting_file
@@ -52,6 +53,7 @@ class TrainEnv(BaseEnv):
             use_generator = use_generator,
             render_mode=render_mode,
             render_real_time_factor=render_real_time_factor,
+            intention_domain_type=intention_domain_type,
         )
 
     def _init_human_traj(self):
@@ -116,7 +118,7 @@ class TrainEnv(BaseEnv):
         #     print("current action: ", self.current_action)
 
         # This function is used to interact with the environment
-        self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]] 
+        self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]]
 
         terminated = False
 
@@ -130,15 +132,30 @@ class TrainEnv(BaseEnv):
             self.current_action[1][0] = self.current_action[1][0] * self.obser_width
             self.current_action[1][1] = self.current_action[1][1] * self.obser_width
 
-            if self._get_predicted_goal(depth=self.current_action[1][0], radius=self.current_action[1][1]):
-                self.path_planner.loadCone(cone_center=self.cone_center, 
-                                            current_pos=self.cur_position,
-                                            radius=self.current_action[1][1],
-                                            is_enabled=True)
-                if not self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal):
+            # Configure intention domain with current state
+            self.intention_domain.configure(
+                action_params=self.current_action[1],
+                cur_pos=self.cur_position,
+                robot_direction=self.robot_direction
+            )
+
+            # Use intention domain to get predicted goal (no need to pass configured params)
+            pred_goal = self.intention_domain.get_predicted_goal(
+                global_goal=self.global_goal,
+                collision_checker=self._isCollided,
+                map_resolution=self.map_resolution
+            )
+
+            if pred_goal is not None:
+                # Load intention domain constraint into path planner
+                self.path_planner.loadIntentionDomain(
+                    cur_pos=self.cur_position,
+                    robot_direction=self.robot_direction.tolist(),
+                    domain_params=self.current_action[1],
+                    is_enabled=True
+                )
+                if not self._plan_robot_path([self.cur_position[0], self.cur_position[1]], pred_goal):
                     is_valid = False
-                # use point on robot path as the start point
-                # self._plan_robot_path([self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]], self.pred_goal)
             else:
                 is_valid = False
 
@@ -146,7 +163,7 @@ class TrainEnv(BaseEnv):
             # time won't elapse if the action is invalid
             end_reward = -1
         else:
-            end_reward = 0  
+            end_reward = 0
             if self._get_human_path():
                 terminated = True
                 end_reward = 1
@@ -173,7 +190,7 @@ class TrainEnv(BaseEnv):
             h_p = self._get_future_human_path(eval_length)
             r_p = self.robot_path_buffer[:eval_length]
             exp_error = np.exp(- self.exp_factor * np.linalg.norm((np.array(h_p).reshape((-1,2)) - np.array(r_p).reshape((-1,2))), axis=1))
-            decay_weight = [self.decay_factor ** i for i in range(eval_length)] 
+            decay_weight = [self.decay_factor ** i for i in range(eval_length)]
             decay_weight = np.array(decay_weight) * (1 - self.decay_factor) / (1 - self.decay_factor ** (eval_length))
             task_reward = decay_weight.dot(exp_error) * self.reward_weight['task']
 
@@ -188,20 +205,18 @@ class TrainEnv(BaseEnv):
             task_reward = 0.0
 
         # regularization reward
-        # radius / depth
         if self.current_action[0] == LOCAL_GOAL:
             if "reg_angle" in self.reward_weight.keys():
-                # angle_reg_reward = -np.arctan(self.current_action[1][1] / self.current_action[1][0]) / (np.pi / 2) * self.reward_weight['reg_angle']
-                norm_angle = np.arctan(self.current_action[1][1] / self.current_action[1][0]) / (np.pi / 2)
-                angle_reg_reward = self.reward_weight['reg_angle'] * (np.log(1 - norm_angle)) / (1 - norm_angle) 
-                # print("angle_reg_reward: ", angle_reg_reward)
+                # Use intention domain to compute regularization reward (no need to pass configured params)
+                angle_reg_reward = self.intention_domain.get_reg_reward() * self.reward_weight['reg_angle']
+                angle_reg_reward = max(angle_reg_reward, -self.reward_weight['state'])  # clip the regularization reward to avoid too large negative reward
             else:
                 angle_reg_reward = 0.0
         else:
             angle_reg_reward = 0.0
-        
+
         self.reward = task_reward + angle_reg_reward + end_reward * self.reward_weight['state']
-        
+
         # debug
         if self.render_mode == "ros":
             print("============== reward terms ==============")

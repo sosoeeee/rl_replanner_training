@@ -90,12 +90,13 @@ PYBIND11_MODULE(cpp_utils, m) {
     py::class_<NavfnPlannerWithCone, std::shared_ptr<NavfnPlannerWithCone>>(m, "PathPlanner")
         .def(py::init())
         .def_property("inflated_distance", &NavfnPlannerWithCone::getInflatedDistance, nullptr)
-        .def("configure", &NavfnPlannerWithCone::configure, 
+        .def("configure", &NavfnPlannerWithCone::configure,
             "Configure the path planner based on the yaml file", py::arg("costmap"), py::arg("yaml_filename"))
-        .def("plan", &NavfnPlannerWithCone::createPlan, 
+        .def("plan", &NavfnPlannerWithCone::createPlan,
             "Create a plan from start and goal poses", py::arg("start"), py::arg("goal"))
-        .def("loadCone", &NavfnPlannerWithCone::loadCone, 
-            "Load the cone into the map", py::arg("cone_center"), py::arg("current_pos"), py::arg("radius"), py::arg("is_enabled"));
+        .def("loadIntentionDomain", &NavfnPlannerWithCone::loadIntentionDomain,
+            "Load intention domain constraint",
+            py::arg("cur_pos"), py::arg("robot_direction"), py::arg("domain_params"), py::arg("is_enabled") = true);
 
     // Bind the loadMap function
     m.def("loadMap", &loadMap, "Load map from YAML into OccupancyGrid", py::arg("yaml_file"));
