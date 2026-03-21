@@ -333,7 +333,7 @@ class PyCostmap2D:
                 wx, wy = map_with_domain.mapToWorld(mx, my)
 
                 # Step 6: Query spatial predicate
-                if intention_domain_obj.is_restricted_area(
+                if not intention_domain_obj.is_restricted_area(
                     wx=wx,
                     wy=wy,
                 ):

@@ -140,13 +140,14 @@ class TrainEnv(BaseEnv):
             )
 
             # Use intention domain to get predicted goal (no need to pass configured params)
-            pred_goal = self.intention_domain.get_predicted_goal(
+            res = self.intention_domain.get_predicted_goal(
                 global_goal=self.global_goal,
                 collision_checker=self._isCollided,
                 map_resolution=self.map_resolution
             )
 
-            if pred_goal is not None:
+            if res is not None:
+                pred_goal, _ = res
                 # Load intention domain constraint into path planner
                 self.path_planner.loadIntentionDomain(
                     cur_pos=self.cur_position,

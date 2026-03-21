@@ -465,7 +465,7 @@ NavfnPlannerWithCone::loadDomainToMap()
       costmap_->mapToWorld(mx, my, wx, wy);
 
       // Step 6: Query spatial predicate
-      if (constraint_->isRestrictedArea(static_cast<float>(wx), static_cast<float>(wy))) {
+      if (!constraint_->isRestrictedArea(static_cast<float>(wx), static_cast<float>(wy))) {
         // Mark as LETHAL_OBSTACLE (254)
         costmap_for_plan_->setCost(mx, my, nav2_costmap_2d::LETHAL_OBSTACLE);
       }
