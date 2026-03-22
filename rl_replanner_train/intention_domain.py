@@ -253,7 +253,7 @@ class ConeIntentionDomain(BaseIntentionDomain):
                 module_0 = vector_0.dot(vector_0) ** 0.5
                 vector_1 = np.array([global_x - v1['x'], global_y - v1['y']])
                 module_1 = vector_1.dot(vector_1) ** 0.5
-                
+
                 cos_0 = vector_0.dot(base_direction) / module_0 if module_0 > 0 else 0
                 cos_1 = vector_1.dot(base_direction) / module_1 if module_1 > 0 else 0
                 if cos_0 * cos_1 > 0:
@@ -541,6 +541,127 @@ class ConeIntentionDomain(BaseIntentionDomain):
         return polygon
 
 
+class RectangleIntentionDomain(ConeIntentionDomain):
+    """
+    Closed rectangle intention domain implementation.
+
+    Parameters:
+        - depth: Distance from robot to rectangle base center (forward projection)
+        - radius: Half-width of the rectangle base
+
+    Geometry:
+        Robot position (cur_pos) -> depth along robot_direction -> rectangle center
+        Rectangle base is perpendicular to robot_direction with width 2*radius
+    """
+
+    def get_bounding_box(
+        self,
+        inflated_distance: Optional[float] = None
+    ) -> Tuple[float, float, float, float]:
+        """
+        Compute axis-aligned bounding box of inflated rectangle.
+
+        Inflated rectangle is a larger rectangle with:
+        - Same orientation as the original
+        - Increased width and height by twice the inflated_distance
+        """
+        # Use configured values if parameters not provided
+        action_params = self._action_params
+        cur_pos = self._cur_pos
+        robot_direction = self._robot_direction
+
+        if action_params is None or cur_pos is None or robot_direction is None or inflated_distance is None:
+            raise ValueError("action_params, cur_pos, robot_direction, and inflated_distance must be provided")
+
+        depth, radius = action_params[0], action_params[1]
+
+        # Rectangle center (before inflation)
+        rect_center = [
+            cur_pos[0] + depth * robot_direction[0],
+            cur_pos[1] + depth * robot_direction[1]
+        ]
+
+        # Inflate rectangle center forward
+        inflated_center = [
+            rect_center[0] + robot_direction[0] * inflated_distance,
+            rect_center[1] + robot_direction[1] * inflated_distance
+        ]
+
+        inflated_radius = radius + inflated_distance
+
+        # Inflated base vertices
+        self._inflated_base_vertices = []
+        for i in range(2):
+            x = inflated_center[0] + inflated_radius * robot_direction[1] * math.cos(i * math.pi)
+            y = inflated_center[1] - inflated_radius * robot_direction[0] * math.cos(i * math.pi)
+            self._inflated_base_vertices.append({'x': x, 'y': y})
+
+        # Inflated robot vertices (pushed backward)
+        inflated_robot_x = cur_pos[0] - robot_direction[0] * inflated_distance
+        inflated_robot_y = cur_pos[1] - robot_direction[1] * inflated_distance
+        self._inflated_robot_vertices = []
+        for i in range(2):
+            x = inflated_robot_x + inflated_distance * robot_direction[1] * math.cos(i * math.pi)
+            y = inflated_robot_y - inflated_distance * robot_direction[0] * math.cos(i * math.pi)
+            self._inflated_robot_vertices.append({'x': x, 'y': y})
+
+        # Compute axis-aligned bounding box from all 4 vertices
+        all_x = [v['x'] for v in self._inflated_base_vertices] + [v['x'] for v in self._inflated_robot_vertices]
+        all_y = [v['y'] for v in self._inflated_base_vertices] + [v['y'] for v in self._inflated_robot_vertices]
+
+        return (min(all_x), max(all_x), min(all_y), max(all_y))
+
+    def get_visualization_polygon(
+        self,
+    ) -> List[List[float]]:
+        """
+        Get inflated rectangle vertices for LINE_STRIP visualization.
+
+        Returns vertices in order: apex_v0 -> base_v0 -> base_v1 -> apex_v1 -> apex_v0 (closed loop)
+        """
+        # Use configured values if parameters not provided
+        action_params = self._action_params
+        cur_pos = self._cur_pos
+        robot_direction = self._robot_direction
+
+        if action_params is None or cur_pos is None or robot_direction is None:
+            raise ValueError("action_params, cur_pos, and robot_direction must be configured or provided")
+
+        depth, radius = action_params[0], action_params[1]
+
+        # The visualization does NOT use inflated geometry, use original rectangle
+        # (Inflation is only for costmap marking, not visual marker)
+        rect_center = [
+            cur_pos[0] + depth * robot_direction[0],
+            cur_pos[1] + depth * robot_direction[1]
+        ]
+
+        # Original base vertices
+        base_vertices = []
+        for i in range(2):
+            x = rect_center[0] + radius * robot_direction[1] * math.cos(i * math.pi)
+            y = rect_center[1] - radius * robot_direction[0] * math.cos(i * math.pi)
+            base_vertices.append([x, y])
+
+        # robot vertices (pushed backward)
+        robot_vertices = []
+        for i in range(2):
+            x = cur_pos[0] + radius * robot_direction[1] * math.cos(i * math.pi)
+            y = cur_pos[1] - radius * robot_direction[0] * math.cos(i * math.pi)
+            robot_vertices.append([x, y])
+
+        # Return closed polygon: apex -> base_v0 -> base_v1 -> apex
+        polygon = [
+            robot_vertices[0],
+            base_vertices[0],
+            base_vertices[1],
+            robot_vertices[1],
+            robot_vertices[0]  # Close the loop
+        ]
+
+        return polygon
+
+
 class IntentionDomainFactory:
     """
     Factory for creating intention domain instances.
@@ -553,7 +674,7 @@ class IntentionDomainFactory:
     _registry: Dict[str, type] = {
         'cone': ConeIntentionDomain,
         # Future shapes can be registered here:
-        # 'rectangle': RectangleIntentionDomain,
+        'rectangle': RectangleIntentionDomain,
         # 'ellipse': EllipseIntentionDomain,
     }
 

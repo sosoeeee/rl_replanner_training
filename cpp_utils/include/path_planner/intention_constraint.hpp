@@ -106,15 +106,36 @@ public:
 
   bool isRestrictedArea(float x, float y) const override;
 
-private:
-  // Cached inflated trapezoid vertices
+protected:
+  // Cached inflated polygon vertices
   struct Vertex {
     float x;
     float y;
   };
 
-  std::vector<Vertex> trapezoid_vertices_;  // [apex_v0, base_v0, base_v1, apex_v1]
+  std::vector<Vertex> polygon_vertices_;  // [apex_v0, base_v0, base_v1, apex_v1]
   bool parameters_initialized_ = false;
+};
+
+/**
+ * @brief Rectangle intention constraint implementation. Friend class of ConeIntentionConstraint for code reuse.
+ * 
+ * Parameters:
+ *   params[0] = depth: distance from robot to rectangle center
+ *   params[1] = radius: half-width of rectangle (perpendicular to robot direction)
+ *
+ */
+class RectangleIntentionConstraint : public ConeIntentionConstraint
+{
+public:
+  RectangleIntentionConstraint() = default;
+  ~RectangleIntentionConstraint() override = default;
+
+  void updateParameters(
+    const std::vector<float> & cur_pos,
+    const std::vector<float> & robot_direction,
+    const std::vector<float> & params,
+    float inflated_distance) override;
 };
 
 /**
