@@ -181,7 +181,8 @@ class ConeIntentionDomain(BaseIntentionDomain):
         """
         return {
             'depth': [1e-3, np.sqrt(2) / 2],    # Max depth ~0.707 * obser_width
-            'radius': [1e-3, np.sqrt(2) / 2]    # Max radius ~0.707 * obser_width
+            'radius': [1e-3, np.sqrt(2) / 2],    # Max radius ~0.707 * obser_width
+            'side': [-1, 1]                      # Side selection parameter
         }
 
     def get_predicted_goal(
@@ -215,7 +216,7 @@ class ConeIntentionDomain(BaseIntentionDomain):
         if action_params is None or cur_pos is None or robot_direction is None:
             raise ValueError("action_params, cur_pos, and robot_direction must be configured or provided")
 
-        depth, radius = action_params[0], action_params[1]
+        depth, radius, side = action_params[0], action_params[1], action_params[2]
 
         # Compute cone center
         cone_center = [
@@ -241,37 +242,49 @@ class ConeIntentionDomain(BaseIntentionDomain):
                   ((v1['y'] - v0['y']) * (v1['y'] - v0['y']) + (v1['x'] - v0['x']) * (v1['x'] - v0['x']))
         inter_y = (v0['x'] - v1['x']) / (v1['y'] - v0['y']) * (inter_x - global_x) + global_y
 
-        # Determine which point on base edge is closest to global goal
-        vector_0 = np.array([global_x - v0['x'], global_y - v0['y']])
-        module_0 = vector_0.dot(vector_0) ** 0.5
-        vector_1 = np.array([global_x - v1['x'], global_y - v1['y']])
-        module_1 = vector_1.dot(vector_1) ** 0.5
-
         # Base edge direction (perpendicular to robot direction)
         base_direction = np.array([robot_direction[1], -robot_direction[0]])
-        cos_0 = vector_0.dot(base_direction) / module_0 if module_0 > 0 else 0
-        cos_1 = vector_1.dot(base_direction) / module_1 if module_1 > 0 else 0
-
         cone_center_dict = {'x': cone_center[0], 'y': cone_center[1]}
 
         try:
-            if cos_0 * cos_1 > 0:
-                # Unilateral case: global goal projects outside base edge
-                if abs(cos_0) < abs(cos_1):
-                    # Vertex 0 is closer to global goal
-                    pred_position = self._avoid_obstacles_from_center(
-                        cone_center_dict, v0, radius, collision_checker, map_resolution
-                    )
+            if side > 0: # close to global
+                # Determine which point on base edge is closest to global goal
+                vector_0 = np.array([global_x - v0['x'], global_y - v0['y']])
+                module_0 = vector_0.dot(vector_0) ** 0.5
+                vector_1 = np.array([global_x - v1['x'], global_y - v1['y']])
+                module_1 = vector_1.dot(vector_1) ** 0.5
+                
+                cos_0 = vector_0.dot(base_direction) / module_0 if module_0 > 0 else 0
+                cos_1 = vector_1.dot(base_direction) / module_1 if module_1 > 0 else 0
+                if cos_0 * cos_1 > 0:
+                    # Unilateral case: global goal projects outside base edge
+                    if abs(cos_0) < abs(cos_1):
+                        # Vertex 0 is closer to global goal
+                        pred_position = self._avoid_obstacles_from_center(
+                            cone_center_dict, v0, radius, collision_checker, map_resolution
+                        )
+                    else:
+                        # Vertex 1 is closer to global goal
+                        pred_position = self._avoid_obstacles_from_center(
+                            cone_center_dict, v1, radius, collision_checker, map_resolution
+                        )
                 else:
-                    # Vertex 1 is closer to global goal
+                    # Bilateral case: global goal projects within base edge
+                    pred_position = self._avoid_obstacles_from_center(
+                        cone_center_dict, {'x': inter_x, 'y': inter_y}, radius, collision_checker, map_resolution
+                    )
+            else: # away from global
+                center_to_inter = np.array([inter_x - cone_center[0], inter_y - cone_center[1]])
+                if center_to_inter.dot(base_direction) > 0:
+                    # Inter point is on the side of vertex 0, away side is towards vertex 1
                     pred_position = self._avoid_obstacles_from_center(
                         cone_center_dict, v1, radius, collision_checker, map_resolution
                     )
-            else:
-                # Bilateral case: global goal projects within base edge
-                pred_position = self._avoid_obstacles_from_center(
-                    cone_center_dict, {'x': inter_x, 'y': inter_y}, radius, collision_checker, map_resolution
-                )
+                else:
+                    # Inter point is on the side of vertex 1, away side is towards vertex 0
+                    pred_position = self._avoid_obstacles_from_center(
+                        cone_center_dict, v0, radius, collision_checker, map_resolution
+                    )
         except Exception as e:
             # Failed to compute predicted goal
             return None
