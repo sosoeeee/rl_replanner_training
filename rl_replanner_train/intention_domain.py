@@ -601,8 +601,8 @@ class RectangleIntentionDomain(ConeIntentionDomain):
         inflated_robot_y = cur_pos[1] - robot_direction[1] * inflated_distance
         self._inflated_robot_vertices = []
         for i in range(2):
-            x = inflated_robot_x + inflated_distance * robot_direction[1] * math.cos(i * math.pi)
-            y = inflated_robot_y - inflated_distance * robot_direction[0] * math.cos(i * math.pi)
+            x = inflated_robot_x + inflated_radius * robot_direction[1] * math.cos(i * math.pi)
+            y = inflated_robot_y - inflated_radius * robot_direction[0] * math.cos(i * math.pi)
             self._inflated_robot_vertices.append({'x': x, 'y': y})
 
         # Compute axis-aligned bounding box from all 4 vertices

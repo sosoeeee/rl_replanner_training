@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import sys
 import os
+import time
 
 # Add the workspace path to the PYTHONPATH
 workspace_path = os.path.join(os.path.dirname(__file__) + "/../..")
@@ -44,6 +45,7 @@ env = TrainEnv(
     robot_prediction_length=robot_prediction_length,
     speed_buffer_length=speed_buffer_length,
     use_generator=True,  # Set to True if you want to use the generator
+    intention_domain_type="rectangle",  # Options: "cone", "ellipse", "rectangle"
 )
 
 obs, info = env.reset()
@@ -59,9 +61,9 @@ while True:
 
     # print('Action:', action)
     # action = {
-    #     'id': 0,
+    #     'id': 1,
     #     'params0': [],
-    #     'params1': [0.0, 0.0],
+    #     'params1': [0.1, 0.2, -0.5],
     # }
     # print('Action:', action)
 
@@ -73,6 +75,8 @@ while True:
     # print('Reward:', reward)W
     # print('Done:', terminated)
     # print('Info:', info)
+
+    time.sleep(0.5)  # Sleep for a short time to slow down the loop for better visualization
 
     if terminated:
         print("Episode finished after {} timesteps".format(step + 1))

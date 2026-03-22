@@ -170,6 +170,7 @@ protected:
   // Intention domain constraint (generic, supports multiple shapes)
   bool enabled_;
   std::unique_ptr<intention_constraint::BaseIntentionConstraint> constraint_;
+  std::string intention_domain_type_;
 
   // Cached constraint parameters for rendering
   std::vector<float> cur_pos_;

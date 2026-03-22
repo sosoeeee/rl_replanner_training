@@ -47,6 +47,7 @@ NavfnPlannerWithCone::configure(nav2_costmap_2d::Costmap2D * costmap, const std:
   use_astar_ = nav2_map_server::yaml_get_value<bool>(doc, "use_astar");
   allow_unknown_ = nav2_map_server::yaml_get_value<bool>(doc, "allow_unknown");
   inflated_distance_ = nav2_map_server::yaml_get_value<double>(doc, "inflated_distance");
+  intention_domain_type_ = nav2_map_server::yaml_get_value<std::string>(doc, "intention_domain_type");
   // use_final_approach_orientation_ = nav2_map_server::yaml_get_value<bool>(doc, "use_final_approach_orientation");
 
   // Create a planner based on the new costmap size
@@ -55,7 +56,7 @@ NavfnPlannerWithCone::configure(nav2_costmap_2d::Costmap2D * costmap, const std:
     costmap_->getSizeInCellsY());
 
   // Initialize intention domain constraint (default: cone shape)
-  constraint_ = intention_constraint::ConstraintFactory::create("cone");
+  constraint_ = intention_constraint::ConstraintFactory::create(intention_domain_type_);
 }
 
 std::vector<Point> NavfnPlannerWithCone::createPlan(
