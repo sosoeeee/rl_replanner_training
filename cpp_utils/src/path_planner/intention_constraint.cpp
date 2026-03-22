@@ -217,11 +217,24 @@ void EllipseIntentionConstraint::updateParameters(
   float a = params[0] / 2.0f;  // Semi-major axis (half of depth)
   float b = params[1];
 
+  _a = a;
   _inflated_a = a + inflated_distance;  // Semi-major axis (along robot direction)
   _inflated_b = b + inflated_distance; // Semi-minor axis (perpendicular to robot direction)
 
   _cur_pos = cur_pos;
-  _cur_pos2center = std::vector<float>{a * robot_direction[0], a * robot_direction[1]};
+  _robot_direction = robot_direction;
+}
+
+std::vector<float> EllipseIntentionConstraint::transformWorldToLocal(const std::vector<float> & world_point) const
+{
+  // Transform point to ellipse-centered frame
+  float dx = world_point[0] - _cur_pos[0];
+  float dy = world_point[1] - _cur_pos[1];
+
+  float local_x = dx * _robot_direction[0] + dy * _robot_direction[1];
+  float local_y = -dx * _robot_direction[1] + dy * _robot_direction[0];
+
+  return {local_x, local_y};
 }
 
 bool EllipseIntentionConstraint::isRestrictedArea(float x, float y) const
@@ -230,9 +243,9 @@ bool EllipseIntentionConstraint::isRestrictedArea(float x, float y) const
     return false;  // If not initialized, no restricted area
   }
 
-  // Transform point to ellipse-centered frame
-  float dx = x - (_cur_pos[0] + _cur_pos2center[0]);
-  float dy = y - (_cur_pos[1] + _cur_pos2center[1]);
+  std::vector<float> local_point = transformWorldToLocal({x, y});
+  float dx = local_point[0] - _a;  
+  float dy = local_point[1]; 
   // Check if point is inside ellipse using the standard equation (x/a)^2 + (y/b)^2 <= 1
   float value = (dx * dx) / (_inflated_a * _inflated_a) + (dy * dy) / (_inflated_b * _inflated_b);
   return value <= 1.0f;  // Inside or on boundary of ellipse

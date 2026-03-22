@@ -63,7 +63,7 @@ while True:
     # action = {
     #     'id': 1,
     #     'params0': [],
-    #     'params1': [0.1, 0.2, -0.5],
+    #     'params1': [0.1, 0.2, 0.5],
     # }
     # print('Action:', action)
 
@@ -76,7 +76,7 @@ while True:
     # print('Done:', terminated)
     # print('Info:', info)
 
-    time.sleep(0.5)  # Sleep for a short time to slow down the loop for better visualization
+    time.sleep(2.0)  # Sleep for a short time to slow down the loop for better visualization
 
     if terminated:
         print("Episode finished after {} timesteps".format(step + 1))

@@ -160,14 +160,17 @@ public:
 
   bool isRestrictedArea(float x, float y) const override;
 
+  std::vector<float> transformWorldToLocal(const std::vector<float> & world_point) const;
+
 private:
   // Additional members for ellipse-specific geometry can be added here
   float _inflated_a;  // Semi-major axis after inflation
   float _inflated_b;  // Semi-minor axis after inflation
+  float _a; 
 
   // frame transformation utilities can be added here if needed
   std::vector<float> _cur_pos;
-  std::vector<float> _cur_pos2center;
+  std::vector<float> _robot_direction;
 };
 
 /**

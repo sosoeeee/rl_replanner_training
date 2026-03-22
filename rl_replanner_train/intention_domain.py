@@ -692,6 +692,60 @@ class EllipseIntentionDomain(RectangleIntentionDomain):
         super().configure(action_params, cur_pos, robot_direction)
         self._inflated_a: Optional[float] = None
         self._inflated_b: Optional[float] = None
+    
+    def transform_to_global(self, local_point: np.ndarray) -> np.ndarray:
+        """
+        Transform a point from local frame to global frame.
+
+        Local frame:
+        - Origin at cur_pos
+        - x-axis along robot_direction
+        - y-axis perpendicular to robot_direction
+
+        Args:
+            local_point: [x, y] coordinates in local frame
+
+        Returns:
+            [x, y] coordinates in global frame
+        """
+        if self._cur_pos is None or self._robot_direction is None:
+            raise ValueError("cur_pos and robot_direction must be configured or provided")
+
+        # Local to global transformation
+        dx = local_point[0] * self._robot_direction[0] - local_point[1] * self._robot_direction[1]
+        dy = local_point[0] * self._robot_direction[1] + local_point[1] * self._robot_direction[0]
+
+        global_x = self._cur_pos[0] + dx
+        global_y = self._cur_pos[1] + dy
+
+        return np.array([global_x, global_y])
+    
+    def transform_to_local(self, global_point: np.ndarray) -> np.ndarray:
+        """
+        Transform a point from global frame to local frame.
+
+        Local frame:
+        - Origin at cur_pos
+        - x-axis along robot_direction
+        - y-axis perpendicular to robot_direction
+
+        Args:
+            global_point: [x, y] coordinates in global frame
+
+        Returns:
+            [x, y] coordinates in local frame
+        """
+        if self._cur_pos is None or self._robot_direction is None:
+            raise ValueError("cur_pos and robot_direction must be configured or provided")
+
+        # Global to local transformation
+        dx = global_point[0] - self._cur_pos[0]
+        dy = global_point[1] - self._cur_pos[1]
+
+        local_x = dx * self._robot_direction[0] + dy * self._robot_direction[1]
+        local_y = -dx * self._robot_direction[1] + dy * self._robot_direction[0]
+
+        return np.array([local_x, local_y])
 
     def get_predicted_goal(
         self,
@@ -728,10 +782,12 @@ class EllipseIntentionDomain(RectangleIntentionDomain):
 
         robot_to_goal = np.array([global_goal[0] - cur_pos[0], global_goal[1] - cur_pos[1]])
 
+        robot_to_goal_local = self.transform_to_local(robot_to_goal)
+
         # find the point on the ellipse that is closest / farthest to the global goal
         # use parametric form of the ellipse and solve for t that minimizes distance to global goal
-        num_tan_points = (np.pi / 2) / (map_resolution / b)
-        if robot_to_goal[1] > 0:
+        num_tan_points = int((np.pi / 2) / (map_resolution / b))
+        if robot_to_goal_local[1] > 0:
             if side > 0:
                 t_range = np.linspace(0, np.pi / 2, num=num_tan_points)
             else:
@@ -744,9 +800,10 @@ class EllipseIntentionDomain(RectangleIntentionDomain):
 
         found_subgoal = None
         dis_min = np.inf
+        get_in_free = False
         for t in t_range:
-            ellipse_point = np.array([a * math.cos(t), b * math.sin(t)])
-            world_point = cur_pos + robot_direction * action_params[0] / 2 + ellipse_point
+            ellipse_point = np.array([a * math.cos(t) + a, b * math.sin(t)])
+            world_point = self.transform_to_global(ellipse_point)
             # skip points that are in collision
             if collision_checker(world_point):
                 if not get_in_free:
@@ -764,8 +821,8 @@ class EllipseIntentionDomain(RectangleIntentionDomain):
         if found_subgoal is None:
             t_range_opposite = -t_range
             for t in t_range_opposite:
-                ellipse_point = np.array([a * math.cos(t), b * math.sin(t)])
-                world_point = cur_pos + robot_direction * action_params[0] / 2 + ellipse_point
+                ellipse_point = np.array([a * math.cos(t) + a, b * math.sin(t)])
+                world_point = self.transform_to_global(ellipse_point)
                 if collision_checker(world_point):
                     continue
                 
@@ -789,6 +846,11 @@ class EllipseIntentionDomain(RectangleIntentionDomain):
         2. Check if point is within trapezoid formed by inflated ellipse edges
         3. Use cross product to test half-plane containment
         """
+        action_params = self._action_params
+        if action_params is None:
+            raise ValueError("action_params must be configured or provided")
+        a = action_params[0] / 2
+
         # approximate the Parallel Curve of the ellipse by inflating the a and b parameters
         if self._inflated_a is None or self._inflated_b is None:
             self._inflated_a = np.sqrt((self._inflated_robot_vertices[0]['x'] - self._inflated_base_vertices[0]['x']) ** 2 + (self._inflated_robot_vertices[0]['y'] - self._inflated_base_vertices[0]['y']) ** 2) / 2
@@ -796,18 +858,11 @@ class EllipseIntentionDomain(RectangleIntentionDomain):
 
         # Transform point to local frame
         world_point = np.array([wx, wy])
-        action_params = self._action_params
-        cur_pos = self._cur_pos
-        robot_direction = self._robot_direction
-
-        if action_params is None or cur_pos is None or robot_direction is None:
-            raise ValueError("action_params, cur_pos, and robot_direction must be configured or provided")
-        
-        local_point = world_point - cur_pos - robot_direction * action_params[0] / 2
+        local_point = self.transform_to_local(world_point)
 
         # Check if point is inside ellipse using the standard equation (x/a)^2 + (y/b)^2 <= 1
         x, y = local_point[0], local_point[1]
-        if (x / self._inflated_a) ** 2 + (y / self._inflated_b) ** 2 <= 1:
+        if ((x - a) / self._inflated_a) ** 2 + (y / self._inflated_b) ** 2 <= 1:
             return True
         else:
             return False
@@ -832,8 +887,8 @@ class EllipseIntentionDomain(RectangleIntentionDomain):
         t_range = np.linspace(0, 2 * np.pi, num=36)  # 36 points around the ellipse
         polygon = []
         for t in t_range:
-            ellipse_point = np.array([a * math.cos(t), b * math.sin(t)])
-            world_point = cur_pos + robot_direction * action_params[0] / 2 + ellipse_point
+            ellipse_point = np.array([a * math.cos(t) + a, b * math.sin(t)])
+            world_point = self.transform_to_global(ellipse_point)
             polygon.append(world_point.tolist())
         polygon.append(polygon[0])  # Close the loop
 
