@@ -201,6 +201,44 @@ void RectangleIntentionConstraint::updateParameters(
 }
 
 //==============================================================================
+// EllipseIntentionConstraint Implementation
+//==============================================================================
+
+void EllipseIntentionConstraint::updateParameters(
+  const std::vector<float> & cur_pos,
+  const std::vector<float> & robot_direction,
+  const std::vector<float> & params,
+  float inflated_distance)
+{
+  // Reuse rectangle logic to compute inflated center and vertices
+  RectangleIntentionConstraint::updateParameters(cur_pos, robot_direction, params, inflated_distance);
+
+  // compute the inflated semi-major and semi-minor axes
+  float a = params[0] / 2.0f;  // Semi-major axis (half of depth)
+  float b = params[1];
+
+  _inflated_a = a + inflated_distance;  // Semi-major axis (along robot direction)
+  _inflated_b = b + inflated_distance; // Semi-minor axis (perpendicular to robot direction)
+
+  _cur_pos = cur_pos;
+  _cur_pos2center = std::vector<float>{a * robot_direction[0], a * robot_direction[1]};
+}
+
+bool EllipseIntentionConstraint::isRestrictedArea(float x, float y) const
+{
+  if (!parameters_initialized_) {
+    return false;  // If not initialized, no restricted area
+  }
+
+  // Transform point to ellipse-centered frame
+  float dx = x - (_cur_pos[0] + _cur_pos2center[0]);
+  float dy = y - (_cur_pos[1] + _cur_pos2center[1]);
+  // Check if point is inside ellipse using the standard equation (x/a)^2 + (y/b)^2 <= 1
+  float value = (dx * dx) / (_inflated_a * _inflated_a) + (dy * dy) / (_inflated_b * _inflated_b);
+  return value <= 1.0f;  // Inside or on boundary of ellipse
+}
+
+//==============================================================================
 // ConstraintFactory Implementation
 //==============================================================================
 
@@ -214,13 +252,13 @@ std::unique_ptr<BaseIntentionConstraint> ConstraintFactory::create(
   else if (constraint_type == "rectangle") {
     return std::make_unique<RectangleIntentionConstraint>();
   }
-  // else if (constraint_type == "ellipse") {
-  //   return std::make_unique<EllipseIntentionConstraint>();
-  // }
+  else if (constraint_type == "ellipse") {
+    return std::make_unique<EllipseIntentionConstraint>();
+  }
   else {
     throw std::invalid_argument(
       "[ConstraintFactory] Unknown constraint type: " + constraint_type +
-      ". Available types: cone");
+      ". Available types: cone, rectangle, ellipse");
   }
 }
 

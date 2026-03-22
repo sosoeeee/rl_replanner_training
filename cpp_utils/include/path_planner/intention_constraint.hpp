@@ -118,7 +118,7 @@ protected:
 };
 
 /**
- * @brief Rectangle intention constraint implementation. Friend class of ConeIntentionConstraint for code reuse.
+ * @brief Rectangle intention constraint implementation.
  * 
  * Parameters:
  *   params[0] = depth: distance from robot to rectangle center
@@ -136,6 +136,38 @@ public:
     const std::vector<float> & robot_direction,
     const std::vector<float> & params,
     float inflated_distance) override;
+};
+
+/**
+ * @brief Ellipse intention constraint implementation.
+ * 
+ * Parameters:
+ *   params[0] = depth: distance from robot to ellipse center
+ *   params[1] = radius: half-width of ellipse (perpendicular to robot direction)
+ *
+ */
+class EllipseIntentionConstraint : public RectangleIntentionConstraint
+{
+public:
+  EllipseIntentionConstraint() = default;
+  ~EllipseIntentionConstraint() override = default;
+  
+  void updateParameters(
+    const std::vector<float> & cur_pos,
+    const std::vector<float> & robot_direction,
+    const std::vector<float> & params,
+    float inflated_distance) override;
+
+  bool isRestrictedArea(float x, float y) const override;
+
+private:
+  // Additional members for ellipse-specific geometry can be added here
+  float _inflated_a;  // Semi-major axis after inflation
+  float _inflated_b;  // Semi-minor axis after inflation
+
+  // frame transformation utilities can be added here if needed
+  std::vector<float> _cur_pos;
+  std::vector<float> _cur_pos2center;
 };
 
 /**

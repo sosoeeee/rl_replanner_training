@@ -661,6 +661,183 @@ class RectangleIntentionDomain(ConeIntentionDomain):
 
         return polygon
 
+class EllipseIntentionDomain(RectangleIntentionDomain):
+    """
+    Closed ellipse intention domain implementation.
+
+    Parameters:
+        - depth: Distance from robot to ellipse base center (forward projection)
+        - radius: Half-width of the ellipse base
+
+    Geometry:
+        Robot position (cur_pos) -> depth along robot_direction -> ellipse center
+        Ellipse base is perpendicular to robot_direction with width 2*radius
+    """
+
+    def __init__(self):
+        """Initialize the cone intention domain."""
+        super().__init__()
+        self._inflated_a: Optional[float] = None
+        self._inflated_b: Optional[float] = None
+
+    def configure(self, action_params, cur_pos, robot_direction):
+        """
+        Configure the cone intention domain with parameters.
+
+        Args:
+            action_params: [depth, radius] for the cone
+            cur_pos: Current robot position [x, y]
+            robot_direction: Normalized direction vector [dx, dy]
+        """
+        super().configure(action_params, cur_pos, robot_direction)
+        self._inflated_a: Optional[float] = None
+        self._inflated_b: Optional[float] = None
+
+    def get_predicted_goal(
+        self,
+        global_goal: Optional[List[float]] = None,
+        collision_checker: Optional[Callable[[List[float]], bool]] = None,
+        map_resolution: Optional[float] = None
+    ) -> Optional[Tuple[List[float], Dict]]:
+        """
+        Compute predicted goal within ellipse domain.
+
+        Args:
+            global_goal: Global goal position [x, y]
+            collision_checker: Function to check if a point is in collision
+            map_resolution: Grid resolution for obstacle avoidance ray casting
+
+        Algorithm:
+        1. Compute ellipse center and base vertices
+        2. Project global goal onto ellipse base edge (perpendicular drop)
+        3. Select closest point to global goal on base edge
+        4. Avoid obstacles from ellipse center toward selected point
+
+        Returns:
+            Tuple of ([pred_x, pred_y], {'ellipse_center': [x, y]}) or None if failed
+        """
+        # Use configured values if parameters not provided
+        action_params = self._action_params
+        cur_pos = self._cur_pos
+        robot_direction = self._robot_direction
+
+        if action_params is None or cur_pos is None or robot_direction is None:
+            raise ValueError("action_params, cur_pos, and robot_direction must be configured or provided")
+
+        a, b, side = action_params[0] / 2, action_params[1], action_params[2]
+
+        robot_to_goal = np.array([global_goal[0] - cur_pos[0], global_goal[1] - cur_pos[1]])
+
+        # find the point on the ellipse that is closest / farthest to the global goal
+        # use parametric form of the ellipse and solve for t that minimizes distance to global goal
+        num_tan_points = (np.pi / 2) / (map_resolution / b)
+        if robot_to_goal[1] > 0:
+            if side > 0:
+                t_range = np.linspace(0, np.pi / 2, num=num_tan_points)
+            else:
+                t_range = np.linspace(0, -np.pi / 2, num=num_tan_points)
+        else:
+            if side > 0:
+                t_range = np.linspace(0, -np.pi / 2, num=num_tan_points)
+            else:   
+                t_range = np.linspace(0, np.pi / 2, num=num_tan_points)
+
+        found_subgoal = None
+        dis_min = np.inf
+        for t in t_range:
+            ellipse_point = np.array([a * math.cos(t), b * math.sin(t)])
+            world_point = cur_pos + robot_direction * action_params[0] / 2 + ellipse_point
+            # skip points that are in collision
+            if collision_checker(world_point):
+                if not get_in_free:
+                    continue
+                else:
+                    break
+            get_in_free = True
+
+            dist = np.linalg.norm(world_point - global_goal)
+            if dist < dis_min:
+                dis_min = dist
+                found_subgoal = world_point
+        
+        # search opposite direction if all points are in collision
+        if found_subgoal is None:
+            t_range_opposite = -t_range
+            for t in t_range_opposite:
+                ellipse_point = np.array([a * math.cos(t), b * math.sin(t)])
+                world_point = cur_pos + robot_direction * action_params[0] / 2 + ellipse_point
+                if collision_checker(world_point):
+                    continue
+                
+                # the first point that is in free space in the opposite direction is selected as the subgoal
+                found_subgoal = world_point
+            
+        return (found_subgoal.tolist(), None) if found_subgoal is not None else None
+
+    def is_restricted_area(
+        self,
+        wx: float,
+        wy: float,
+    ) -> bool:
+        """
+        Check if point (wx, wy) is inside or on the inflated ellipse boundary.
+
+        Uses local coordinate transformation and cross product for half-plane tests.
+
+        Algorithm:
+        1. Transform to local frame with origin at cur_pos, x-axis along robot_direction
+        2. Check if point is within trapezoid formed by inflated ellipse edges
+        3. Use cross product to test half-plane containment
+        """
+        # approximate the Parallel Curve of the ellipse by inflating the a and b parameters
+        if self._inflated_a is None or self._inflated_b is None:
+            self._inflated_a = np.sqrt((self._inflated_robot_vertices[0]['x'] - self._inflated_base_vertices[0]['x']) ** 2 + (self._inflated_robot_vertices[0]['y'] - self._inflated_base_vertices[0]['y']) ** 2) / 2
+            self._inflated_b = np.sqrt((self._inflated_robot_vertices[0]['x'] - self._inflated_robot_vertices[1]['x']) ** 2 + (self._inflated_robot_vertices[0]['y'] - self._inflated_robot_vertices[1]['y']) ** 2) / 2
+
+        # Transform point to local frame
+        world_point = np.array([wx, wy])
+        action_params = self._action_params
+        cur_pos = self._cur_pos
+        robot_direction = self._robot_direction
+
+        if action_params is None or cur_pos is None or robot_direction is None:
+            raise ValueError("action_params, cur_pos, and robot_direction must be configured or provided")
+        
+        local_point = world_point - cur_pos - robot_direction * action_params[0] / 2
+
+        # Check if point is inside ellipse using the standard equation (x/a)^2 + (y/b)^2 <= 1
+        x, y = local_point[0], local_point[1]
+        if (x / self._inflated_a) ** 2 + (y / self._inflated_b) ** 2 <= 1:
+            return True
+        else:
+            return False
+
+    def get_visualization_polygon(
+        self,
+    ) -> List[List[float]]:
+        """
+        Get inflated ellipse vertices for LINE_STRIP visualization.
+        Returns vertices in order
+        """
+        # Use configured values if parameters not provided
+        action_params = self._action_params
+        cur_pos = self._cur_pos
+        robot_direction = self._robot_direction
+
+        if action_params is None or cur_pos is None or robot_direction is None:
+            raise ValueError("action_params, cur_pos, and robot_direction must be configured or provided")
+
+        a, b = action_params[0] / 2, action_params[1]
+
+        t_range = np.linspace(0, 2 * np.pi, num=36)  # 36 points around the ellipse
+        polygon = []
+        for t in t_range:
+            ellipse_point = np.array([a * math.cos(t), b * math.sin(t)])
+            world_point = cur_pos + robot_direction * action_params[0] / 2 + ellipse_point
+            polygon.append(world_point.tolist())
+        polygon.append(polygon[0])  # Close the loop
+
+        return polygon
 
 class IntentionDomainFactory:
     """
@@ -668,14 +845,13 @@ class IntentionDomainFactory:
 
     Usage:
         domain = IntentionDomainFactory.create('cone')
-        domain = IntentionDomainFactory.create('rectangle', aspect_ratio=2.0)
     """
 
     _registry: Dict[str, type] = {
         'cone': ConeIntentionDomain,
         # Future shapes can be registered here:
         'rectangle': RectangleIntentionDomain,
-        # 'ellipse': EllipseIntentionDomain,
+        'ellipse': EllipseIntentionDomain,
     }
 
     @staticmethod

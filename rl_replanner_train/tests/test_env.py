@@ -45,7 +45,7 @@ env = TrainEnv(
     robot_prediction_length=robot_prediction_length,
     speed_buffer_length=speed_buffer_length,
     use_generator=True,  # Set to True if you want to use the generator
-    intention_domain_type="rectangle",  # Options: "cone", "ellipse", "rectangle"
+    intention_domain_type="ellipse",  # Options: "cone", "ellipse", "rectangle"
 )
 
 obs, info = env.reset()
