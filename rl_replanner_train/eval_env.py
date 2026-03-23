@@ -108,8 +108,8 @@ class EvalEnv(BaseEnv):
             # evaluate in order
             self.traj_index = (self.traj_index + 1) % len(self.replay_trajectories)
         else:
-            # Reset the trajectory index
-            self.traj_index = np.random.randint(0, len(self.replay_trajectories))
+            # Reset the trajectory index using gymnasium's random number generator
+            self.traj_index = self.np_random.integers(0, len(self.replay_trajectories))
 
         # Use pre-loaded trajectory data instead of reading from file
         self.current_human_traj = self.replay_trajectories[self.traj_index]

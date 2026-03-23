@@ -50,6 +50,14 @@ void TrajGenerator::initialize(const std::string &map_file, const std::string &p
 
     // initialize the teb planner
     // planner_ = std::make_unique<TebOptimalPlanner>(cfg_, obstacles_.get(), &via_points_);
+
+    // Initialize random number generator with a default seed
+    gen_.seed(0);
+}
+
+void TrajGenerator::setSeed(unsigned int seed)
+{
+    gen_.seed(seed);
 }
 
 // void TrajGenerator::getNearestNode(Point p, int &node_id)
@@ -188,8 +196,6 @@ void TrajGenerator::updateViaPoints()
     // sample via points from the corridor
     via_points_.clear();
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
     double px, py;
     double dist;
 
@@ -206,20 +212,20 @@ void TrajGenerator::updateViaPoints()
         // }
         // sample via points in the circle
         std::normal_distribution<double> dist_x(circle.x, circle.radius / sigma_factor);
-        px = dist_x(gen);
+        px = dist_x(gen_);
         std::normal_distribution<double> dist_y(circle.y, circle.radius / sigma_factor);
-        py = dist_y(gen);
+        py = dist_y(gen_);
 
         // check if the Point is in the circle
         dist = sqrt(pow(px - circle.x, 2) + pow(py - circle.y, 2));
         while (dist >= circle.radius) {
             // resample the Point
-            px = dist_x(gen);
-            py = dist_y(gen);
+            px = dist_x(gen_);
+            py = dist_y(gen_);
             dist = sqrt(pow(px - circle.x, 2) + pow(py - circle.y, 2));
         }
         via_points_.push_back(Eigen::Vector2d(px, py));
-    }   
+    }
 
     // LOGGER_INFO("teb_local_planner", "After sampling, number of via points: %d", via_points_.size());
 }

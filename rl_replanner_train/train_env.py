@@ -80,13 +80,17 @@ class TrainEnv(BaseEnv):
 
     def _reset_human_traj(self, seed=None, options=None):
         # load human trajectory
-        traj_file = np.random.choice(self.replay_traj_files)
+        traj_file = self.np_random.choice(self.replay_traj_files)
         self.current_human_traj = np.loadtxt(traj_file)
 
         self.global_goal = [self.current_human_traj[-1][0], self.current_human_traj[-1][1]]
 
         # TODO: generate a human trajectory. Its start and end point are the same as the trajectory loaded from the file
         if self.use_generator:
+            # Set random seed for C++ trajectory generator to ensure reproducibility
+            seed_for_cpp = self.np_random.integers(0, 2**31-1)
+            self.traj_generator.setSeed(seed_for_cpp)
+
             start_point = cpp_utils.Point(self.current_human_traj[0][0], self.current_human_traj[0][1])
             end_point = cpp_utils.Point(self.current_human_traj[-1][0], self.current_human_traj[-1][1])
 
