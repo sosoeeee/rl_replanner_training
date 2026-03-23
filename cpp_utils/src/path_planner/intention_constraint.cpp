@@ -255,8 +255,12 @@ bool EllipseIntentionConstraint::isRestrictedArea(float x, float y) const
 void CorridorIntentionConstraint::calculateTrajectory(const std::vector<float> & params, float resolution)
 {
   float S = params[0];
-  float w0 = params[2];
-  float v0 = params[3];  // Get v0 from params (4th parameter)
+  // BiToUni
+  float w0 = 0.0;
+  float v0 = params[2];
+
+  // float w0 = params[2];
+  // float v0 = params[3];  // Get v0 from params (4th parameter)
 
   if (v0 <= 0.0f || resolution <= 0.0f) {
     throw std::runtime_error(

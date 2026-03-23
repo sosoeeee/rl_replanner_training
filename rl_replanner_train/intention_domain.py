@@ -288,7 +288,8 @@ class ConeIntentionDomain(BaseIntentionDomain):
         return {
             'depth': [1e-3, np.sqrt(2) / 2],    # Max depth ~0.707 * obser_width
             'radius': [1e-3, np.sqrt(2) / 2],    # Max radius ~0.707 * obser_width
-            'side': [-1, 1]                      # Side selection parameter
+            # BiToUni
+            # 'side': [-1, 1]                      # Side selection parameter
         }
     
     def rescale_params(self, normalized_params: List[float], obser_width: float) -> List[float]:
@@ -305,7 +306,9 @@ class ConeIntentionDomain(BaseIntentionDomain):
         depth = normalized_params[0] * obser_width
         radius = normalized_params[1] * obser_width
 
-        return [depth, radius, normalized_params[2]]  # side parameter is not scaled
+        # return [depth, radius, normalized_params[2]]  # side parameter is not scaled 
+        # BiToUni  
+        return [depth, radius]  # side parameter is not scaled
 
     def get_predicted_goal(
         self,
@@ -338,7 +341,9 @@ class ConeIntentionDomain(BaseIntentionDomain):
         if action_params is None or cur_pos is None or robot_direction is None:
             raise ValueError("action_params, cur_pos, and robot_direction must be configured or provided")
 
-        depth, radius, side = action_params[0], action_params[1], action_params[2]
+        # depth, radius, side = action_params[0], action_params[1], action_params[2]
+        # BiToUni
+        depth, radius = action_params[0], action_params[1]
 
         # Compute cone center
         cone_center = [
@@ -369,44 +374,45 @@ class ConeIntentionDomain(BaseIntentionDomain):
         cone_center_dict = {'x': cone_center[0], 'y': cone_center[1]}
 
         try:
-            if side > 0: # close to global
-                # Determine which point on base edge is closest to global goal
-                vector_0 = np.array([global_x - v0['x'], global_y - v0['y']])
-                module_0 = vector_0.dot(vector_0) ** 0.5
-                vector_1 = np.array([global_x - v1['x'], global_y - v1['y']])
-                module_1 = vector_1.dot(vector_1) ** 0.5
+            # BiToUni
+            # Determine which point on base edge is closest to global goal
+            vector_0 = np.array([global_x - v0['x'], global_y - v0['y']])
+            module_0 = vector_0.dot(vector_0) ** 0.5
+            vector_1 = np.array([global_x - v1['x'], global_y - v1['y']])
+            module_1 = vector_1.dot(vector_1) ** 0.5
 
-                cos_0 = vector_0.dot(base_direction) / module_0 if module_0 > 0 else 0
-                cos_1 = vector_1.dot(base_direction) / module_1 if module_1 > 0 else 0
-                if cos_0 * cos_1 > 0:
-                    # Unilateral case: global goal projects outside base edge
-                    if abs(cos_0) < abs(cos_1):
-                        # Vertex 0 is closer to global goal
-                        pred_position = self._avoid_obstacles_from_center(
-                            cone_center_dict, v0, radius, collision_checker, map_resolution
-                        )
-                    else:
-                        # Vertex 1 is closer to global goal
-                        pred_position = self._avoid_obstacles_from_center(
-                            cone_center_dict, v1, radius, collision_checker, map_resolution
-                        )
-                else:
-                    # Bilateral case: global goal projects within base edge
-                    pred_position = self._avoid_obstacles_from_center(
-                        cone_center_dict, {'x': inter_x, 'y': inter_y}, radius, collision_checker, map_resolution
-                    )
-            else: # away from global
-                center_to_inter = np.array([inter_x - cone_center[0], inter_y - cone_center[1]])
-                if center_to_inter.dot(base_direction) > 0:
-                    # Inter point is on the side of vertex 0, away side is towards vertex 1
-                    pred_position = self._avoid_obstacles_from_center(
-                        cone_center_dict, v1, radius, collision_checker, map_resolution
-                    )
-                else:
-                    # Inter point is on the side of vertex 1, away side is towards vertex 0
+            cos_0 = vector_0.dot(base_direction) / module_0 if module_0 > 0 else 0
+            cos_1 = vector_1.dot(base_direction) / module_1 if module_1 > 0 else 0
+            if cos_0 * cos_1 > 0:
+                # Unilateral case: global goal projects outside base edge
+                if abs(cos_0) < abs(cos_1):
+                    # Vertex 0 is closer to global goal
                     pred_position = self._avoid_obstacles_from_center(
                         cone_center_dict, v0, radius, collision_checker, map_resolution
                     )
+                else:
+                    # Vertex 1 is closer to global goal
+                    pred_position = self._avoid_obstacles_from_center(
+                        cone_center_dict, v1, radius, collision_checker, map_resolution
+                    )
+            else:
+                # Bilateral case: global goal projects within base edge
+                pred_position = self._avoid_obstacles_from_center(
+                    cone_center_dict, {'x': inter_x, 'y': inter_y}, radius, collision_checker, map_resolution
+                )
+            # if side > 0: # close to global
+            # else: # away from global
+            #     center_to_inter = np.array([inter_x - cone_center[0], inter_y - cone_center[1]])
+            #     if center_to_inter.dot(base_direction) > 0:
+            #         # Inter point is on the side of vertex 0, away side is towards vertex 1
+            #         pred_position = self._avoid_obstacles_from_center(
+            #             cone_center_dict, v1, radius, collision_checker, map_resolution
+            #         )
+            #     else:
+            #         # Inter point is on the side of vertex 1, away side is towards vertex 0
+            #         pred_position = self._avoid_obstacles_from_center(
+            #             cone_center_dict, v0, radius, collision_checker, map_resolution
+            #         )
         except Exception as e:
             # Failed to compute predicted goal
             return None
@@ -846,7 +852,9 @@ class EllipseIntentionDomain(RectangleIntentionDomain):
         if action_params is None or cur_pos is None or robot_direction is None:
             raise ValueError("action_params, cur_pos, and robot_direction must be configured or provided")
 
-        a, b, side = action_params[0] / 2, action_params[1], action_params[2]
+        # a, b, side = action_params[0] / 2, action_params[1], action_params[2]
+        # BiToUni
+        a, b = action_params[0] / 2, action_params[1]
 
         robot_to_goal = np.array([global_goal[0] - cur_pos[0], global_goal[1] - cur_pos[1]])
 
@@ -856,15 +864,19 @@ class EllipseIntentionDomain(RectangleIntentionDomain):
         # use parametric form of the ellipse and solve for t that minimizes distance to global goal
         num_tan_points = int((np.pi / 2) / (map_resolution / b))
         if robot_to_goal_local[1] > 0:
-            if side > 0:
-                t_range = np.linspace(0, np.pi / 2, num=num_tan_points)
-            else:
-                t_range = np.linspace(0, -np.pi / 2, num=num_tan_points)
+            # BiToUni
+            t_range = np.linspace(0, np.pi / 2, num=num_tan_points)
+            # if side > 0:
+            #     t_range = np.linspace(0, np.pi / 2, num=num_tan_points)
+            # else:
+            #     t_range = np.linspace(0, -np.pi / 2, num=num_tan_points)
         else:
-            if side > 0:
-                t_range = np.linspace(0, -np.pi / 2, num=num_tan_points)
-            else:   
-                t_range = np.linspace(0, np.pi / 2, num=num_tan_points)
+            # BiToUni
+            t_range = np.linspace(0, -np.pi / 2, num=num_tan_points)
+            # if side > 0:
+            #     t_range = np.linspace(0, -np.pi / 2, num=num_tan_points)
+            # else:   
+            #     t_range = np.linspace(0, np.pi / 2, num=num_tan_points)
 
         found_subgoal = None
         dis_min = np.inf
@@ -981,6 +993,7 @@ class CorridorIntentionDomain(BaseIntentionDomain):
         self._corridors = {}
         self._trajectory_length = 0
         self._map_resolution = None # saved for adaptive corridor number
+        self._norm_r = None # saved for adaptive corridor number
 
     def configure(self, action_params, cur_pos, robot_direction):
         """
@@ -995,6 +1008,7 @@ class CorridorIntentionDomain(BaseIntentionDomain):
         self._trajectory = []  # Cache trajectory for efficiency
         self._trajectory_length = 0
         self._corridors = {}
+        self._norm_r = None # saved for adaptive corridor number
 
     def get_action_space_setting(self) -> Dict[str, List[float]]:
         """
@@ -1004,8 +1018,9 @@ class CorridorIntentionDomain(BaseIntentionDomain):
         """
         return {
             'S': [1e-3, 1.0],    
-            'r': [1e-3, 0.25],                      # Side selection parameter
-            'w0': [-np.pi / 2 * self._lambda / (1 - np.exp(-self._lambda)), np.pi / 2 * self._lambda / (1 - np.exp(-self._lambda))]  # Scaled by lambda for sharper corridor
+            'r': [1e-3, 0.25],            
+            # BiToUni          
+            # 'w0': [-np.pi / 2 * self._lambda / (1 - np.exp(-self._lambda)), np.pi / 2 * self._lambda / (1 - np.exp(-self._lambda))]  # Scaled by lambda for sharper corridor
         }
 
     def rescale_params(self, normalized_params: List[float], obser_width: float) -> List[float]:
@@ -1019,8 +1034,12 @@ class CorridorIntentionDomain(BaseIntentionDomain):
             [S, r, w0, v0] where v0 is corridor-specific parameter
         """
         self._v0 = 0.5 * obser_width  # Set v0 to half of obser_width for consistent corridor length
+        self._norm_r = normalized_params[1]  # Save normalized r for adaptive corridor number
         r = normalized_params[1] * obser_width
-        return [normalized_params[0], r, normalized_params[2], self._v0]
+        # BiToUni
+        return [normalized_params[0], r, self._v0]
+
+        # return [normalized_params[0], r, normalized_params[2], self._v0]
     
     def calculate_trajectory(self, map_resolution: Optional[float] = None) -> List[List[float]]:
         """
@@ -1032,7 +1051,10 @@ class CorridorIntentionDomain(BaseIntentionDomain):
         if action_params is None:
             raise ValueError("action_params, cur_pos, and robot_direction must be configured or provided")
 
-        S, _, w0 = action_params[0], action_params[1], action_params[2]
+        # S, _, w0 = action_params[0], action_params[1], action_params[2]
+        # BiToUni
+        w0 = 0.0
+        S, _ = action_params[0], action_params[1]
 
         num_points = int(S / (map_resolution / self._v0)) + 1
         s_values = np.linspace(0, S, num=num_points)
@@ -1122,11 +1144,16 @@ class CorridorIntentionDomain(BaseIntentionDomain):
         if action_params is None:
             raise ValueError("action_params must be configured or provided")
 
-        w0 = action_params[2]
-        norm_w0 = abs(w0) / (np.pi / 2 * self._lambda / (1 - np.exp(-self._lambda)))  # Normalize w0 to [0, 1]
-        norm_w0 = min(0.999, norm_w0) # Prevent division by zero and log(0)
+        # w0 = action_params[2]
+        # norm_w0 = abs(w0) / (np.pi / 2 * self._lambda / (1 - np.exp(-self._lambda)))  # Normalize w0 to [0, 1]
+        # norm_w0 = min(0.999, norm_w0) # Prevent division by zero and log(0)
         
-        reg_reward = np.log(1 - norm_w0) / (1 - norm_w0)
+        # reg_reward = np.log(1 - norm_w0) / (1 - norm_w0)
+
+        # BiToUni
+        self._norm_r = (self._norm_r - 1e-3) / (0.25 - 1e-3)  # Normalize r to [0, 1]
+        self._norm_r = min(0.999, self._norm_r) # Prevent division by zero and log(0)
+        reg_reward = np.log(1 - self._norm_r) / (1 - self._norm_r)
 
         return reg_reward
 
