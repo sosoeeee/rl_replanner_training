@@ -342,10 +342,16 @@ void CorridorIntentionConstraint::updateParameters(
       "[CorridorIntentionConstraint] cur_pos and robot_direction must have size 2");
   }
 
-  if (params.size() < 4) {
+  // BiToUni
+  if (params.size() < 3) {
     throw std::invalid_argument(
-      "[CorridorIntentionConstraint] params must have at least 4 elements [S, r, w0, v0]");
+      "[CorridorIntentionConstraint] params must have at least 4 elements [S, r, v0]");
   }
+
+  // if (params.size() < 4) {
+  //   throw std::invalid_argument(
+  //     "[CorridorIntentionConstraint] params must have at least 4 elements [S, r, w0, v0]");
+  // }
 
   _cur_pos = cur_pos;
   _robot_direction = robot_direction;
