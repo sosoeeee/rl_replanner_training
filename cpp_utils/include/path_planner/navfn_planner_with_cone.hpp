@@ -50,7 +50,7 @@ public:
    * @brief Load intention domain constraint for path planning
    * @param cur_pos Current robot position [x, y]
    * @param robot_direction Normalized direction vector [dx, dy]
-   * @param domain_params Shape-specific parameters (e.g., [depth, radius] for cone)
+   * @param domain_params Shape-specific parameters (e.g., [depth, radius] for cone; [S, r, w0, v0] for corridor)
    * @param is_enabled Whether to enable the constraint
    */
   void loadIntentionDomain(

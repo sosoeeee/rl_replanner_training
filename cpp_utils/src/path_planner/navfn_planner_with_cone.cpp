@@ -440,8 +440,8 @@ NavfnPlannerWithCone::loadDomainToMap()
     return;
   }
 
-  // Step 1: Update constraint with cached parameters
-  constraint_->updateParameters(cur_pos_, robot_direction_, domain_params_, inflated_distance_);
+  // Step 1: Update constraint with cached parameters (resolution is now passed to updateParameters)
+  constraint_->updateParameters(cur_pos_, robot_direction_, domain_params_, inflated_distance_, resolution_);
 
   // Step 2: Get bounding box in world coordinates
   float min_x, max_x, min_y, max_y;

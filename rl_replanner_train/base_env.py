@@ -129,7 +129,6 @@ class BaseEnv(gym.Env):
 
         # temporary variables for action
         self.cur_position = None
-        self.cone_center = None
         self.robot_direction = None
 
         ################################################################################################################################

@@ -15,7 +15,8 @@ void ConeIntentionConstraint::updateParameters(
   const std::vector<float> & cur_pos,
   const std::vector<float> & robot_direction,
   const std::vector<float> & params,
-  float inflated_distance)
+  float inflated_distance,
+  float resolution)
 {
   if (cur_pos.size() != 2 || robot_direction.size() != 2) {
     throw std::invalid_argument(
@@ -26,6 +27,9 @@ void ConeIntentionConstraint::updateParameters(
     throw std::invalid_argument(
       "[ConeIntentionConstraint] params must have at least 2 elements [depth, radius]");
   }
+
+  _cur_pos = cur_pos;
+  _robot_direction = robot_direction;
 
   float depth = params[0];
   float radius = params[1];
@@ -143,7 +147,8 @@ void RectangleIntentionConstraint::updateParameters(
   const std::vector<float> & cur_pos,
   const std::vector<float> & robot_direction,
   const std::vector<float> & params,
-  float inflated_distance)
+  float inflated_distance,
+  float resolution)
 {
   if (cur_pos.size() != 2 || robot_direction.size() != 2) {
     throw std::invalid_argument(
@@ -154,6 +159,9 @@ void RectangleIntentionConstraint::updateParameters(
     throw std::invalid_argument(
       "[RectangleIntentionConstraint] params must have at least 2 elements [depth, radius]");
   }
+
+  _cur_pos = cur_pos;
+  _robot_direction = robot_direction;
 
   float depth = params[0];
   float radius = params[1];
@@ -208,10 +216,11 @@ void EllipseIntentionConstraint::updateParameters(
   const std::vector<float> & cur_pos,
   const std::vector<float> & robot_direction,
   const std::vector<float> & params,
-  float inflated_distance)
+  float inflated_distance,
+  float resolution)
 {
   // Reuse rectangle logic to compute inflated center and vertices
-  RectangleIntentionConstraint::updateParameters(cur_pos, robot_direction, params, inflated_distance);
+  RectangleIntentionConstraint::updateParameters(cur_pos, robot_direction, params, inflated_distance, resolution);
 
   // compute the inflated semi-major and semi-minor axes
   float a = params[0] / 2.0f;  // Semi-major axis (half of depth)
@@ -223,18 +232,6 @@ void EllipseIntentionConstraint::updateParameters(
 
   _cur_pos = cur_pos;
   _robot_direction = robot_direction;
-}
-
-std::vector<float> EllipseIntentionConstraint::transformWorldToLocal(const std::vector<float> & world_point) const
-{
-  // Transform point to ellipse-centered frame
-  float dx = world_point[0] - _cur_pos[0];
-  float dy = world_point[1] - _cur_pos[1];
-
-  float local_x = dx * _robot_direction[0] + dy * _robot_direction[1];
-  float local_y = -dx * _robot_direction[1] + dy * _robot_direction[0];
-
-  return {local_x, local_y};
 }
 
 bool EllipseIntentionConstraint::isRestrictedArea(float x, float y) const
@@ -252,6 +249,160 @@ bool EllipseIntentionConstraint::isRestrictedArea(float x, float y) const
 }
 
 //==============================================================================
+// CorridorIntentionConstraint Implementation
+//==============================================================================
+
+void CorridorIntentionConstraint::calculateTrajectory(const std::vector<float> & params, float resolution)
+{
+  float S = params[0];
+  float w0 = params[2];
+  float v0 = params[3];  // Get v0 from params (4th parameter)
+
+  if (v0 <= 0.0f || resolution <= 0.0f) {
+    throw std::runtime_error(
+      "[CorridorIntentionConstraint] v0 and resolution must be set before calculating trajectory");
+  }
+
+  // Calculate number of trajectory points
+  int num_points = static_cast<int>(S / (resolution / v0)) + 1;
+  num_points = std::max(num_points, 2);  // At least 2 points
+
+  float ds = S / std::max(num_points - 1, 1);  // Step size along s-axis
+
+  _trajectory.clear();
+  _trajectory.reserve(num_points);
+
+  float cum_x = 0.0f, cum_y = 0.0f;
+  _trajectory_length = 0.0f;
+
+  // First point at origin (robot position in local frame)
+  _trajectory.push_back({0.0f, 0.0f});
+
+  for (int i = 1; i < num_points; ++i) {
+    float s = i * ds;
+
+    // Sigmoid-shaped angle: theta(s) = (w0/_lambda) * (1 - exp(-_lambda * s))
+    float theta = (w0 / _lambda) * (1.0f - std::exp(-_lambda * s));
+
+    float dx = v0 * std::cos(theta) * ds;
+    float dy = v0 * std::sin(theta) * ds;
+
+    cum_x += dx;
+    cum_y += dy;
+
+    _trajectory_length += std::sqrt(dx * dx + dy * dy);
+    _trajectory.push_back({cum_x, cum_y});
+  }
+}
+
+void CorridorIntentionConstraint::buildCorridors(float inflated_radius, float resolution)
+{
+  if (_trajectory.empty()) {
+    throw std::runtime_error(
+      "[CorridorIntentionConstraint] Trajectory must be calculated before building corridors");
+  }
+
+  // Adaptive corridor count based on trajectory length and inflated radius
+  float k = 5.0f;  // Control spacing between corridors
+  float inner_val = std::max(0.0f, inflated_radius - k * resolution);
+  float delta_s = 2.0f * std::sqrt(inflated_radius * inflated_radius - inner_val * inner_val);
+  int num_corridors = std::max(1, static_cast<int>(_trajectory_length / delta_s));
+
+  _corridors.clear();
+  _corridors.reserve(num_corridors);
+
+  // Sample corridor centers evenly along trajectory
+  for (int i = 0; i < num_corridors; ++i) {
+    int idx = (i * (_trajectory.size() - 1)) / std::max(num_corridors - 1, 1);
+    idx = std::min(idx, static_cast<int>(_trajectory.size()) - 1);
+
+    const auto & local_center = _trajectory[idx];
+
+    // Transform to world frame
+    std::vector<float> world_center = transformLocalToWorld(local_center);
+
+    // Store as [x, y, r]
+    _corridors.push_back({world_center[0], world_center[1], inflated_radius});
+  }
+}
+
+void CorridorIntentionConstraint::updateParameters(
+  const std::vector<float> & cur_pos,
+  const std::vector<float> & robot_direction,
+  const std::vector<float> & params,
+  float inflated_distance,
+  float resolution)
+{
+  if (cur_pos.size() != 2 || robot_direction.size() != 2) {
+    throw std::invalid_argument(
+      "[CorridorIntentionConstraint] cur_pos and robot_direction must have size 2");
+  }
+
+  if (params.size() < 4) {
+    throw std::invalid_argument(
+      "[CorridorIntentionConstraint] params must have at least 4 elements [S, r, w0, v0]");
+  }
+
+  _cur_pos = cur_pos;
+  _robot_direction = robot_direction;
+
+  // Calculate trajectory in local frame
+  calculateTrajectory(params, resolution);
+
+  // Build inflated corridors for collision checking
+  float inflated_radius = params[1] + inflated_distance;
+  buildCorridors(inflated_radius, resolution);
+
+  parameters_initialized_ = true;
+}
+
+void CorridorIntentionConstraint::getBoundingBox(
+  float & min_x, float & max_x,
+  float & min_y, float & max_y) const
+{
+  if (!parameters_initialized_ || _corridors.empty()) {
+    throw std::runtime_error(
+      "[CorridorIntentionConstraint] Cannot get bounding box: parameters not initialized");
+  }
+
+  // Compute axis-aligned bounding box from all corridor circles
+  // Each corridor is [x, y, r]
+  min_x = _corridors[0][0] - _corridors[0][2];
+  max_x = _corridors[0][0] + _corridors[0][2];
+  min_y = _corridors[0][1] - _corridors[0][2];
+  max_y = _corridors[0][1] + _corridors[0][2];
+
+  for (size_t i = 1; i < _corridors.size(); ++i) {
+    const auto & corridor = _corridors[i];
+    min_x = std::min(min_x, corridor[0] - corridor[2]);
+    max_x = std::max(max_x, corridor[0] + corridor[2]);
+    min_y = std::min(min_y, corridor[1] - corridor[2]);
+    max_y = std::max(max_y, corridor[1] + corridor[2]);
+  }
+}
+
+bool CorridorIntentionConstraint::isRestrictedArea(float x, float y) const
+{
+  if (!parameters_initialized_ || _corridors.empty()) {
+    return false;  // If not initialized, no restricted area
+  }
+
+  // Check if point is inside any corridor circle
+  // Each corridor is [x, y, r]
+  for (const auto & corridor : _corridors) {
+    float dx = x - corridor[0];
+    float dy = y - corridor[1];
+    float dist_sq = dx * dx + dy * dy;
+
+    if (dist_sq <= corridor[2] * corridor[2]) {
+      return true;  // Point is inside this corridor
+    }
+  }
+
+  return false;  // Point is outside all corridors
+}
+
+//==============================================================================
 // ConstraintFactory Implementation
 //==============================================================================
 
@@ -261,17 +412,19 @@ std::unique_ptr<BaseIntentionConstraint> ConstraintFactory::create(
   if (constraint_type == "cone") {
     return std::make_unique<ConeIntentionConstraint>();
   }
-  // Future shapes can be added here:
   else if (constraint_type == "rectangle") {
     return std::make_unique<RectangleIntentionConstraint>();
   }
   else if (constraint_type == "ellipse") {
     return std::make_unique<EllipseIntentionConstraint>();
   }
+  else if (constraint_type == "corridor") {
+    return std::make_unique<CorridorIntentionConstraint>();
+  }
   else {
     throw std::invalid_argument(
       "[ConstraintFactory] Unknown constraint type: " + constraint_type +
-      ". Available types: cone, rectangle, ellipse");
+      ". Available types: cone, rectangle, ellipse, corridor");
   }
 }
 

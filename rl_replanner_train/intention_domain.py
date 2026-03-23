@@ -49,6 +49,98 @@ class BaseIntentionDomain(abc.ABC):
         self._cur_pos = cur_pos
         self._robot_direction = robot_direction
 
+    def transform_to_global(self, local_point: np.ndarray) -> np.ndarray:
+        """
+        Transform point(s) from local frame to global frame.
+
+        Local frame:
+        - Origin at cur_pos
+        - x-axis along robot_direction
+        - y-axis perpendicular to robot_direction
+
+        Args:
+            local_point: [x, y] or [[x1, y1], ..., [xN, yN]] in local frame
+
+        Returns:
+            [x, y] for single-point input, or (N, 2) array for batched input
+        """
+        if self._cur_pos is None or self._robot_direction is None:
+            raise ValueError("cur_pos and robot_direction must be configured or provided")
+
+        points = np.asarray(local_point)
+        if points.ndim == 1:
+            if points.shape[0] != 2:
+                raise ValueError("local_point must have shape (2,) or (N, 2)")
+
+            # Local to global transformation (single point)
+            dx = points[0] * self._robot_direction[0] - points[1] * self._robot_direction[1]
+            dy = points[0] * self._robot_direction[1] + points[1] * self._robot_direction[0]
+
+            global_x = self._cur_pos[0] + dx
+            global_y = self._cur_pos[1] + dy
+
+            return np.array([global_x, global_y])
+
+        if points.ndim == 2:
+            if points.shape[1] != 2:
+                raise ValueError("local_point must have shape (2,) or (N, 2)")
+
+            # Local to global transformation (batched points)
+            dx = points[:, 0] * self._robot_direction[0] - points[:, 1] * self._robot_direction[1]
+            dy = points[:, 0] * self._robot_direction[1] + points[:, 1] * self._robot_direction[0]
+            global_x = self._cur_pos[0] + dx
+            global_y = self._cur_pos[1] + dy
+
+            return np.column_stack((global_x, global_y))
+
+        raise ValueError("local_point must have shape (2,) or (N, 2)")
+    
+    def transform_to_local(self, global_point: np.ndarray) -> np.ndarray:
+        """
+        Transform point(s) from global frame to local frame.
+
+        Local frame:
+        - Origin at cur_pos
+        - x-axis along robot_direction
+        - y-axis perpendicular to robot_direction
+
+        Args:
+            global_point: [x, y] or [[x1, y1], ..., [xN, yN]] in global frame
+
+        Returns:
+            [x, y] for single-point input, or (N, 2) array for batched input
+        """
+        if self._cur_pos is None or self._robot_direction is None:
+            raise ValueError("cur_pos and robot_direction must be configured or provided")
+
+        points = np.asarray(global_point)
+        if points.ndim == 1:
+            if points.shape[0] != 2:
+                raise ValueError("global_point must have shape (2,) or (N, 2)")
+
+            # Global to local transformation (single point)
+            dx = points[0] - self._cur_pos[0]
+            dy = points[1] - self._cur_pos[1]
+
+            local_x = dx * self._robot_direction[0] + dy * self._robot_direction[1]
+            local_y = -dx * self._robot_direction[1] + dy * self._robot_direction[0]
+
+            return np.array([local_x, local_y])
+
+        if points.ndim == 2:
+            if points.shape[1] != 2:
+                raise ValueError("global_point must have shape (2,) or (N, 2)")
+
+            # Global to local transformation (batched points)
+            dx = points[:, 0] - self._cur_pos[0]
+            dy = points[:, 1] - self._cur_pos[1]
+            local_x = dx * self._robot_direction[0] + dy * self._robot_direction[1]
+            local_y = -dx * self._robot_direction[1] + dy * self._robot_direction[0]
+
+            return np.column_stack((local_x, local_y))
+
+        raise ValueError("global_point must have shape (2,) or (N, 2)")
+
     @abc.abstractmethod
     def get_action_space_setting(self) -> Dict[str, List[float]]:
         """
@@ -57,6 +149,20 @@ class BaseIntentionDomain(abc.ABC):
         Returns:
             Dict mapping parameter names to [min, max] ranges.
             Example: {'depth': [1e-3, 0.707], 'radius': [1e-3, 0.707]}
+        """
+        pass
+
+    @abc.abstractmethod
+    def rescale_params(self, normalized_params: List[float], obser_width: float) -> List[float]:
+        """
+        Rescale normalized action parameters to actual values based on observation width.
+
+        Args:
+            normalized_params: List of parameters in [0, 1] range
+            obser_width: Observation width in meters for scaling
+
+        Returns:
+            List of rescaled parameters in actual units (e.g., meters)
         """
         pass
 
@@ -184,6 +290,22 @@ class ConeIntentionDomain(BaseIntentionDomain):
             'radius': [1e-3, np.sqrt(2) / 2],    # Max radius ~0.707 * obser_width
             'side': [-1, 1]                      # Side selection parameter
         }
+    
+    def rescale_params(self, normalized_params: List[float], obser_width: float) -> List[float]:
+        """
+        Rescale normalized cone parameters to actual values based on observation width.
+
+        Args:
+            normalized_params: [norm_depth, norm_radius, norm_side] in [0, 1]
+            obser_width: Observation width in meters for scaling
+
+        Returns:
+            [depth, radius, side] with depth and radius in meters, side in [-1, 1]
+        """
+        depth = normalized_params[0] * obser_width
+        radius = normalized_params[1] * obser_width
+
+        return [depth, radius, normalized_params[2]]  # side parameter is not scaled
 
     def get_predicted_goal(
         self,
@@ -693,60 +815,6 @@ class EllipseIntentionDomain(RectangleIntentionDomain):
         self._inflated_a: Optional[float] = None
         self._inflated_b: Optional[float] = None
     
-    def transform_to_global(self, local_point: np.ndarray) -> np.ndarray:
-        """
-        Transform a point from local frame to global frame.
-
-        Local frame:
-        - Origin at cur_pos
-        - x-axis along robot_direction
-        - y-axis perpendicular to robot_direction
-
-        Args:
-            local_point: [x, y] coordinates in local frame
-
-        Returns:
-            [x, y] coordinates in global frame
-        """
-        if self._cur_pos is None or self._robot_direction is None:
-            raise ValueError("cur_pos and robot_direction must be configured or provided")
-
-        # Local to global transformation
-        dx = local_point[0] * self._robot_direction[0] - local_point[1] * self._robot_direction[1]
-        dy = local_point[0] * self._robot_direction[1] + local_point[1] * self._robot_direction[0]
-
-        global_x = self._cur_pos[0] + dx
-        global_y = self._cur_pos[1] + dy
-
-        return np.array([global_x, global_y])
-    
-    def transform_to_local(self, global_point: np.ndarray) -> np.ndarray:
-        """
-        Transform a point from global frame to local frame.
-
-        Local frame:
-        - Origin at cur_pos
-        - x-axis along robot_direction
-        - y-axis perpendicular to robot_direction
-
-        Args:
-            global_point: [x, y] coordinates in global frame
-
-        Returns:
-            [x, y] coordinates in local frame
-        """
-        if self._cur_pos is None or self._robot_direction is None:
-            raise ValueError("cur_pos and robot_direction must be configured or provided")
-
-        # Global to local transformation
-        dx = global_point[0] - self._cur_pos[0]
-        dy = global_point[1] - self._cur_pos[1]
-
-        local_x = dx * self._robot_direction[0] + dy * self._robot_direction[1]
-        local_y = -dx * self._robot_direction[1] + dy * self._robot_direction[0]
-
-        return np.array([local_x, local_y])
-
     def get_predicted_goal(
         self,
         global_goal: Optional[List[float]] = None,
@@ -894,6 +962,252 @@ class EllipseIntentionDomain(RectangleIntentionDomain):
 
         return polygon
 
+class CorridorIntentionDomain(BaseIntentionDomain):
+    """
+    Closed corridor intention domain implementation.
+
+    Parameters:
+        - depth: Distance from robot to corridor base center (forward projection)
+        - radius: Half-width of the corridor base
+
+    """
+
+    def __init__(self, _lambda = 0.95):
+        """Initialize the corridor intention domain."""
+        super().__init__()
+        self._v0 = None
+        self._lambda = _lambda
+        self._trajectory = []  # Cache trajectory for efficiency
+        self._corridors = {}
+        self._trajectory_length = 0
+        self._map_resolution = None # saved for adaptive corridor number
+
+    def configure(self, action_params, cur_pos, robot_direction):
+        """
+        Configure the corridor intention domain with parameters.
+
+        Args:
+            action_params: [depth, radius] for the corridor
+            cur_pos: Current robot position [x, y]
+            robot_direction: Normalized direction vector [dx, dy]
+        """
+        super().configure(action_params, cur_pos, robot_direction)
+        self._trajectory = []  # Cache trajectory for efficiency
+        self._trajectory_length = 0
+        self._corridors = {}
+
+    def get_action_space_setting(self) -> Dict[str, List[float]]:
+        """
+        Returns corridor-specific action space parameters.
+
+        Ranges normalized to [0, 1] during action sampling, then scaled by obser_width.
+        """
+        return {
+            'S': [1e-3, 1.0],    
+            'r': [1e-3, 0.25],                      # Side selection parameter
+            'w0': [-np.pi / 2 * self._lambda / (1 - np.exp(-self._lambda)), np.pi / 2 * self._lambda / (1 - np.exp(-self._lambda))]  # Scaled by lambda for sharper corridor
+        }
+
+    def rescale_params(self, normalized_params: List[float], obser_width: float) -> List[float]:
+        """
+        Rescale normalized action parameters to actual values.
+
+        S and r are scaled by obser_width, w0 is scaled by lambda factor.
+        v0 is computed as 0.5 * obser_width and returned as the 4th parameter.
+
+        Returns:
+            [S, r, w0, v0] where v0 is corridor-specific parameter
+        """
+        self._v0 = 0.5 * obser_width  # Set v0 to half of obser_width for consistent corridor length
+        r = normalized_params[1] * obser_width
+        return [normalized_params[0], r, normalized_params[2], self._v0]
+    
+    def calculate_trajectory(self, map_resolution: Optional[float] = None) -> List[List[float]]:
+        """
+        Calculate the trajectory of the corridor centerline based on current parameters.
+        """
+        # Use configured values if parameters not provided
+        action_params = self._action_params
+
+        if action_params is None:
+            raise ValueError("action_params, cur_pos, and robot_direction must be configured or provided")
+
+        S, _, w0 = action_params[0], action_params[1], action_params[2]
+
+        num_points = int(S / (map_resolution / self._v0)) + 1
+        s_values = np.linspace(0, S, num=num_points)
+        ds = S / max(num_points - 1, 1)  # Step size along the trajectory
+
+        theta_values = (w0 / self._lambda) * (1 - np.exp(-self._lambda * s_values))  # Sigmoid-shaped angle change
+        dx = self._v0 * np.cos(theta_values) * ds
+        dy = self._v0 * np.sin(theta_values) * ds
+
+        d_len = np.sqrt(dx * dx + dy * dy)
+        self._trajectory_length = np.sum(d_len)
+
+        x_arr = np.cumsum(dx)
+        y_arr = np.cumsum(dy)
+
+        x_arr = np.insert(x_arr, 0, 0)  # Start with 0 at the robot position
+        y_arr = np.insert(y_arr, 0, 0)
+
+        # convert to world coordinates
+        local_points = np.stack((x_arr, y_arr), axis=-1)
+        self._trajectory = self.transform_to_global(local_points)
+
+    def get_predicted_goal(
+        self,
+        global_goal: Optional[List[float]] = None,
+        collision_checker: Optional[Callable[[List[float]], bool]] = None,
+        map_resolution: Optional[float] = None
+    ) -> Optional[Tuple[List[float], Dict]]:
+        """
+        Compute predicted goal within corridor domain.
+
+        Args:
+            global_goal: Global goal position [x, y]
+            collision_checker: Function to check if a point is in collision
+            map_resolution: Grid resolution for obstacle avoidance ray casting
+
+        Returns:
+            Tuple of ([pred_x, pred_y], {'cone_center': [x, y]}) or None if failed
+        """
+        self._map_resolution = map_resolution
+        self.calculate_trajectory(map_resolution)
+
+        # Find the corridor centered in the last point of the trajectory
+        if len(self._trajectory) == 0:
+            return None
+        
+        # find the "wavefront" points of last corridor
+        r = self._action_params[1]
+        n_point = int(np.pi / (map_resolution / r))
+        phi_arr = np.linspace(-np.pi / 2, np.pi / 2, num=n_point)
+        wavefront_local = np.stack((r * np.cos(phi_arr), r * np.sin(phi_arr)), axis=-1)  # Points on the base edge in local frame
+
+        if len(self._trajectory) > 1:
+            ahead_vector = self._trajectory[-1] - self._trajectory[-2]
+        else:
+            # Fall back to the robot's current heading
+            ahead_vector = self._robot_direction
+        assert np.linalg.norm(ahead_vector) > 1e-6, "Trajectory points are too close to compute a valid ahead vector"
+        ahead_vector = ahead_vector / np.linalg.norm(ahead_vector) 
+
+        # transform points ahead to global frame
+        center_point = self._trajectory[-1]
+        dx = wavefront_local[:, 0] * ahead_vector[0] - wavefront_local[:, 1] * ahead_vector[1]
+        dy = wavefront_local[:, 0] * ahead_vector[1] + wavefront_local[:, 1] * ahead_vector[0]
+        wavefront_global_x = center_point[0] + dx
+        wavefront_global_y = center_point[1] + dy
+
+        # find the point closest to the global goal
+        closest_point = None
+        min_dist = np.inf
+        for x, y in zip(wavefront_global_x, wavefront_global_y):
+            if collision_checker([x, y]):
+                continue
+            dist = np.linalg.norm(np.array([x, y]) - np.array(global_goal))
+            if dist < min_dist:
+                min_dist = dist
+                closest_point = [x, y]
+        
+        return (closest_point, None) if closest_point is not None else None
+
+    def get_reg_reward(self) -> float:
+        """
+        Corridor regularization reward penalizes w0.
+        """
+        # Use configured values if parameters not provided
+        action_params = self._action_params
+        if action_params is None:
+            raise ValueError("action_params must be configured or provided")
+
+        w0 = action_params[2]
+        norm_w0 = abs(w0) / (np.pi / 2 * self._lambda / (1 - np.exp(-self._lambda)))  # Normalize w0 to [0, 1]
+        norm_w0 = min(0.999, norm_w0) # Prevent division by zero and log(0)
+        
+        reg_reward = np.log(1 - norm_w0) / (1 - norm_w0)
+
+        return reg_reward
+
+    def get_bounding_box(
+        self,
+        inflated_distance: Optional[float] = None
+    ) -> Tuple[float, float, float, float]:
+        """
+        Compute axis-aligned bounding box of inflated corridor.
+        """
+        # Use configured values if parameters not provided
+        action_params = self._action_params
+        if action_params is None:
+            raise ValueError("action_params must be configured or provided")
+
+        # adaptive corridor nums
+        inflated_r = self._action_params[1] + inflated_distance
+        k = 5  # control the distance between corridors, smaller k means more corridors
+        inner_val = max(0.0, inflated_r - k * self._map_resolution)
+        delta_s = 2 * np.sqrt(inflated_r ** 2 - inner_val ** 2)
+        num_corridors = max(1, int(self._trajectory_length / delta_s))
+
+        # build corridors and compute bounding box
+        index = np.linspace(0, len(self._trajectory) - 1, num=num_corridors, dtype=int)
+        self._corridors = {}
+        min_x, max_x, min_y, max_y = np.inf, -np.inf, np.inf, -np.inf
+        for i in index:
+            center = self._trajectory[i]
+            self._corridors[i] = {
+                'center': center,
+                'r': inflated_r
+            }
+            min_x = min(min_x, center[0] - inflated_r)
+            max_x = max(max_x, center[0] + inflated_r)
+            min_y = min(min_y, center[1] - inflated_r)
+            max_y = max(max_y, center[1] + inflated_r)
+
+        return (min_x, max_x, min_y, max_y)
+
+    def is_restricted_area(
+        self,
+        wx: float,
+        wy: float,
+    ) -> bool:
+        """
+        Check if point (wx, wy) is inside or on the inflated corridor boundary.
+        """
+        if len(self._corridors) == 0:
+            raise ValueError("Corridors must be computed by calling get_bounding_box with inflated_distance before using is_restricted_area")
+
+        for corridor in self._corridors.values():
+            center = corridor['center']
+            r = corridor['r']
+            if np.linalg.norm(np.array([wx, wy]) - center) <= r:
+                return True
+
+        return False
+
+
+    def get_visualization_polygon(
+        self,
+    ) -> List[List[float]]:
+        """
+        Get inflated corridor vertices for LINE_STRIP visualization.
+        """
+        # Use configured values if parameters not provided
+        action_params = self._action_params
+        cur_pos = self._cur_pos
+        robot_direction = self._robot_direction
+
+        if action_params is None or cur_pos is None or robot_direction is None:
+            raise ValueError("action_params, cur_pos, and robot_direction must be configured or provided")
+
+        # visualize the centerline of the corridor
+        polygon = []
+        for point in self._trajectory:
+            polygon.append(point.tolist())
+        
+        return polygon
+
+        
 class IntentionDomainFactory:
     """
     Factory for creating intention domain instances.
