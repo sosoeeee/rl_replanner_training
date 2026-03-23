@@ -45,10 +45,10 @@ env = TrainEnv(
     robot_prediction_length=robot_prediction_length,
     speed_buffer_length=speed_buffer_length,
     use_generator=True,  # Set to True if you want to use the generator
-    intention_domain_type="cone",  # Options: "cone", "ellipse", "rectangle", "corridor"
+    intention_domain_type="corridor",  # Options: "cone", "ellipse", "rectangle", "corridor"
 )
 
-obs, info = env.reset()
+obs, info = env.reset(seed=1117)
 
 print("Observation space:", env.observation_space)
 print("Shape of observation space:", env.observation_space.shape)
@@ -78,7 +78,7 @@ while True:
     # print('Done:', terminated)
     # print('Info:', info)
 
-    time.sleep(0.5)  # Sleep for a short time to slow down the loop for better visualization
+    # time.sleep(0.5)  # Sleep for a short time to slow down the loop for better visualization
 
     if terminated:
         print("Episode finished after {} timesteps".format(step + 1))

@@ -292,20 +292,28 @@ class BaseEnv(gym.Env):
     # after calling _get_obs, the flag 'is_obs_ready_' will be set to false
     def _get_obs(self, is_terminal=False):
         self.structure_obs = {}
-        if not is_terminal:
-            self._get_robot_path()                              # for reward calculation
-            self.structure_obs["robot_path"] = copy.deepcopy(self.robot_path_buffer)
-            self.structure_obs["human_path"] = self.human_path_buffer
-            self.structure_obs["partial_map"] = self._get_partial_map()
-            self.structure_obs["d_goal"] = self.global_goal
-            self.structure_obs["last_action"] = int(self.current_action[0])
-            self._regularization()
-        else:
-            self.structure_obs["partial_map"] = np.zeros((1, self.window_width_pixel, self.window_width_pixel), dtype=np.uint8)
-            self.structure_obs["human_path"] = np.zeros((2 * self.human_history_length,), dtype=np.float32)
-            self.structure_obs["robot_path"] = np.zeros((2 * self.robot_prediction_length,), dtype=np.float32)
-            self.structure_obs["d_goal"] = np.zeros((2,), dtype=np.float32)
-            self.structure_obs["last_action"] = int(self.current_action[0])
+        self._get_robot_path()                              # for reward calculation
+        self.structure_obs["robot_path"] = copy.deepcopy(self.robot_path_buffer)
+        self.structure_obs["human_path"] = self.human_path_buffer
+        self.structure_obs["partial_map"] = self._get_partial_map()
+        self.structure_obs["d_goal"] = self.global_goal
+        self.structure_obs["last_action"] = int(self.current_action[0])
+        self._regularization()
+
+        # if not is_terminal:
+        #     self._get_robot_path()                              # for reward calculation
+        #     self.structure_obs["robot_path"] = copy.deepcopy(self.robot_path_buffer)
+        #     self.structure_obs["human_path"] = self.human_path_buffer
+        #     self.structure_obs["partial_map"] = self._get_partial_map()
+        #     self.structure_obs["d_goal"] = self.global_goal
+        #     self.structure_obs["last_action"] = int(self.current_action[0])
+        #     self._regularization()
+        # else:
+        #     self.structure_obs["partial_map"] = np.zeros((1, self.window_width_pixel, self.window_width_pixel), dtype=np.uint8)
+        #     self.structure_obs["human_path"] = np.zeros((2 * self.human_history_length,), dtype=np.float32)
+        #     self.structure_obs["robot_path"] = np.zeros((2 * self.robot_prediction_length,), dtype=np.float32)
+        #     self.structure_obs["d_goal"] = np.zeros((2,), dtype=np.float32)
+        #     self.structure_obs["last_action"] = int(self.current_action[0])
 
         return self.structure_obs
     
