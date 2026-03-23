@@ -81,16 +81,14 @@ void VoronoiNode::resetProbability() {
     }
 }
 
-int VoronoiNode::getAdjacent() {
+int VoronoiNode::getAdjacent(std::mt19937& gen) {
     // Check if there are adjacent nodes available
     if (adjacent.empty()) {
         std::cerr << "No adjacent nodes available." << std::endl;
-        return -1; 
+        return -1;
     }
 
-    // TODO: change to controllerable random number generator
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    // Use external random number generator for reproducibility
     std::vector<float> probabilities;
     for (const auto& pair : adjacent) {
         probabilities.push_back(pair.second);

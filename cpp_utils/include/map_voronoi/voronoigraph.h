@@ -5,6 +5,7 @@
 #include <utility>
 #include <memory>
 #include <queue>
+#include <random>
 #include "voronoi.h"
 #include "voronoinode.h"
 
@@ -82,6 +83,9 @@ public:
     // void printMinDistOnAllPathsInModifiedGraph();
     void pruneEdgesByObstacleClearance(float map_resolution, float robot_radius);
 
+    // Set random seed for reproducible path sampling
+    void setSeed(unsigned int seed) { gen_.seed(seed); }
+
 private:
     bool** getBoolMap(std::shared_ptr<Costmap2D> costmap);
     // void buildGraph();
@@ -89,6 +93,7 @@ private:
 
     std::shared_ptr<Costmap2D> costmap;
     std::shared_ptr<Voronoi> voronoi_static = std::make_shared<Voronoi>();
+    std::mt19937 gen_{0}; // Random number generator for reproducible sampling
     // std::vector<VoronoiNode> voronoi_nodes; // List of Voronoi nodes
 
     // @ Bubble technique

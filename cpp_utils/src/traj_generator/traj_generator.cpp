@@ -58,6 +58,10 @@ void TrajGenerator::initialize(const std::string &map_file, const std::string &p
 void TrajGenerator::setSeed(unsigned int seed)
 {
     gen_.seed(seed);
+    // Also set seed for VoronoiGraph to ensure reproducible path selection
+    if (voronoi_graph_) {
+        voronoi_graph_->setSeed(seed);
+    }
 }
 
 // void TrajGenerator::getNearestNode(Point p, int &node_id)
