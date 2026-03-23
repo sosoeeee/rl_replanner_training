@@ -129,8 +129,11 @@ class TrainEnv(BaseEnv):
 
         if self.current_action[0] == LOCAL_GOAL:
             # rescale to the map size
-            self.current_action[1] = self.intention_domain.rescale_params(self.current_action[1], self.obser_width)
-
+            self.current_action = (
+                self.current_action[0],
+                self.intention_domain.rescale_params(self.current_action[1], self.obser_width)
+            )
+            
             # Configure intention domain with current state
             self.intention_domain.configure(
                 action_params=self.current_action[1],

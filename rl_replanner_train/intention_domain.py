@@ -1144,10 +1144,10 @@ class CorridorIntentionDomain(BaseIntentionDomain):
 
         # adaptive corridor nums
         inflated_r = self._action_params[1] + inflated_distance
-        k = 5  # control the distance between corridors, smaller k means more corridors
+        k = 1  # control the distance between corridors, smaller k means more corridors
         inner_val = max(0.0, inflated_r - k * self._map_resolution)
         delta_s = 2 * np.sqrt(inflated_r ** 2 - inner_val ** 2)
-        num_corridors = max(1, int(self._trajectory_length / delta_s))
+        num_corridors = max(10, int(self._trajectory_length / delta_s))
 
         # build corridors and compute bounding box
         index = np.linspace(0, len(self._trajectory) - 1, num=num_corridors, dtype=int)
@@ -1221,6 +1221,7 @@ class IntentionDomainFactory:
         # Future shapes can be registered here:
         'rectangle': RectangleIntentionDomain,
         'ellipse': EllipseIntentionDomain,
+        'corridor': CorridorIntentionDomain
     }
 
     @staticmethod

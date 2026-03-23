@@ -45,7 +45,7 @@ env = TrainEnv(
     robot_prediction_length=robot_prediction_length,
     speed_buffer_length=speed_buffer_length,
     use_generator=True,  # Set to True if you want to use the generator
-    intention_domain_type="ellipse",  # Options: "cone", "ellipse", "rectangle"
+    intention_domain_type="corridor",  # Options: "cone", "ellipse", "rectangle"
 )
 
 obs, info = env.reset()
@@ -59,7 +59,9 @@ total_reward = 0
 while True:
     action = env.action_space.sample()
 
-    # print('Action:', action)
+    print('Action:', action)
+    # action['params1'][0] = 0.01
+    # action['params1'][1] = 0.01
     # action = {
     #     'id': 1,
     #     'params0': [],
@@ -76,7 +78,7 @@ while True:
     # print('Done:', terminated)
     # print('Info:', info)
 
-    time.sleep(2.0)  # Sleep for a short time to slow down the loop for better visualization
+    time.sleep(0.5)  # Sleep for a short time to slow down the loop for better visualization
 
     if terminated:
         print("Episode finished after {} timesteps".format(step + 1))

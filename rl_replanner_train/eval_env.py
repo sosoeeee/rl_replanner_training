@@ -139,8 +139,11 @@ class EvalEnv(BaseEnv):
 
         if self.current_action[0] == LOCAL_GOAL:
             # rescale to the map size
-            self.current_action[1] = self.intention_domain.rescale_params(self.current_action[1], self.obser_width)
-
+            self.current_action = (
+                self.current_action[0],
+                self.intention_domain.rescale_params(self.current_action[1], self.obser_width)
+            )
+            
             self.angles.append(math.degrees(math.atan2(self.current_action[1][1], self.current_action[1][0])) * 2)
 
             # Configure intention domain with current state
