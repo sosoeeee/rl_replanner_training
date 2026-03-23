@@ -91,7 +91,7 @@ PYBIND11_MODULE(cpp_utils, m) {
         .def(py::init())
         .def_property("inflated_distance", &NavfnPlannerWithCone::getInflatedDistance, nullptr)
         .def("configure", &NavfnPlannerWithCone::configure,
-            "Configure the path planner based on the yaml file", py::arg("costmap"), py::arg("yaml_filename"))
+            "Configure the path planner based on the yaml file", py::arg("costmap"), py::arg("yaml_filename"), py::arg("intention_domain_type"))
         .def("plan", &NavfnPlannerWithCone::createPlan,
             "Create a plan from start and goal poses", py::arg("start"), py::arg("goal"))
         .def("loadIntentionDomain", &NavfnPlannerWithCone::loadIntentionDomain,

@@ -125,7 +125,7 @@ class BaseEnv(gym.Env):
         
         # load planner
         self.path_planner = cpp_utils.PathPlanner()
-        self.path_planner.configure(self.global_costmap, path_planner_setting_file)
+        self.path_planner.configure(self.global_costmap, path_planner_setting_file, intention_domain_type)
 
         # temporary variables for action
         self.cur_position = None

@@ -30,7 +30,7 @@ NavfnPlannerWithCone::~NavfnPlannerWithCone()
 }
 
 void
-NavfnPlannerWithCone::configure(nav2_costmap_2d::Costmap2D * costmap, const std::string & yaml_filename)
+NavfnPlannerWithCone::configure(nav2_costmap_2d::Costmap2D * costmap, const std::string & yaml_filename, const std::string & intention_domain_type)
 {
   costmap_ = costmap;
 
@@ -47,7 +47,7 @@ NavfnPlannerWithCone::configure(nav2_costmap_2d::Costmap2D * costmap, const std:
   use_astar_ = nav2_map_server::yaml_get_value<bool>(doc, "use_astar");
   allow_unknown_ = nav2_map_server::yaml_get_value<bool>(doc, "allow_unknown");
   inflated_distance_ = nav2_map_server::yaml_get_value<double>(doc, "inflated_distance");
-  intention_domain_type_ = nav2_map_server::yaml_get_value<std::string>(doc, "intention_domain_type");
+  intention_domain_type_ = intention_domain_type; // 直接使用传入参数
   // use_final_approach_orientation_ = nav2_map_server::yaml_get_value<bool>(doc, "use_final_approach_orientation");
 
   // Create a planner based on the new costmap size

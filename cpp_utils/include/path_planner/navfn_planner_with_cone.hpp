@@ -31,10 +31,11 @@ public:
   ~NavfnPlannerWithCone();
 
   /**
-   * @brief Configuring path planner based on yaml file
+   * @brief Configuring path planner based on yaml file and intention domain type
    * @param yaml_filename Path to the yaml file
+   * @param intention_domain_type Intention domain type from gym
    */
-  void configure(nav2_costmap_2d::Costmap2D * costmap, const std::string & yaml_filename);
+  void configure(nav2_costmap_2d::Costmap2D * costmap, const std::string & yaml_filename, const std::string & intention_domain_type);
 
   /**
    * @brief Creating a plan from start and goal poses
