@@ -310,8 +310,14 @@ void CorridorIntentionConstraint::buildCorridors(float inflated_radius, float re
   float k = 1.0f;  // Control spacing between corridors
   float inner_val = std::max(0.0f, inflated_radius - k * resolution);
   float delta_s = 2.0f * std::sqrt(inflated_radius * inflated_radius - inner_val * inner_val);
-  int num_corridors = std::max(10, static_cast<int>(_trajectory_length / delta_s));
-
+  // Prevent Division by Zero
+    int num_corridors;
+    if (delta_s < 1e-6f) {
+      num_corridors = _trajectory.size();
+    } else {
+      num_corridors = std::max(10, static_cast<int>(_trajectory_length / delta_s));
+    }
+    
   _corridors.clear();
   _corridors.reserve(num_corridors);
 

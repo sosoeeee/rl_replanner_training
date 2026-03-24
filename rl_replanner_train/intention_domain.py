@@ -1103,7 +1103,7 @@ class CorridorIntentionDomain(BaseIntentionDomain):
         
         # find the "wavefront" points of last corridor
         r = self._action_params[1]
-        n_point = int(np.pi / (map_resolution / r))
+        n_point = max(3, int(np.pi / (map_resolution / r)))
         phi_arr = np.linspace(-np.pi / 2, np.pi / 2, num=n_point)
         wavefront_local = np.stack((r * np.cos(phi_arr), r * np.sin(phi_arr)), axis=-1)  # Points on the base edge in local frame
 
@@ -1112,8 +1112,10 @@ class CorridorIntentionDomain(BaseIntentionDomain):
         else:
             # Fall back to the robot's current heading
             ahead_vector = self._robot_direction
-        assert np.linalg.norm(ahead_vector) > 1e-6, "Trajectory points are too close to compute a valid ahead vector"
-        ahead_vector = ahead_vector / np.linalg.norm(ahead_vector) 
+        ahead_norm = np.linalg.norm(ahead_vector)
+        if ahead_norm < 1e-6:
+            return None # Graceful fallback instead of crashing
+        ahead_vector = ahead_vector / ahead_norm
 
         # transform points ahead to global frame
         center_point = self._trajectory[-1]
@@ -1174,7 +1176,11 @@ class CorridorIntentionDomain(BaseIntentionDomain):
         k = 1  # control the distance between corridors, smaller k means more corridors
         inner_val = max(0.0, inflated_r - k * self._map_resolution)
         delta_s = 2 * np.sqrt(inflated_r ** 2 - inner_val ** 2)
-        num_corridors = max(10, int(self._trajectory_length / delta_s))
+        # Prevent Division by Zero
+        if delta_s < 1e-6:
+            num_corridors = max(10, len(self._trajectory))
+        else:
+            num_corridors = max(10, int(self._trajectory_length / delta_s))
 
         # build corridors and compute bounding box
         index = np.linspace(0, len(self._trajectory) - 1, num=num_corridors, dtype=int)
