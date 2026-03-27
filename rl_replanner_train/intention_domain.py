@@ -1008,7 +1008,6 @@ class CorridorIntentionDomain(BaseIntentionDomain):
         self._trajectory = []  # Cache trajectory for efficiency
         self._trajectory_length = 0
         self._corridors = {}
-        self._norm_r = None # saved for adaptive corridor number
 
     def get_action_space_setting(self) -> Dict[str, List[float]]:
         """
