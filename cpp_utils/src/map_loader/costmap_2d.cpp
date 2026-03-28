@@ -263,7 +263,14 @@ unsigned char Costmap2D::getCost(unsigned int undex) const
 
 void Costmap2D::setCost(unsigned int mx, unsigned int my, unsigned char cost)
 {
-  costmap_[getIndex(mx, my)] = cost;
+  if (mx >= size_x_ || my >= size_y_ || mx < 0 || my < 0) {
+    std::cerr << "Costmap2D::setCost: Invalid coordinates (" << mx << ", " << my << ") for costmap of size (" << size_x_ << ", " << size_y_ << "). Returning NO_INFORMATION." << std::endl;
+    costmap_[getIndex(mx, my)] = NO_INFORMATION;
+  } 
+  else
+  {
+    costmap_[getIndex(mx, my)] = cost;
+  }
 }
 
 void Costmap2D::mapToWorld(unsigned int mx, unsigned int my, double & wx, double & wy) const
@@ -522,24 +529,32 @@ std::shared_ptr<Costmap2D> Costmap2D::getPartialCostmap(
     return NULL;
   }
 
-  unsigned int size_x = cellDistance(wx_size);
-  unsigned int size_y = cellDistance(wy_size);
-  unsigned int start_x = mx - size_x / 2;
-  unsigned int start_y = my - size_y / 2;
+  try
+  {
+    unsigned int size_x = cellDistance(wx_size);
+    unsigned int size_y = cellDistance(wy_size);
+    int start_x = mx - size_x / 2;
+    int start_y = my - size_y / 2;
 
-  std::shared_ptr<Costmap2D> partial_map = std::make_shared<Costmap2D>(size_x, size_y, resolution_, 
-                                  origin_x_ + start_x * resolution_,
-                                  origin_y_ + start_y * resolution_);
+    std::shared_ptr<Costmap2D> partial_map = std::make_shared<Costmap2D>(size_x, size_y, resolution_, 
+                                    origin_x_ + start_x * resolution_,
+                                    origin_y_ + start_y * resolution_);
 
-  for (unsigned int x = 0; x < size_x; ++x) {
-    for (unsigned int y = 0; y < size_y; ++y) {
-      unsigned int cell_x = start_x + x;
-      unsigned int cell_y = start_y + y;
-      partial_map->setCost(x, y, getCost(cell_x, cell_y));
+    for (unsigned int x = 0; x < size_x; ++x) {
+      for (unsigned int y = 0; y < size_y; ++y) {
+        unsigned int cell_x = start_x + x;
+        unsigned int cell_y = start_y + y;
+        partial_map->setCost(x, y, getCost(cell_x, cell_y));
+      }
     }
-  }
 
-  return partial_map;
+    return partial_map;
+  }
+  catch (const std::exception & e)
+  {
+    std::cerr << "Error in getPartialCostmap: " << e.what() << std::endl;
+    return NULL;
+  }
 }
 
 }  // namespace nav2_costmap_2d

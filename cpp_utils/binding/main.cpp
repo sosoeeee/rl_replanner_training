@@ -73,8 +73,10 @@ PYBIND11_MODULE(cpp_utils, m) {
         .def_property("data", &Costmap2D::getCharMapToPy, nullptr)
         .def("getCost", static_cast<unsigned char (Costmap2D::*)(unsigned int, unsigned int) const>(&Costmap2D::getCost), "Get the cost of a cell in the costmap", py::arg("mx"), py::arg("my"))
         .def("getCostByIndex", static_cast<unsigned char (Costmap2D::*)(unsigned int) const>(&Costmap2D::getCost), "Get the cost of a cell in the costmap by index", py::arg("index"))
-        .def("getPartialCostmap", &Costmap2D::getPartialCostmap, "Get a partial costmap", py::arg("wx"), py::arg("wy"), py::arg("wx_size"), py::arg("wy_size"));
-    
+        .def("getPartialCostmap", &Costmap2D::getPartialCostmap, "Get a partial costmap", py::arg("wx"), py::arg("wy"), py::arg("wx_size"), py::arg("wy_size"))
+        .def("setCost", &Costmap2D::setCost, "Set the cost of a cell in the costmap", py::arg("mx"), py::arg("my"), py::arg("cost"))
+        .def("copy", [](const Costmap2D &self) { return Costmap2D(self); });
+
     // Bind the point data structure
     py::class_<Point>(m, "Point")
         .def(py::init<float, float>())
