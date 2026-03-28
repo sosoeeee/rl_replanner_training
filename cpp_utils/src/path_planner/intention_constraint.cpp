@@ -16,7 +16,7 @@ void ConeIntentionConstraint::updateParameters(
   const std::vector<float> & robot_direction,
   const std::vector<float> & params,
   float inflated_distance,
-  float resolution)
+  float /*resolution*/)
 {
   if (cur_pos.size() != 2 || robot_direction.size() != 2) {
     throw std::invalid_argument(
@@ -148,7 +148,7 @@ void RectangleIntentionConstraint::updateParameters(
   const std::vector<float> & robot_direction,
   const std::vector<float> & params,
   float inflated_distance,
-  float resolution)
+  float /*resolution*/)
 {
   if (cur_pos.size() != 2 || robot_direction.size() != 2) {
     throw std::invalid_argument(

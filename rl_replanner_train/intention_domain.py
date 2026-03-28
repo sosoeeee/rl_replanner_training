@@ -1220,9 +1220,17 @@ class CorridorIntentionDomain(BaseIntentionDomain):
 
     def get_visualization_polygon(
         self,
+        inflated_distance: float = 0.0,
+        num_cap_points: int = 10
     ) -> List[List[float]]:
         """
-        Get inflated corridor vertices for LINE_STRIP visualization.
+        Get corridor contour vertices for visualization (closed polygon).
+        Generates the precise boundary of the corridor (a swept capsule shape)
+        instead of just the centerline.
+        
+        Args:
+            inflated_distance: Extra radius to inflate the polygon (defaults to 0.0).
+            num_cap_points: Number of vertices to use for the semicircular caps.
         """
         # Use configured values if parameters not provided
         action_params = self._action_params
@@ -1232,11 +1240,77 @@ class CorridorIntentionDomain(BaseIntentionDomain):
         if action_params is None or cur_pos is None or robot_direction is None:
             raise ValueError("action_params, cur_pos, and robot_direction must be configured or provided")
 
-        # visualize the centerline of the corridor
+        if len(self._trajectory) == 0:
+            return []
+
+        # 获取包含膨胀距离在内的总半径
+        r = self._action_params[1] + inflated_distance
+        trajectory = np.array(self._trajectory)
+
+        # 如果轨迹只有一个点，直接返回一个完整的圆
+        if len(trajectory) == 1:
+            center = trajectory[0]
+            angles = np.linspace(0, 2 * np.pi, num_cap_points * 2)
+            return [[center[0] + r * np.cos(a), center[1] + r * np.sin(a)] for a in angles]
+
+        # 1. 计算每个轨迹点的切向量 (Tangent vectors)
+        tangents = np.zeros_like(trajectory)
+        tangents[0] = trajectory[1] - trajectory[0]         # 起点前向差分
+        tangents[-1] = trajectory[-1] - trajectory[-2]      # 终点后向差分
+        if len(trajectory) > 2:
+            # 内部点使用中心差分以保证法向量平滑过渡
+            tangents[1:-1] = trajectory[2:] - trajectory[:-2]
+
+        # 归一化切向量
+        norms = np.linalg.norm(tangents, axis=1, keepdims=True)
+        norms[norms == 0] = 1e-6  # 防止除以零
+        tangents = tangents / norms
+
+        # 2. 计算法向量 (Normal vectors) 
+        # 将切向量逆时针旋转90度: T=(dx, dy) -> N=(-dy, dx)
+        normals = np.empty_like(tangents)
+        normals[:, 0] = -tangents[:, 1]
+        normals[:, 1] = tangents[:, 0]
+
+        # 3. 计算左侧边界和右侧边界
+        left_bound = trajectory + r * normals
+        right_bound = trajectory - r * normals
+
+        # 4. 计算终点处的前向半圆弧 (End cap)
+        end_center = trajectory[-1]
+        theta_end = np.arctan2(tangents[-1, 1], tangents[-1, 0])
+        # 从左侧 (+pi/2) 扫向右侧 (-pi/2)，途经正前方
+        angles_end = np.linspace(theta_end + np.pi / 2, theta_end - np.pi / 2, num_cap_points)
+        end_cap = np.column_stack((
+            end_center[0] + r * np.cos(angles_end),
+            end_center[1] + r * np.sin(angles_end)
+        ))
+
+        # 5. 计算起点处的后向半圆弧 (Start cap)
+        start_center = trajectory[0]
+        theta_start = np.arctan2(tangents[0, 1], tangents[0, 0])
+        # 从右侧 (-pi/2) 扫向左侧 (-3*pi/2 即 +pi/2)，途经正后方
+        angles_start = np.linspace(theta_start - np.pi / 2, theta_start - 1.5 * np.pi, num_cap_points)
+        start_cap = np.column_stack((
+            start_center[0] + r * np.cos(angles_start),
+            start_center[1] + r * np.sin(angles_start)
+        ))
+
+        # 6. 拼接完整的闭合多边形 (Closed Polygon)
         polygon = []
-        for point in self._trajectory:
-            polygon.append(point.tolist())
-        
+        # A. 沿着左边界前进 (Start -> End)
+        polygon.extend(left_bound.tolist())
+        # B. 加上终点半圆弧 (去掉首尾点避免和边界点重复)
+        polygon.extend(end_cap.tolist()[1:-1])
+        # C. 沿着右边界倒退 (End -> Start)
+        polygon.extend(right_bound[::-1].tolist())
+        # D. 加上起点半圆弧 (去掉首尾点避免重复)
+        polygon.extend(start_cap.tolist()[1:-1])
+
+        # E. 将第一个点添加到末尾，确保首尾闭合 (供后续 LINE_STRIP 渲染使用)
+        if polygon:
+            polygon.append(polygon[0])
+
         return polygon
 
         
