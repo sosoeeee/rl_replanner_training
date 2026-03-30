@@ -89,25 +89,31 @@ std::vector<Point> loadTrajectoryFromFile(const std::string& filename) {
 
 
 int main(int argc, char* argv[]) {
-    // 1. 加载地图
-    // 您可以根据需要更改地图文件路径
-    auto [status, costmap] = loadMap("/home/rosdev/ros2_ws/train_env/rl_replanner_training/rl_replanner_train/maps/real_maps/phy2.yaml");
+    // 1. Parse arguments: trajectory file (required), map yaml (optional)
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <path_to_trajectory_file> [path_to_map_yaml]" << std::endl;
+        return -1;
+    }
+
+    std::string trajectory_path = argv[1];
+    std::string map_yaml = "/home/rosdev/ros2_ws/train_env/rl_replanner_training/rl_replanner_train/maps/real_maps/phy2.yaml";
+    if (argc >= 3) {
+        map_yaml = argv[2];
+    }
+
+    // 2. 加载地图
+    auto [status, costmap] = loadMap(map_yaml);
     if (status != LOAD_MAP_STATUS::LOAD_MAP_SUCCESS) {
         std::cerr << "Failed to load map." << std::endl;
         return -1;
     }
     std::cout << "Map loaded (" << costmap->getSizeInCellsX() << "x" << costmap->getSizeInCellsY() << ").\n";
 
-    // 2. 初始化Voronoi图，用于距离计算
+    // 3. 初始化Voronoi图，用于距离计算
     VoronoiGraph voronoigraph(costmap);
     std::cout << "Voronoi graph initialized for distance calculations.\n";
 
-    // 3. 加载轨迹文件
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <path_to_trajectory_file>" << std::endl;
-        return -1;
-    }
-    std::string trajectory_path = argv[1];
+    // 4. 加载轨迹文件
     std::cout << "Analyzing trajectory: " << trajectory_path << std::endl;
 
     std::vector<Point> trajectory = loadTrajectoryFromFile(trajectory_path);
@@ -115,7 +121,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // 4. 计算每个轨迹点到最近障碍物的距离并求和
+    // 5. 计算每个轨迹点到最近障碍物的距离并求和
     double total_distance = 0.0;
     int valid_points = 0;
 
@@ -132,7 +138,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // 5. 计算并打印平均距离
+    // 6. 计算并打印平均距离
     if (valid_points > 0) {
         double avg_distance_cells = total_distance / valid_points;
         double avg_distance_meters = avg_distance_cells * costmap->getResolution();
