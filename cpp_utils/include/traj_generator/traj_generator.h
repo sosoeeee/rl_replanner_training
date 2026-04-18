@@ -38,6 +38,9 @@ public:
     std::pair<std::vector<Point>, std::vector<Point>> sampleTrajLoopWithInit(Point start, Point end);
     std::pair<std::vector<Point>, std::vector<Point>> sampleDistinctHomotopyTrajsLoopWithInit(Point start, Point end);
 
+    // Set random seed for reproducibility
+    void setSeed(unsigned int seed);
+
     // for visualization
     std::vector<PoseSE2> getInitPlan() const {return init_plan_;}
     std::vector<Circle> getCircles() const {return circles_;}
@@ -65,6 +68,7 @@ private:
 
     std::shared_ptr<Costmap2D> costmap_;
     std::unique_ptr<VoronoiGraph> voronoi_graph_;
+    std::mt19937 gen_; // Random number generator for reproducible sampling
     double path_resolution_; // resolution of the init path
     double time_resolution_; // resolution of the time
 

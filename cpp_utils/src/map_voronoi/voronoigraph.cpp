@@ -264,7 +264,7 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
         }
     }
 
-    int next_id = voronoi_nodes_modified[start_id].getAdjacent();
+    int next_id = voronoi_nodes_modified[start_id].getAdjacent(gen_);
     int backtrack_id = -1;
     while (next_id != end_id) {
         passby_nodes.push_back(next_id);
@@ -315,7 +315,7 @@ std::vector<int> VoronoiGraph::getPassbyNodes(int start_id, int end_id)
             } while (voronoi_nodes_modified[next_id].hasAdjacent() == false);
         }
 
-        next_id = voronoi_nodes_modified[next_id].getAdjacent();
+        next_id = voronoi_nodes_modified[next_id].getAdjacent(gen_);
     }
 
     passby_nodes.push_back(end_id);

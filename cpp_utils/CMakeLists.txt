@@ -47,6 +47,7 @@ set(path_library_name path_planner)
 add_library(${path_library_name} SHARED
   src/${path_library_name}/navfn.cpp
   src/${path_library_name}/navfn_planner_with_cone.cpp
+  src/${path_library_name}/intention_constraint.cpp
   )
 
 set(teb_local_planner_name teb_local_planner)

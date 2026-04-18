@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "path_planner/navfn.hpp"
+#include "path_planner/intention_constraint.hpp"
 #include "map_loader/costmap_2d.hpp"
 #include "utils.h"
 
@@ -30,10 +31,11 @@ public:
   ~NavfnPlannerWithCone();
 
   /**
-   * @brief Configuring path planner based on yaml file
+   * @brief Configuring path planner based on yaml file and intention domain type
    * @param yaml_filename Path to the yaml file
+   * @param intention_domain_type Intention domain type from gym
    */
-  void configure(nav2_costmap_2d::Costmap2D * costmap, const std::string & yaml_filename);
+  void configure(nav2_costmap_2d::Costmap2D * costmap, const std::string & yaml_filename, const std::string & intention_domain_type);
 
   /**
    * @brief Creating a plan from start and goal poses
@@ -45,7 +47,18 @@ public:
     const Point & start,
     const Point & goal);
 
-  void loadCone(std::vector<float> center, std::vector<float> current_pos, float radius, bool is_enabled = true);
+  /**
+   * @brief Load intention domain constraint for path planning
+   * @param cur_pos Current robot position [x, y]
+   * @param robot_direction Normalized direction vector [dx, dy]
+   * @param domain_params Shape-specific parameters (e.g., [depth, radius] for cone; [S, r, w0, v0] for corridor)
+   * @param is_enabled Whether to enable the constraint
+   */
+  void loadIntentionDomain(
+    std::vector<float> cur_pos,
+    std::vector<float> robot_direction,
+    std::vector<float> domain_params,
+    bool is_enabled = true);
 
   float getInflatedDistance();
 
@@ -155,18 +168,22 @@ protected:
   bool use_astar_;
 
   // ======================================================================================== //
-  // Cone related parameters
+  // Intention domain constraint (generic, supports multiple shapes)
   bool enabled_;
-  std::vector<float> center_; // Center of the cone
-  std::vector<float> cur_pos_; // cur_pos of the robot (get from predictor server)
-  float radius_; // Radius of the cone
+  std::unique_ptr<intention_constraint::BaseIntentionConstraint> constraint_;
+  std::string intention_domain_type_;
+
+  // Cached constraint parameters for rendering
+  std::vector<float> cur_pos_;
+  std::vector<float> robot_direction_;
+  std::vector<float> domain_params_;
+
   float inflated_distance_;
   double resolution_{0};
 
   std::unique_ptr<nav2_costmap_2d::Costmap2D> costmap_for_plan_; // a copy
 
-  void loadConeToMap(float robot_x, float robot_y);
-  void setEdgeCost(float wx0, float wy0, float wx1, float wy1, unsigned char cost_value);
+  void loadDomainToMap();
 };
 
 }  // namespace nav2_navfn_planner_with_cone

@@ -73,8 +73,10 @@ PYBIND11_MODULE(cpp_utils, m) {
         .def_property("data", &Costmap2D::getCharMapToPy, nullptr)
         .def("getCost", static_cast<unsigned char (Costmap2D::*)(unsigned int, unsigned int) const>(&Costmap2D::getCost), "Get the cost of a cell in the costmap", py::arg("mx"), py::arg("my"))
         .def("getCostByIndex", static_cast<unsigned char (Costmap2D::*)(unsigned int) const>(&Costmap2D::getCost), "Get the cost of a cell in the costmap by index", py::arg("index"))
-        .def("getPartialCostmap", &Costmap2D::getPartialCostmap, "Get a partial costmap", py::arg("wx"), py::arg("wy"), py::arg("wx_size"), py::arg("wy_size"));
-    
+        .def("getPartialCostmap", &Costmap2D::getPartialCostmap, "Get a partial costmap", py::arg("wx"), py::arg("wy"), py::arg("wx_size"), py::arg("wy_size"))
+        .def("setCost", &Costmap2D::setCost, "Set the cost of a cell in the costmap", py::arg("mx"), py::arg("my"), py::arg("cost"))
+        .def("copy", [](const Costmap2D &self) { return Costmap2D(self); });
+
     // Bind the point data structure
     py::class_<Point>(m, "Point")
         .def(py::init<float, float>())
@@ -90,12 +92,13 @@ PYBIND11_MODULE(cpp_utils, m) {
     py::class_<NavfnPlannerWithCone, std::shared_ptr<NavfnPlannerWithCone>>(m, "PathPlanner")
         .def(py::init())
         .def_property("inflated_distance", &NavfnPlannerWithCone::getInflatedDistance, nullptr)
-        .def("configure", &NavfnPlannerWithCone::configure, 
-            "Configure the path planner based on the yaml file", py::arg("costmap"), py::arg("yaml_filename"))
-        .def("plan", &NavfnPlannerWithCone::createPlan, 
+        .def("configure", &NavfnPlannerWithCone::configure,
+            "Configure the path planner based on the yaml file", py::arg("costmap"), py::arg("yaml_filename"), py::arg("intention_domain_type"))
+        .def("plan", &NavfnPlannerWithCone::createPlan,
             "Create a plan from start and goal poses", py::arg("start"), py::arg("goal"))
-        .def("loadCone", &NavfnPlannerWithCone::loadCone, 
-            "Load the cone into the map", py::arg("cone_center"), py::arg("current_pos"), py::arg("radius"), py::arg("is_enabled"));
+        .def("loadIntentionDomain", &NavfnPlannerWithCone::loadIntentionDomain,
+            "Load intention domain constraint",
+            py::arg("cur_pos"), py::arg("robot_direction"), py::arg("domain_params"), py::arg("is_enabled") = true);
 
     // Bind the loadMap function
     m.def("loadMap", &loadMap, "Load map from YAML into OccupancyGrid", py::arg("yaml_file"));
@@ -136,9 +139,11 @@ PYBIND11_MODULE(cpp_utils, m) {
     // Bind the Trajectory generator class
     py::class_<TrajGenerator, std::shared_ptr<TrajGenerator>>(m, "TrajGenerator")
         .def(py::init())
-        .def("initialize", &TrajGenerator::initialize, 
+        .def("initialize", &TrajGenerator::initialize,
             "Initialize the trajectory generator based on the yaml file", py::arg("map_file"), py::arg("planner_file"), py::arg("path_resolution"), py::arg("time_resolution"))
-        .def("sampleTraj", &TrajGenerator::sampleTraj, 
+        .def("setSeed", &TrajGenerator::setSeed,
+            "Set random seed for reproducible trajectory generation", py::arg("seed"))
+        .def("sampleTraj", &TrajGenerator::sampleTraj,
             "Sample a trajectory between two points", py::arg("start"), py::arg("end"))
         .def("sampleTrajLoop", &TrajGenerator::sampleTrajLoop, 
             "Sample a trajectory between two points", py::arg("start"), py::arg("end"))

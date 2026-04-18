@@ -51,7 +51,7 @@ public:
 
     void resetProbability();
 
-    int getAdjacent();  // Get a random adjacent node based on the probability
+    int getAdjacent(std::mt19937& gen);  // Get a random adjacent node based on the probability
 
     std::vector<int> getNeighbors() const {
         std::vector<int> neighbors;

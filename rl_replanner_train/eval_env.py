@@ -3,18 +3,7 @@ import time
 import numpy as np
 from typing import Dict, Union
 import math
-import copy
-import gymnasium as gym
-from gymnasium import spaces
 
-from rl_replanner_train.action_converter import ActionConverter
-import cpp_utils
-
-# render modules    
-import psutil
-import rclpy
-from rl_replanner_train.render.rosRender import rosRender, generate_rviz_launch_description
-from launch import LaunchService
 from rl_replanner_train.base_env import BaseEnv
 
 
@@ -47,8 +36,8 @@ class EvalEnv(BaseEnv):
             render_real_time_factor=1.0,
             use_generator = False,
             eval_ordered=False,  # if True, the evaluation will be in order of the eval_path_directory
-            record_heatmap=False, # if True, record replan positions for heatmap generation
-        ):
+            intention_domain_type='cone',
+            ):
         # addtional parameters
         self.eval_path_directory = eval_path_directory
         self.eval_ordered = eval_ordered
@@ -68,6 +57,7 @@ class EvalEnv(BaseEnv):
             use_generator = use_generator,
             render_mode=render_mode,
             render_real_time_factor=render_real_time_factor,
+            intention_domain_type=intention_domain_type,
         )
     
     def _init_human_traj(self):
@@ -119,8 +109,8 @@ class EvalEnv(BaseEnv):
             # evaluate in order
             self.traj_index = (self.traj_index + 1) % len(self.replay_trajectories)
         else:
-            # Reset the trajectory index
-            self.traj_index = np.random.randint(0, len(self.replay_trajectories))
+            # Reset the trajectory index using gymnasium's random number generator
+            self.traj_index = self.np_random.integers(0, len(self.replay_trajectories))
 
         # Use pre-loaded trajectory data instead of reading from file
         self.current_human_traj = self.replay_trajectories[self.traj_index]
@@ -143,7 +133,7 @@ class EvalEnv(BaseEnv):
     # when evaluating, if the robot action is invalid, current episode will be terminated
     def _interact(self):
         # This function is used to interact with the environment
-        self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]] 
+        self.cur_position = [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]]
 
         terminated = False
 
@@ -153,21 +143,41 @@ class EvalEnv(BaseEnv):
 
         if self.current_action[0] == LOCAL_GOAL:
             # rescale to the map size
-            self.current_action[1][0] = self.current_action[1][0] * self.obser_width
-            self.current_action[1][1] = self.current_action[1][1] * self.obser_width
-
+            self.current_action = (
+                self.current_action[0],
+                self.intention_domain.rescale_params(self.current_action[1], self.obser_width)
+            )
+            
             self.angles.append(math.degrees(math.atan2(self.current_action[1][1], self.current_action[1][0])) * 2)
 
-            if self._get_predicted_goal(depth=self.current_action[1][0], radius=self.current_action[1][1]):
-                self.path_planner.loadCone(cone_center=self.cone_center, 
-                                            current_pos=self.cur_position,
-                                            radius=self.current_action[1][1],
-                                            is_enabled=True)
-                if not self._plan_robot_path([self.cur_position[0], self.cur_position[1]], self.pred_goal):
+            # Configure intention domain with current state
+            self.intention_domain.configure(
+                action_params=self.current_action[1],
+                cur_pos=self.cur_position,
+                robot_direction=self.robot_direction
+            )
+
+            # Use intention domain to get predicted goal (no need to pass configured params)
+            res = self.intention_domain.get_predicted_goal(
+                global_goal=self.global_goal,
+                collision_checker=self._isCollided,
+                map_resolution=self.map_resolution
+            )
+
+            if res is not None:
+                pred_goal, _ = res
+                # Load intention domain constraint into path planner
+                self.path_planner.loadIntentionDomain(
+                    cur_pos=self.cur_position,
+                    robot_direction=self.robot_direction.tolist(),
+                    domain_params=self.current_action[1],
+                    is_enabled=True
+                )
+                if not self._plan_robot_path([self.cur_position[0], self.cur_position[1]], pred_goal):
                     # terminated = True
                     self.fail_num += 1
                 # use point on robot path as the start point
-                # self._plan_robot_path([self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]], self.pred_goal)
+                # self._plan_robot_path([self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]], pred_goal)
             else:
                 # terminated = True
                 self.fail_num += 1

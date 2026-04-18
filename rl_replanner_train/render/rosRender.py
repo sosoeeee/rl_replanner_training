@@ -1,5 +1,6 @@
 import math
 import threading
+import numpy as np
 
 import cpp_utils
 from rl_replanner_train.render.costmap_2d import PyCostmap2D
@@ -73,26 +74,26 @@ class rosRender():
         self.marker.color.g = 1.0
         self.marker.color.b = 0.0
 
-        self.cone_marker_pub = self.node.create_publisher(Marker, 'cone_marker', 10)
-        self.cone_marker = Marker()
-        self.cone_marker.header.frame_id = self.global_frame_
-        self.cone_marker.header.stamp = self.node.get_clock().now().to_msg()
-        self.cone_marker.ns = "cone"
-        self.cone_marker.id = 0
-        self.cone_marker.type = Marker.LINE_LIST # Use LINE_LIST to draw a triangle
-        self.cone_marker.action = Marker.ADD
-        self.cone_marker.pose.position.z = 0.0
-        self.cone_marker.pose.orientation.x = 0.0
-        self.cone_marker.pose.orientation.y = 0.0
-        self.cone_marker.pose.orientation.z = 0.0
-        self.cone_marker.pose.orientation.w = 1.0
-        self.cone_marker.scale.x = 0.03  # Thickness of the lines
-        self.cone_marker.scale.y = 0.03  # Thickness of the lines
-        self.cone_marker.scale.z = 0.0 
-        self.cone_marker.color.a = 0.8  # Alpha (transparency)
-        self.cone_marker.color.r = 0.0
-        self.cone_marker.color.g = 1.0
-        self.cone_marker.color.b = 1.0
+        self.domain_marker_pub = self.node.create_publisher(Marker, 'domain_marker', 10)
+        self.domain_marker = Marker()
+        self.domain_marker.header.frame_id = self.global_frame_
+        self.domain_marker.header.stamp = self.node.get_clock().now().to_msg()
+        self.domain_marker.ns = "intention_domain"
+        self.domain_marker.id = 0
+        self.domain_marker.type = Marker.LINE_STRIP  # Use LINE_STRIP for closed polygon visualization
+        self.domain_marker.action = Marker.ADD
+        self.domain_marker.pose.position.z = 0.0
+        self.domain_marker.pose.orientation.x = 0.0
+        self.domain_marker.pose.orientation.y = 0.0
+        self.domain_marker.pose.orientation.z = 0.0
+        self.domain_marker.pose.orientation.w = 1.0
+        self.domain_marker.scale.x = 0.03  # Thickness of the lines
+        self.domain_marker.scale.y = 0.03  # Thickness of the lines
+        self.domain_marker.scale.z = 0.0
+        self.domain_marker.color.a = 0.8  # Alpha (transparency)
+        self.domain_marker.color.r = 0.0
+        self.domain_marker.color.g = 1.0
+        self.domain_marker.color.b = 1.0
 
         self.partial_map_pub = self.node.create_publisher(OccupancyGrid, 'obs_partial_map', 10)
         self.partial_map = PyCostmap2D(self.node)
@@ -118,29 +119,46 @@ class rosRender():
     def pub_global_map(self):
         self.global_map_pub.publish(self.global_map.getOccupancyGrid())
     
-    def pub_global_map_with_cone(self, cur_pose: list[float], cone_center: list[float], cone_radius: float, inflated_distance: float):
-        map_with_cone = self.global_map.load_cone_to_map(cur_pose[0], cur_pose[1], cone_center, cone_radius, inflated_distance)
-        self.global_map_pub.publish(map_with_cone.getOccupancyGrid())
+    def pub_global_map_with_domain(
+        self,
+        intention_domain_obj,
+        inflated_distance: float
+    ):
+        """
+        Publish global costmap with intention domain marked as obstacles.
 
-        height = math.sqrt((cone_center[0] - cur_pose[0]) ** 2 + (cone_center[1] - cur_pose[1]) ** 2)
-        height_dirc = [(cone_center[0] - cur_pose[0]) / height, (cone_center[1] - cur_pose[1]) / height]
+        Uses the generic bounding box scan method to ensure 100% physical alignment
+        between Python rendering and C++ path planner.
 
-        p_ = Point()
-        p_.x = cur_pose[0]
-        p_.y = cur_pose[1]
-        vertices = [p_]
-        for i in range(2):
-            p_ = Point()
-            p_.x = cone_center[0] + cone_radius * height_dirc[1] * math.cos(i * math.pi)
-            p_.y = cone_center[1] - cone_radius * height_dirc[0] * math.cos(i * math.pi)
-            vertices.append(p_)
-        
-        self.cone_marker.points.clear()
-        for i in range(3):
-            self.cone_marker.points.append(vertices[i])
-            self.cone_marker.points.append(vertices[(i + 1) % 3])
+        Args
+        ----
+            intention_domain_obj: Instance of BaseIntentionDomain
+            action_params (list[float]): Shape-specific parameters
+            cur_pos (list[float]): Robot's current position [x, y]
+            robot_direction (np.ndarray): Normalized direction vector [dx, dy]
+            inflated_distance (float): Inflation margin for robot safety
 
-        self.cone_marker_pub.publish(self.cone_marker)
+        """
+        # Step 1: Render costmap using bounding box scan + spatial predicate
+        map_with_domain = self.global_map.load_domain_to_map(
+            intention_domain_obj=intention_domain_obj,
+            inflated_distance=inflated_distance
+        )
+        self.global_map_pub.publish(map_with_domain.getOccupancyGrid())
+
+        # Step 2: Render domain boundary marker using visualization polygon
+        polygon_vertices = intention_domain_obj.get_visualization_polygon()
+
+        # Convert to ROS Point messages for LINE_STRIP marker
+        self.domain_marker.points.clear()
+        for vertex in polygon_vertices:
+            p = Point()
+            p.x = vertex[0]
+            p.y = vertex[1]
+            p.z = 0.0
+            self.domain_marker.points.append(p)
+
+        self.domain_marker_pub.publish(self.domain_marker)
 
     def pub_partial_map(self, map: cpp_utils.Costmap2D_cpp):
         self.partial_map.loadCostmapFromCostmapCpp(map)

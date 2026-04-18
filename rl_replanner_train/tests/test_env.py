@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import sys
 import os
+import time
 
 # Add the workspace path to the PYTHONPATH
 workspace_path = os.path.join(os.path.dirname(__file__) + "/../..")
@@ -33,7 +34,7 @@ speed_buffer_length=4
 env = TrainEnv(
     reward_weight=reward_weight,
     # map_setting_file='./rl_replanner_train/maps/sim_maps/turtlebot3_world.yaml',
-    map_setting_file='./rl_replanner_train/maps/sim_maps/room.yaml',
+    map_setting_file='./rl_replanner_train/maps/sim_maps/circle_clutter.yaml',
     path_planner_setting_file='./cpp_utils/include/path_planner/planner_setting.yaml',
     traj_planner_setting_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
     render_mode='ros',
@@ -44,9 +45,10 @@ env = TrainEnv(
     robot_prediction_length=robot_prediction_length,
     speed_buffer_length=speed_buffer_length,
     use_generator=True,  # Set to True if you want to use the generator
+    intention_domain_type="ellipse",  # Options: "cone", "ellipse", "rectangle", "corridor"
 )
 
-obs, info = env.reset()
+obs, info = env.reset(seed=1117)
 
 print("Observation space:", env.observation_space)
 print("Shape of observation space:", env.observation_space.shape)
@@ -57,11 +59,13 @@ total_reward = 0
 while True:
     action = env.action_space.sample()
 
-    # print('Action:', action)
+    print('Action:', action)
+    # action['params1'][0] = 0.01
+    # action['params1'][1] = 0.01
     # action = {
-    #     'id': 0,
+    #     'id': 1,
     #     'params0': [],
-    #     'params1': [0.0, 0.0],
+    #     'params1': [0.1, 0.2, 0.5],
     # }
     # print('Action:', action)
 
@@ -73,6 +77,8 @@ while True:
     # print('Reward:', reward)W
     # print('Done:', terminated)
     # print('Info:', info)
+
+    # time.sleep(0.5)  # Sleep for a short time to slow down the loop for better visualization
 
     if terminated:
         print("Episode finished after {} timesteps".format(step + 1))

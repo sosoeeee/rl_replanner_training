@@ -9,6 +9,7 @@ import gymnasium as gym
 from gymnasium import spaces
 
 from rl_replanner_train.action_converter import ActionConverter
+from rl_replanner_train.intention_domain import IntentionDomainFactory
 import cpp_utils
 
 # render modules    
@@ -43,6 +44,7 @@ class BaseEnv(gym.Env):
             use_generator = False,
             render_mode=None, 
             render_real_time_factor=1.0,
+            intention_domain_type='cone',
         ):
         
         ################################################################################################################################
@@ -64,13 +66,14 @@ class BaseEnv(gym.Env):
         self.structure_obs = None
 
         # define action space
+        # Initialize intention domain (default: cone)
+        self.intention_domain = IntentionDomainFactory.create(intention_domain_type)
+        domain_params = self.intention_domain.get_action_space_setting()
+
         parameterized_action_set = {
             DO_NOTHING: {},
             # GLOBAL_GOAL: {},
-            LOCAL_GOAL: {
-                'depth': [1e-3, np.sqrt(2)/2],
-                'radius': [1e-3, np.sqrt(2)/2]
-            }
+            LOCAL_GOAL: domain_params
         }
         self.action_converter = ActionConverter(parameterized_action_set)
         self.action_space = self.action_converter.gym_space_setting()
@@ -79,30 +82,6 @@ class BaseEnv(gym.Env):
 
         # define reward
         self.reward_weight = reward_weight
-        if "replan_punishment" in self.reward_weight.keys():
-            if ("reg_angle_factor_a" in self.reward_weight.keys()) \
-                and ("reg_angle_factor_b" in self.reward_weight.keys()) \
-                and ("reg_angle_factor_k" in self.reward_weight.keys())\
-                and ("reg_depth_factor_b" not in self.reward_weight.keys()):
-                # at start the normed angle is 1/2
-                self.angle_c_ = (1 / 2) ** (self.reward_weight['reg_angle_factor_b']) * (self.reward_weight["replan_punishment"] - self.reward_weight["reg_angle_factor_a"] - self.reward_weight["reg_angle_factor_k"] * np.log(1/2)) / np.log(1/2)
-            elif ("reg_angle_factor_a" not in self.reward_weight.keys()) \
-                and ("reg_angle_factor_b" not in self.reward_weight.keys()) \
-                and ("reg_angle_factor_k" not in self.reward_weight.keys())\
-                and ("reg_depth_factor_b" in self.reward_weight.keys() and 'reg_depth_init_portion' in self.reward_weight.keys()):
-                # at start the normed depth is 1/init_portion (depend to the action space rescale)
-                init_portion = self.reward_weight['reg_depth_init_portion']
-                self.depth_c_ = (1 / init_portion) ** (self.reward_weight['reg_depth_factor_b']) * (self.reward_weight["replan_punishment"] / np.log(init_portion))
-            elif ("reg_angle_factor_a" in self.reward_weight.keys()) \
-                and ("reg_angle_factor_b" in self.reward_weight.keys()) \
-                and ("reg_angle_factor_k" in self.reward_weight.keys())\
-                and ("reg_depth_factor_b" in self.reward_weight.keys() and 'reg_depth_init_portion' in self.reward_weight.keys()):
-                # at start the normed angle is 1/2 and depth is 1/init_portion
-                init_portion = self.reward_weight['reg_depth_init_portion']
-                self.angle_c_ = (1 / 2) ** (self.reward_weight['reg_angle_factor_b']) * ((self.reward_weight["replan_punishment"] / 2 - self.reward_weight["reg_angle_factor_a"] - self.reward_weight["reg_angle_factor_k"] * np.log(1/2)) / np.log(1/2))
-                self.depth_c_ = (1 / init_portion) ** (self.reward_weight['reg_depth_factor_b']) * ((self.reward_weight["replan_punishment"] / 2) / np.log(init_portion))
-            else:
-                raise ValueError("Invalid reward weight setting. No reg reward function to calculate the replan punishment.")
 
         self.decay_factor = self.reward_weight['decay_factor'] # task reward decay factor
         self.exp_factor = self.reward_weight['exp_factor']     # when error is 0.5 (which is half length of edge of partial square map), the approximate reward is 0.3
@@ -146,12 +125,10 @@ class BaseEnv(gym.Env):
         
         # load planner
         self.path_planner = cpp_utils.PathPlanner()
-        self.path_planner.configure(self.global_costmap, path_planner_setting_file)
+        self.path_planner.configure(self.global_costmap, path_planner_setting_file, intention_domain_type)
 
         # temporary variables for action
         self.cur_position = None
-        self.cone_center = None
-        self.pred_goal = None
         self.robot_direction = None
 
         ################################################################################################################################
@@ -315,20 +292,28 @@ class BaseEnv(gym.Env):
     # after calling _get_obs, the flag 'is_obs_ready_' will be set to false
     def _get_obs(self, is_terminal=False):
         self.structure_obs = {}
-        if not is_terminal:
-            self._get_robot_path()                              # for reward calculation
-            self.structure_obs["robot_path"] = copy.deepcopy(self.robot_path_buffer)
-            self.structure_obs["human_path"] = self.human_path_buffer
-            self.structure_obs["partial_map"] = self._get_partial_map()
-            self.structure_obs["d_goal"] = self.global_goal
-            self.structure_obs["last_action"] = int(self.current_action[0])
-            self._regularization()
-        else:
-            self.structure_obs["partial_map"] = np.zeros((1, self.window_width_pixel, self.window_width_pixel), dtype=np.uint8)
-            self.structure_obs["human_path"] = np.zeros((2 * self.human_history_length,), dtype=np.float32)
-            self.structure_obs["robot_path"] = np.zeros((2 * self.robot_prediction_length,), dtype=np.float32)
-            self.structure_obs["d_goal"] = np.zeros((2,), dtype=np.float32)
-            self.structure_obs["last_action"] = int(self.current_action[0])
+        self._get_robot_path()                              # for reward calculation
+        self.structure_obs["robot_path"] = copy.deepcopy(self.robot_path_buffer)
+        self.structure_obs["human_path"] = self.human_path_buffer
+        self.structure_obs["partial_map"] = self._get_partial_map()
+        self.structure_obs["d_goal"] = self.global_goal
+        self.structure_obs["last_action"] = int(self.current_action[0])
+        self._regularization()
+
+        # if not is_terminal:
+        #     self._get_robot_path()                              # for reward calculation
+        #     self.structure_obs["robot_path"] = copy.deepcopy(self.robot_path_buffer)
+        #     self.structure_obs["human_path"] = self.human_path_buffer
+        #     self.structure_obs["partial_map"] = self._get_partial_map()
+        #     self.structure_obs["d_goal"] = self.global_goal
+        #     self.structure_obs["last_action"] = int(self.current_action[0])
+        #     self._regularization()
+        # else:
+        #     self.structure_obs["partial_map"] = np.zeros((1, self.window_width_pixel, self.window_width_pixel), dtype=np.uint8)
+        #     self.structure_obs["human_path"] = np.zeros((2 * self.human_history_length,), dtype=np.float32)
+        #     self.structure_obs["robot_path"] = np.zeros((2 * self.robot_prediction_length,), dtype=np.float32)
+        #     self.structure_obs["d_goal"] = np.zeros((2,), dtype=np.float32)
+        #     self.structure_obs["last_action"] = int(self.current_action[0])
 
         return self.structure_obs
     
@@ -557,83 +542,7 @@ class BaseEnv(gym.Env):
             print("self.observation_space['robot_path']: ", self.observation_space["robot_path"].shape)
             print("self.observation_space['d_goal']: ", self.observation_space["d_goal"].shape)
             raise e
-        
-    def _get_predicted_goal(self, depth, radius):
-        # load cone from robot's perspective
-        # self.cur_position = [self.current_robot_path[self.robot_closest_idx][0], self.current_robot_path[self.robot_closest_idx][1]]
 
-        # debug 
-        # these two positions are not the same !!!
-        # print("current position from idx: ", self.cur_position)
-        # print("current position from buffer: ", [self.human_path_buffer[-1][0], self.human_path_buffer[-1][1]])
-
-        self.cone_center = [
-            self.cur_position[0] + depth * self.robot_direction[0],
-            self.cur_position[1] + depth * self.robot_direction[1]
-        ]
-        vertices = []
-        for i in range(2):
-            x = self.cone_center[0] + radius * self.robot_direction[1] * math.cos(i * math.pi)
-            y = self.cone_center[1] - radius * self.robot_direction[0] * math.cos(i * math.pi)
-            vertices.append({'x': x, 'y': y})
-
-        # Intersection of two perpendicular lines
-        global_x = self.global_goal[0]
-        global_y = self.global_goal[1]
-        inter_x = ((global_y - vertices[0]['y']) * (vertices[1]['y'] - vertices[0]['y']) * (vertices[1]['x'] - vertices[0]['x']) +
-                   global_x * (vertices[1]['x'] - vertices[0]['x']) * (vertices[1]['x'] - vertices[0]['x']) + 
-                   vertices[0]['x'] * (vertices[1]['y'] - vertices[0]['y']) * (vertices[1]['y'] - vertices[0]['y'])) / ((vertices[1]['y'] - vertices[0]['y']) * (vertices[1]['y'] - vertices[0]['y']) + (vertices[1]['x'] - vertices[0]['x']) * (vertices[1]['x'] - vertices[0]['x']))
-        inter_y = (vertices[0]['x'] - vertices[1]['x']) / (vertices[1]['y'] - vertices[0]['y']) * (inter_x - global_x) + global_y
-        
-        # select the nearest point to the global goal from the base edge of cone
-        vector_0 = np.array([global_x - vertices[0]['x'], global_y - vertices[0]['y']])
-        module_0 = vector_0.dot(vector_0) ** 0.5
-        vector_1 = np.array([global_x - vertices[1]['x'], global_y - vertices[1]['y']])
-        module_1 = vector_1.dot(vector_1) ** 0.5
-        base_direction = np.array([self.robot_direction[1], -self.robot_direction[0]])
-        cos_0 = vector_0.dot(base_direction) / module_0
-        cos_1 = vector_1.dot(base_direction) / module_1
-
-        cone_center_rename = {'x': self.cone_center[0], 'y': self.cone_center[1]}
-
-        try:
-            if cos_0 * cos_1 > 0:
-                # unilateral
-                if abs(cos_0) < abs(cos_1):
-                    # the vertex 0 is close to global goal
-                    # pred_position = self._avoidObstacles(vertices[0], vertices[1], vertices[0])
-                    pred_position = self._avoidObstacles_from_center(cone_center_rename, vertices[0], radius)
-                else:
-                    # the vertex 1 is close to global goal
-                    # pred_position = self._avoidObstacles(vertices[0], vertices[1], vertices[1])
-                    pred_position = self._avoidObstacles_from_center(cone_center_rename, vertices[1], radius)
-            else:
-                # bilateral
-                # pred_position = self._avoidObstacles(vertices[0], vertices[1], {'x':inter_x, 'y':inter_y})
-                pred_position = self._avoidObstacles_from_center(cone_center_rename, {'x':inter_x, 'y':inter_y}, radius)
-
-        except Exception as e:
-            # print('[Predictor] Fail to get the predicted goal: %s' % str(e))
-            return False
-        
-        if pred_position is None:
-             return False
-
-        # angle
-        # angle_depth = (1 - math.exp(-self.pred_decay_factor * depth)) / self.pred_decay_factor
-        # avr_angle_vel = np.mean(np.array(self.actual_states.w))
-        # avr_angle_vel = avr_angle_vel / abs(avr_angle_vel)
-        # pred_theta = self.actual_states.theta[-1] + angle_depth * avr_angle_vel
-
-        # Becasue the global planner, Navfn, doesn't consider the orientation of the robot along the path 
-        # and the parameter "use_final_approach_orientation" is set to true,
-        # the last pose of planned path is always set to the approach orientation. 
-        # So we don't need to consider the orientation of the predict goal.
-
-        self.pred_goal = copy.copy(pred_position)
-
-        return True
-    
     def _isCollided(self, point):
         if (point[0] < self.global_costmap.origin_x or point[1] < self.global_costmap.origin_y):
             return True
@@ -646,104 +555,6 @@ class BaseEnv(gym.Env):
         else:
             return True
 
-    # Return the collision-free point closest to the target on the line segment from vertex_0 to vertex_1
-    def _avoidObstacles(self, vertex_0, vertex_1, target):
-        module = ((vertex_1['x'] - vertex_0['x']) ** 2 + (vertex_1['y'] - vertex_0['y']) ** 2) ** 0.5
-        if target['x'] == vertex_0['x'] and target['y'] == vertex_0['y']:
-            dir_x = (vertex_1['x'] - vertex_0['x']) / module
-            dir_y = (vertex_1['y'] - vertex_0['y']) / module
-            distance = 0
-            p_ = [target['x'] + distance * dir_x, target['y'] + distance * dir_y]
-            while self._isCollided(p_):
-                distance += self.map_resolution
-                if distance > module:
-                    # print('[Predictor] The lien segment is in the obstacles')
-                    return None
-                else:
-                    p_ = [target['x'] + distance * dir_x, target['y'] + distance * dir_y]
-            return p_
-        elif target['x'] == vertex_1['x'] and target['y'] == vertex_1['y']:
-            dir_x = (vertex_0['x'] - vertex_1['x']) / module
-            dir_y = (vertex_0['y'] - vertex_1['y']) / module
-            distance = 0
-            p_ = [target['x'] + distance * dir_x, target['y'] + distance * dir_y]
-            while self._isCollided(p_):
-                distance += self.map_resolution
-                if distance > module:
-                    # print('[Predictor] The lien segment is in the obstacles')
-                    return None
-                else:
-                    p_ = [target['x'] + distance * dir_x, target['y'] + distance * dir_y]
-            return p_
-        else:
-            dir_x = (vertex_0['x'] - vertex_1['x']) / module
-            dir_y = (vertex_0['y'] - vertex_1['y']) / module
-            distance = 0
-            module_0 = ((target['x'] - vertex_0['x']) ** 2 + (target['y'] - vertex_0['y']) ** 2) ** 0.5
-            module_1 = module - module_0
-            p_0 = [target['x'] + distance * dir_x, target['y'] + distance * dir_y]
-            p_1 = p_0
-            while True:
-                if distance <= module_0 and not self._isCollided(p_0):
-                    return p_0
-                if distance <= module_1 and not self._isCollided(p_1):
-                    return p_1
-                distance += self.map_resolution
-                if distance > module_0 and distance > module_1:
-                    # print('[Predictor] The lien segment is in the obstacles')
-                    return None
-                elif distance > module_0 and distance <= module_1:
-                    p_1 = [target['x'] - distance * dir_x, target['y'] - distance * dir_y]
-                elif distance <= module_0 and distance > module_1:
-                    p_0 = [target['x'] + distance * dir_x, target['y'] + distance * dir_y]
-                else:
-                    p_0 = [target['x'] + distance * dir_x, target['y'] + distance * dir_y]
-                    p_1 = [target['x'] - distance * dir_x, target['y'] - distance * dir_y]
-
-    # Return the collision-free point closest to the vertex_1 on the line segment from vertex_0 to vertex_1
-    def _avoidObstacles_from_center(self, vertex_0, vertex_1, max_distance):
-        module = ((vertex_1['x'] - vertex_0['x']) ** 2 + (vertex_1['y'] - vertex_0['y']) ** 2) ** 0.5
-        dir_x = (vertex_1['x'] - vertex_0['x']) / module
-        dir_y = (vertex_1['y'] - vertex_0['y']) / module
-        distance = 0
-        p_ = [vertex_0['x'] + distance * dir_x, vertex_0['y'] + distance * dir_y]
-
-        # if the vertex_0 is in the obstacles, get out of the obstacles first
-        while self._isCollided(p_):
-            distance += self.map_resolution
-            if distance > max_distance:
-
-                # search the another direction until the max_distance
-                dir_x = -dir_x
-                dir_y = -dir_y
-                distance = self.map_resolution
-                p_ = [vertex_0['x'] + distance * dir_x, vertex_0['y'] + distance * dir_y]
-
-                while distance < max_distance:
-                    if not self._isCollided(p_): # return the first free-occupiable point in the opposite direction
-                        return p_
-                    else:
-                        distance += self.map_resolution
-                        p_ = [vertex_0['x'] + distance * dir_x, vertex_0['y'] + distance * dir_y]
-                    
-                return None
-            else:
-                p_ = [vertex_0['x'] + distance * dir_x, vertex_0['y'] + distance * dir_y]
-
-        # then move along the line segment until the vertex_1
-        while distance < max_distance:
-            distance += self.map_resolution
-            p_ = [vertex_0['x'] + distance * dir_x, vertex_0['y'] + distance * dir_y]
-            if not self._isCollided(p_):
-                continue
-            else:
-                # if the point is in the obstacles, return the last point
-                return [vertex_0['x'] + (distance - self.map_resolution) * dir_x, 
-                        vertex_0['y'] + (distance - self.map_resolution) * dir_y]
-
-        return [vertex_0['x'] + max_distance * dir_x, 
-                vertex_0['y'] + max_distance * dir_y]
-
     def render(self):
         if self.render_mode == "ros":
             # observation
@@ -754,9 +565,10 @@ class BaseEnv(gym.Env):
 
             # simulation setup
             if self.current_action[0] == LOCAL_GOAL:
-                self.render_ros.pub_global_map_with_cone(self.cur_position, self.cone_center, 
-                                                         self.current_action[1][1], 
-                                                         inflated_distance=self.inflated_distance)
+                self.render_ros.pub_global_map_with_domain(
+                    intention_domain_obj=self.intention_domain,
+                    inflated_distance=self.inflated_distance
+                )
             else:
                 self.render_ros.pub_global_map()
             

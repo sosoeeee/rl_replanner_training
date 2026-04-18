@@ -1,4 +1,5 @@
 #include "path_planner/navfn_planner_with_cone.hpp"
+#include "path_planner/intention_constraint.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -8,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "path_planner/navfn.hpp"
 #include "yaml-cpp/yaml.h"
@@ -28,7 +30,7 @@ NavfnPlannerWithCone::~NavfnPlannerWithCone()
 }
 
 void
-NavfnPlannerWithCone::configure(nav2_costmap_2d::Costmap2D * costmap, const std::string & yaml_filename)
+NavfnPlannerWithCone::configure(nav2_costmap_2d::Costmap2D * costmap, const std::string & yaml_filename, const std::string & intention_domain_type)
 {
   costmap_ = costmap;
 
@@ -45,12 +47,16 @@ NavfnPlannerWithCone::configure(nav2_costmap_2d::Costmap2D * costmap, const std:
   use_astar_ = nav2_map_server::yaml_get_value<bool>(doc, "use_astar");
   allow_unknown_ = nav2_map_server::yaml_get_value<bool>(doc, "allow_unknown");
   inflated_distance_ = nav2_map_server::yaml_get_value<double>(doc, "inflated_distance");
+  intention_domain_type_ = intention_domain_type; // 直接使用传入参数
   // use_final_approach_orientation_ = nav2_map_server::yaml_get_value<bool>(doc, "use_final_approach_orientation");
 
   // Create a planner based on the new costmap size
   planner_ = std::make_unique<NavFn>(
     costmap_->getSizeInCellsX(),
     costmap_->getSizeInCellsY());
+
+  // Initialize intention domain constraint (default: cone shape)
+  constraint_ = intention_constraint::ConstraintFactory::create(intention_domain_type_);
 }
 
 std::vector<Point> NavfnPlannerWithCone::createPlan(
@@ -133,8 +139,11 @@ NavfnPlannerWithCone::makePlan(
   try {
     if (enabled_){
       enabled_ = false;
-      loadConeToMap(cur_pos_[0], cur_pos_[1]);
+      loadDomainToMap();
+      // Clear cached parameters after use
       cur_pos_.clear();
+      robot_direction_.clear();
+      domain_params_.clear();
       }
 
       // make sure to resize the underlying array that Navfn uses
@@ -142,7 +151,7 @@ NavfnPlannerWithCone::makePlan(
         costmap_for_plan_->getSizeInCellsX(),
         costmap_for_plan_->getSizeInCellsY());
 
-      planner_->setCostmap(costmap_for_plan_->getCharMap(), true, allow_unknown_); 
+      planner_->setCostmap(costmap_for_plan_->getCharMap(), true, allow_unknown_);
 
       // RCLCPP_INFO(logger_, "costmap_for_plan_ address is %p", static_cast<void*>(costmap_for_plan_.get()));
       // RCLCPP_INFO(logger_, "costmap_ address is %p", (void *)costmap_);
@@ -391,105 +400,77 @@ NavfnPlannerWithCone::clearRobotCell(unsigned int mx, unsigned int my)
 }
 
 void
-NavfnPlannerWithCone::loadCone(std::vector<float> center, std::vector<float> current_pos, float radius, bool is_enabled)
+NavfnPlannerWithCone::loadIntentionDomain(
+  std::vector<float> cur_pos,
+  std::vector<float> robot_direction,
+  std::vector<float> domain_params,
+  bool is_enabled)
 {
   enabled_ = is_enabled;
   if (!enabled_) {
     return;
   }
 
-  if (2 != center.size()){
-    std::cout << "[Load Cone] The size of center point are not equal to 2" << std::endl;
+  // Validate input dimensions
+  if (cur_pos.size() != 2) {
+    std::cout << "[Load Intention Domain] cur_pos must have size 2" << std::endl;
+    enabled_ = false;
     return;
   }
 
-  radius_ = radius;
-  for (unsigned int i = 0; i < 2; i++) {
-    center_.push_back(center[i]);
-    cur_pos_.push_back(current_pos[i]);
+  if (robot_direction.size() != 2) {
+    std::cout << "[Load Intention Domain] robot_direction must have size 2" << std::endl;
+    enabled_ = false;
+    return;
   }
+
+  // Cache parameters for rendering in makePlan()
+  cur_pos_ = cur_pos;
+  robot_direction_ = robot_direction;
+  domain_params_ = domain_params;
 
   return;
 }
 
 void
-NavfnPlannerWithCone::loadConeToMap(float robot_x, float robot_y)
+NavfnPlannerWithCone::loadDomainToMap()
 {
-
-  // inflate the cone to make sure the goal is not in the cone edge
-  // suppose the robot is a circle
-  // after inflation, the triangle is transformed to a trapzoid
-  float height = sqrt(pow(center_[0] - robot_x, 2) + pow(center_[1] - robot_y, 2));
-  std::vector<float> height_dirc;
-  height_dirc.push_back((center_[0] - robot_x) / height);
-  height_dirc.push_back((center_[1] - robot_y) / height);
-  std::vector<float> inflated_center;
-  inflated_center.push_back(center_[0] + height_dirc[0] * inflated_distance_);
-  inflated_center.push_back(center_[1] + height_dirc[1] * inflated_distance_);
-  center_.clear();
-
-  // the bottom edge of the cone after inflation
-  float phi = std::atan(height / radius_);
-  float inflated_radius = radius_ + inflated_distance_ / std::tan(phi/2);
-  // calculate the bottom vertex of the cone
-  std::vector<Point> inflated_vertices;
-  for (int i = 0; i < 2; i++) {
-    Point vertex;
-    vertex.x = static_cast<double>(inflated_center[0] + inflated_radius * height_dirc[1] * cos(i * M_PI));
-    vertex.y = static_cast<double>(inflated_center[1] - inflated_radius * height_dirc[0] * cos(i * M_PI));
-    inflated_vertices.push_back(vertex);
+  if (!constraint_) {
+    std::cout << "[Load Domain To Map] Constraint not initialized" << std::endl;
+    return;
   }
 
-  // the upper vertex of the cone after inflation
-  float inflated_robot_x = robot_x - height_dirc[0] * inflated_distance_;
-  float inflated_robot_y = robot_y - height_dirc[1] * inflated_distance_;
-  std::vector<Point> inflated_robot_vertices;
-  for (int i = 0; i < 2; i++) {
-    Point vertex;
-    vertex.x = static_cast<double>(inflated_robot_x + inflated_distance_ * std::tan(phi/2) * height_dirc[1] * cos(i * M_PI));
-    vertex.y = static_cast<double>(inflated_robot_y - inflated_distance_ * std::tan(phi/2) * height_dirc[0] * cos(i * M_PI));
-    inflated_robot_vertices.push_back(vertex);
-  }
+  // Step 1: Update constraint with cached parameters (resolution is now passed to updateParameters)
+  constraint_->updateParameters(cur_pos_, robot_direction_, domain_params_, inflated_distance_, resolution_);
 
-  // base edge
-  setEdgeCost(inflated_vertices[0].x, inflated_vertices[0].y, inflated_vertices[1].x, inflated_vertices[1].y, nav2_costmap_2d::LETHAL_OBSTACLE);
-  // side edges
-  setEdgeCost(inflated_vertices[0].x, inflated_vertices[0].y, inflated_robot_vertices[0].x, inflated_robot_vertices[0].y, nav2_costmap_2d::LETHAL_OBSTACLE);
-  setEdgeCost(inflated_vertices[1].x, inflated_vertices[1].y, inflated_robot_vertices[1].x, inflated_robot_vertices[1].y, nav2_costmap_2d::LETHAL_OBSTACLE);
-  // top edge
-  setEdgeCost(inflated_robot_vertices[0].x, inflated_robot_vertices[0].y, inflated_robot_vertices[1].x, inflated_robot_vertices[1].y, nav2_costmap_2d::LETHAL_OBSTACLE);
+  // Step 2: Get bounding box in world coordinates
+  float min_x, max_x, min_y, max_y;
+  constraint_->getBoundingBox(min_x, max_x, min_y, max_y);
 
-}
+  // Step 3: Convert world bounding box to grid indices
+  unsigned int min_mx, min_my, max_mx, max_my;
+  bool min_valid = costmap_->worldToMap(min_x, min_y, min_mx, min_my);
+  bool max_valid = costmap_->worldToMap(max_x, max_y, max_mx, max_my);
 
-void
-NavfnPlannerWithCone::setEdgeCost(
-  float wx0, float wy0, float wx1, float wy1,
-  unsigned char cost_value)
-{
-  unsigned int mx, my;
-  bool is_valid;
-  bool warn_flag = false;
-  std::vector<float> direction_vector;
-  float module = sqrt(pow(wx1 - wx0, 2) + pow(wy1 - wy0, 2));
-  direction_vector.push_back((wx1 - wx0) / module);
-  direction_vector.push_back((wy1 - wy0) / module);
-  float distance = 0;
+  // Clamp to valid map range
+  min_mx = std::max(0u, std::min(min_mx, costmap_->getSizeInCellsX() - 1));
+  max_mx = std::max(0u, std::min(max_mx, costmap_->getSizeInCellsX() - 1));
+  min_my = std::max(0u, std::min(min_my, costmap_->getSizeInCellsY() - 1));
+  max_my = std::max(0u, std::min(max_my, costmap_->getSizeInCellsY() - 1));
 
-  while (distance <= module)
-  {
-    is_valid = costmap_->worldToMap(wx0 + distance * direction_vector[0], wy0 + distance * direction_vector[1], mx, my);
-    if (is_valid){
-      costmap_for_plan_->setCost(mx, my, cost_value);
+  // Step 4: Bounding box scan - iterate over all cells in the box
+  for (unsigned int mx = min_mx; mx <= max_mx; ++mx) {
+    for (unsigned int my = min_my; my <= max_my; ++my) {
+      // Step 5: Convert grid cell center to world coordinates
+      double wx, wy;
+      costmap_->mapToWorld(mx, my, wx, wy);
+
+      // Step 6: Query spatial predicate
+      if (!constraint_->isRestrictedArea(static_cast<float>(wx), static_cast<float>(wy))) {
+        // Mark as LETHAL_OBSTACLE (254)
+        costmap_for_plan_->setCost(mx, my, nav2_costmap_2d::LETHAL_OBSTACLE);
+      }
     }
-    else
-    {
-      warn_flag = true;
-    }
-    distance += static_cast<float>(resolution_);
-  }
-
-  if (warn_flag){
-    // std::cout << "[Path Planner] The edge of cone is out of range." << std::endl;
   }
 } 
 
