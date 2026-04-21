@@ -36,6 +36,7 @@ class EvalEnv(BaseEnv):
             render_real_time_factor=1.0,
             use_generator = False,
             eval_ordered=False,  # if True, the evaluation will be in order of the eval_path_directory
+            record_heatmap=False, # if True, record replan positions for heatmap generation
             intention_domain_type='cone',
             ):
         # addtional parameters
