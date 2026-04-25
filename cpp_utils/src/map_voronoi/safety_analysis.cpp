@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::string trajectory_path = argv[1];
-    std::string map_yaml = "/home/rosdev/ros2_ws/train_env/rl_replanner_training/rl_replanner_train/maps/real_maps/phy2.yaml";
+    std::string map_yaml = "/home/rosdev/ros2_ws/train_env/rl_replanner_training/rl_replanner_train/maps/real_maps/phy1.yaml";
     if (argc >= 3) {
         map_yaml = argv[2];
     }

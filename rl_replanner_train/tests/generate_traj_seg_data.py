@@ -15,14 +15,15 @@ from nav_msgs.msg import OccupancyGrid
 # import matplotlib
 # matplotlib.use('TkAgg')
 
-map_name = "circle_clutter" 
-start_point = cpp_utils.Point(-4.0, -4.0)
-end_point = cpp_utils.Point(4.0, 4.0)
+map_name = "phy1"
+init_pose = (-3.08, 0.57)
+target_pose = (0.789, 3.348)
+start_point = cpp_utils.Point(init_pose[0], init_pose[1])
+end_point = cpp_utils.Point(target_pose[0], target_pose[1])
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(current_dir))
-map_file = os.path.join(project_root, "rl_replanner_train", "maps", "sim_maps", "circle_clutter.yaml")
-# map_file = os.path.join(project_root, "rl_replanner_train", "maps", "real_maps", "phy1.yaml")
+map_file = os.path.join(project_root, "rl_replanner_train", "maps", "real_maps", "phy1.yaml")
 planner_file = os.path.join(project_root, "cpp_utils", "include", "teb_local_planner", "teb_params.yaml")
 
 rclpy.init()
@@ -42,7 +43,7 @@ pyCostmap = PyCostmap2D(render_node)
 traj_generator = cpp_utils.TrajGenerator()
 traj_generator.initialize(
     map_file=map_file,
-    planner_file="./cpp_utils/include/teb_local_planner/teb_params.yaml",
+    planner_file=planner_file,
     path_resolution=0.025,
     time_resolution=0.1,
 )
@@ -68,11 +69,12 @@ past_time_frames = 20
 future_time_frames = 40
 total_time_frames = past_time_frames + future_time_frames
 obser_width = 5.0
-MAX_SAMPLES = 20000
+MAX_SAMPLES = 1000
 partial_map = costmap_cpp.getPartialCostmap(start_point.x, start_point.y, obser_width, obser_width)
 size_x = partial_map.size_x
 size_y = partial_map.size_y
 traj_array = np.zeros((MAX_SAMPLES, 1, total_time_frames, 2))  # (N_batches, N_agents, N_time_frames, 2)
+traj_array_abs = np.zeros((MAX_SAMPLES, 1, total_time_frames, 2))  # absolute positions in world frame
 map_array = np.zeros((MAX_SAMPLES, size_x, size_y))  # (N_batches, height, width)
 global_goal = np.array([end_point.x, end_point.y]) 
 idx = 0
@@ -122,7 +124,9 @@ with tqdm(total=MAX_SAMPLES, desc="Collecting Data", unit="sample") as pbar:
             partial_map_2d = data.reshape((partial_map.size_y, partial_map.size_x))
 
             # Convert the trajectory segment to a numpy array
+            traj_segment_array_abs = np.array([[point.x, point.y] for point in traj_segment])
             traj_segment_array_rela = np.array([[point.x - cur_pos.x, point.y - cur_pos.y] for point in traj_segment])  # relative positions
+            traj_array_abs[idx, 0, :total_time_frames, :] = traj_segment_array_abs
             traj_array[idx, 0, :total_time_frames, :] = traj_segment_array_rela
             map_array[idx, :, :] = partial_map_2d
             idx += 1
@@ -170,5 +174,6 @@ with tqdm(total=MAX_SAMPLES, desc="Collecting Data", unit="sample") as pbar:
 
 # save data as npy files
 np.save(os.path.join(project_root, "rl_replanner_train", "data", f"traj_array_{map_name}.npy"), traj_array[:idx])
+np.save(os.path.join(project_root, "rl_replanner_train", "data", f"traj_array_abs_{map_name}.npy"), traj_array_abs[:idx])
 np.save(os.path.join(project_root, "rl_replanner_train", "data", f"map_array_{map_name}.npy"), map_array[:idx])
 print(f"Saved {idx} samples to npy files.")

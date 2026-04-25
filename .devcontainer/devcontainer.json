@@ -42,7 +42,6 @@
         "--privileged",
         "--env", "DISPLAY=${localEnv:DISPLAY}",
         "--volume", "/tmp/.X11-unix:/tmp/.X11-unix:rw",
-        "--volume", "${localEnv:XAUTHORITY}:/root/.Xauthority:ro",
         "--env", "QT_X11_NO_MITSHM=1",
         "--name", "rl_replanner_env_only"
         // "--runtime=nvidia",

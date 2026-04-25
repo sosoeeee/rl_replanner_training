@@ -1,7 +1,6 @@
 import glob
-import time
+import copy
 import numpy as np
-from typing import Dict, Union
 import math
 
 from rl_replanner_train.base_env import BaseEnv
@@ -37,12 +36,17 @@ class EvalEnv(BaseEnv):
             use_generator = False,
             eval_ordered=False,  # if True, the evaluation will be in order of the eval_path_directory
             record_heatmap=False, # if True, record replan positions for heatmap generation
+            record_diffusion_uncertainty=False, # if True, expose replan snapshots for synchronous diffusion inference
             intention_domain_type='cone',
+            max_eval_paths=0,
             ):
         # addtional parameters
         self.eval_path_directory = eval_path_directory
         self.eval_ordered = eval_ordered
         self.record_heatmap = record_heatmap
+        self.record_diffusion_uncertainty = record_diffusion_uncertainty
+        self.max_eval_paths = max_eval_paths
+        self._decay_weight_cache = {}
 
         super().__init__(
             reward_weight=reward_weight,
@@ -60,6 +64,21 @@ class EvalEnv(BaseEnv):
             render_real_time_factor=render_real_time_factor,
             intention_domain_type=intention_domain_type,
         )
+
+    def _get_decay_weight(self, eval_length: int):
+        if eval_length <= 0:
+            return np.array([], dtype=np.float64)
+        if eval_length in self._decay_weight_cache:
+            return self._decay_weight_cache[eval_length]
+
+        decay_weight = np.array([self.decay_factor ** i for i in range(eval_length)], dtype=np.float64)
+        denom = (1 - self.decay_factor ** eval_length)
+        if abs(denom) < 1e-12:
+            weights = np.full(eval_length, 1.0 / eval_length, dtype=np.float64)
+        else:
+            weights = decay_weight * (1 - self.decay_factor) / denom
+        self._decay_weight_cache[eval_length] = weights
+        return weights
     
     def _init_human_traj(self):
         # human path
@@ -69,6 +88,10 @@ class EvalEnv(BaseEnv):
             self.replay_traj_files = glob.glob(self.replay_traj_path + '/' + self.eval_path_directory + '/*.txt')
         else:
             self.replay_traj_files = glob.glob(self.replay_traj_path + '/' + map_name + '/eval_paths/*.txt')
+
+        self.replay_traj_files = sorted(self.replay_traj_files)
+        if self.max_eval_paths is not None and self.max_eval_paths > 0:
+            self.replay_traj_files = self.replay_traj_files[:self.max_eval_paths]
 
         # Pre-load all trajectory data to avoid repeated file I/O operations
         self.replay_trajectories = []
@@ -201,13 +224,26 @@ class EvalEnv(BaseEnv):
             if self.record_heatmap:
                 self.replan_positions.append(self.cur_position)
 
+        self.info = {}
+        if self.record_diffusion_uncertainty and self.current_action[0] == LOCAL_GOAL:
+            self.info['replan_triggered'] = True
+            self.info['diffusion_history'] = copy.deepcopy(self.human_path_buffer)
+            self.info['diffusion_position'] = copy.deepcopy(self.cur_position)
+        elif self.record_diffusion_uncertainty:
+            self.info['replan_triggered'] = False
+            self.info['diffusion_position'] = copy.deepcopy(self.cur_position)
+
         if is_terminal:
             if end_reward > 0:
                 is_success = True
             else:
                 is_success = False
 
-            self.info = {
+            traj_file = None
+            if 0 <= self.traj_index < len(self.replay_traj_files):
+                traj_file = self.replay_traj_files[self.traj_index]
+
+            self.info.update({
                 'is_success': is_success,
                 'replan_freq': self.replan_num / self.current_step,  # replan frequency
                 'fail_rate': self.fail_num / self.current_step,  # fail rate
@@ -215,10 +251,11 @@ class EvalEnv(BaseEnv):
                 'prediction_error': self.total_prediction_error / self.current_step if self.current_step > 0 else 0.0,
                 'cur_idx': self.traj_index,
                 'eval_traj_num': len(self.replay_traj_files),
-            }
+                'traj_file': traj_file,
+            })
             if self.record_heatmap:
                 self.info['replan_positions'] = self.replan_positions
-        else:
+        elif not self.record_diffusion_uncertainty:
             self.info = {}
 
     def _calculate_reward(self, end_reward, is_terminal=False):
@@ -234,8 +271,7 @@ class EvalEnv(BaseEnv):
             self.total_prediction_error += step_prediction_error
 
             exp_error = np.exp(- self.exp_factor * path_error)
-            decay_weight = [self.decay_factor ** i for i in range(eval_length)] 
-            decay_weight = np.array(decay_weight) * (1 - self.decay_factor) / (1 - self.decay_factor ** (eval_length))
+            decay_weight = self._get_decay_weight(eval_length)
             task_reward = decay_weight.dot(exp_error)
         else:
             task_reward = 0.0
